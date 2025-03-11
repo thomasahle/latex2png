@@ -27,6 +27,23 @@ body {
   font-size: 1.2rem;
 }
 
+/* Make the right section a flex container with centered items */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: -5px;
+}
+
+.navbar-right a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.navbar-right a:hover {
+  text-decoration: underline;
+}
+
 a {
   color: #007bff;
   text-decoration: none;
