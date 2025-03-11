@@ -1,0 +1,171 @@
+
+/* Basic resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  background: #f8f9fa;
+  color: #333;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.navbar-left .site-title {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Container */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.description {
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.wrap-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.wrap-checkbox input {
+  margin-right: 0.3rem;
+}
+
+textarea {
+  width: 100%;
+  height: 200px;
+  font-family: monospace;
+  font-size: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  resize: vertical;
+  border: 1px solid #ddd;
+}
+
+/* Action row and image options */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.action-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.action-right {
+  margin-left: auto;
+}
+
+.image-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.image-options label {
+  margin-right: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.image-options select,
+.image-options input {
+  padding: 0.3rem;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+button,
+.twitter-btn {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+.primary-btn:hover {
+  background: #0056b3;
+}
+
+.twitter-btn {
+  background: #1da1f2;
+  color: #fff;
+}
+
+.twitter-btn:hover {
+  background: #117ab8;
+}
+
+/* Preview area */
+.preview-area {
+  margin-bottom: 1.5rem;
+  border: 1px solid #ddd;
+  min-height: 200px;
+  text-align: center;
+}
+
+#preview {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+}

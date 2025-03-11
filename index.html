@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LaTeX to Image</title>
+  <!-- MathJax (with AMS extension for align environments) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        packages: { '[+]': ['ams'] }
+      }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
+
+  <!-- html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <span class="site-title">LaTeX to Image</span>
+    </div>
+    <div class="navbar-right">
+      <a href="https://github.com/thomasahle/latex2png">
+        Show source code on GitHub
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Heading and description -->
+    <h1>Convert LaTeX math equations to PNG/JPEG/SVG images</h1>
+    <p class="description">
+      Simply type in your LaTeX below and watch the preview update in real time.
+      Need an example? <a href="#" id="example-link">Show example</a>.
+    </p>
+
+    <!-- Form area -->
+    <div class="form-area">
+      <div class="form-header">
+        <label for="latex-input" class="form-label">Enter your LaTeX here:</label>
+        <div class="wrap-checkbox">
+          <input type="checkbox" id="wrap-align-check" name="wrap-align-check" checked>
+          <label for="wrap-align-check">
+            Wrap with <code>\begin{align}</code> and <code>\end{align}</code>
+          </label>
+        </div>
+      </div>
+      <textarea id="latex-input" rows="5" placeholder="e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}"></textarea>
+    </div>
+
+    <!-- Preview area -->
+    <div class="preview-area">
+      <div id="preview"></div>
+    </div>
+
+    <!-- Action row: Save, Image Options on left; Share on right -->
+    <div class="action-row">
+      <div class="action-left">
+        <button id="save-btn" class="primary-btn">Save image</button>
+        <div class="image-options">
+          <label for="format-select">Format:</label>
+          <select id="format-select">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="svg">SVG (experimental)</option>
+          </select>
+          <label for="scale-input">Scale:</label>
+          <input type="number" id="scale-input" min="1" max="5" value="2" step="0.5">
+        </div>
+      </div>
+      <div class="action-right">
+        <button id="twitter-share" class="twitter-btn">Share</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
