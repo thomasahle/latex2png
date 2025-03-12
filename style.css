@@ -345,6 +345,9 @@ textarea {
 }
 
 @media (max-width: 600px) {
+   h1, .description .extra, .theme-toggle-text {
+      display: none;
+   }
    .container {
     padding: 1rem;
     margin: 1rem auto;
