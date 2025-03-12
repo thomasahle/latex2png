@@ -2,8 +2,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
+  <script>
+     window.dataLayer = window.dataLayer || [];
+     function gtag(){dataLayer.push(arguments);}
+     gtag('js', new Date());
+     gtag('config', 'G-40XB6Q54CE');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
   <title>LaTeX to Image</title>
+
+  <!-- Meta Description -->
+  <meta name="description" content="Convert LaTeX math equations to high-quality PNG, JPEG, or SVG images with our easy-to-use web tool. Preview, save, and share your equations online." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="LaTeX to Image" />
+  <meta property="og:description" content="Effortlessly convert LaTeX math equations into high-quality images (PNG, JPEG, SVG)." />
+  <meta property="og:image" content="https://your-github-pages-url/og-image.png" />
+  <meta property="og:url" content="https://thomasahle/latex2png" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LaTeX to Image" />
+  <meta name="twitter:description" content="Convert LaTeX math equations into high-quality images (PNG, JPEG, SVG)." />
+  <meta name="twitter:image" content="https://thomasahle/latex2png" />
+  <meta name="twitter:site" content="@thomasahle" />
+
   <!-- MathJax (with AMS extension for align environments) -->
   <script>
     window.MathJax = {
@@ -51,7 +80,7 @@
     <!-- Form area -->
     <div class="form-area">
       <div class="form-header">
-        <label for="latex-input" class="form-label">Enter your LaTeX here:</label>
+        <label for="latex-input" class="form-label" id="enter-latex">Enter your LaTeX here:</label>
         <div class="wrap-checkbox">
           <input type="checkbox" id="wrap-align-check" name="wrap-align-check" checked>
           <label for="wrap-align-check">
@@ -67,26 +96,23 @@
       <div id="preview"></div>
     </div>
 
-    <!-- Action row: Save, Image Options on left; Share on right -->
-    <div class="action-row">
-      <div class="action-left">
-        <button id="save-btn" class="primary-btn">Save image</button>
-        <div class="image-options">
-          <label for="format-select">Format:</label>
-          <select id="format-select">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="svg">SVG (experimental)</option>
-          </select>
-          <label for="scale-input">Scale:</label>
-          <input type="number" id="scale-input" min="1" max="5" value="2" step="0.5">
-        </div>
-      </div>
-      <div class="action-right">
-        <button id="twitter-share" class="twitter-btn">Share</button>
-      </div>
-    </div>
+<!-- Action row: Save image, Image Options, and Share -->
+<div class="action-row">
+  <button id="save-btn" class="primary-btn">Save image</button>
+  <div class="image-options">
+    <label for="format-select">Format:</label>
+    <select id="format-select">
+      <option value="png">PNG</option>
+      <option value="jpeg">JPEG</option>
+      <option value="svg">SVG</option>
+    </select>
   </div>
+  <div class="image-options">
+    <label for="scale-input">Scale:</label>
+    <input type="number" id="scale-input" min="1" max="5" value="2" step="0.5">
+  </div>
+  <button id="twitter-share" class="twitter-btn">Share</button>
+</div>
 
   <script src="script.js"></script>
 </body>

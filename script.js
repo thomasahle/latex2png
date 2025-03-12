@@ -15,9 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Example LaTeX
   const sampleLatex = String.raw`
 f(1,m) &= \exp(-m), \\
-f(2,m) &= \exp(-2m) + (m+m^2)\bigl(\exp(-2m)+m^3\bigr), \\
-f(3,m) &= \exp(-3m) + (2m+4m^2)\exp(-3m) \\
-       &\quad + \left(\frac{1}{2}m^2 + 2m^2 + 2.25m^3\right)\exp(-5m),
+f(2,m) &= \exp(-2m) + (m+m^2)\exp(-3m), \\
+f(3,m) &= \exp(-3m) + (2m+4m^2)\exp(-4m) \\
+       &\quad + \left(\frac{1}{2}m^2 + 2m^2 + \frac{9}{4}m^3\right)\exp(-5m),
 `;
 
   // Render LaTeX in real time

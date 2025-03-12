@@ -106,29 +106,65 @@ textarea {
   border: 1px solid #ddd;
 }
 
+@media (max-width: 600px) {
+   .container {
+    padding: 1rem;
+    margin: 1rem auto;
+   }
+   #enter-latex {
+    display: none;
+   }
+}
+
 /* Action row and image options */
+
 .action-row {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 1rem;
+  grid-gap: 1rem;
   align-items: center;
-}
-
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.action-right {
-  margin-left: auto;
 }
 
 .image-options {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .action-row {
+    display: grid;
+    grid-template-columns: auto auto;  /* columns sized to content */
+    grid-template-rows: auto auto;
+    grid-gap: 1rem;
+    /* Don't force grid items to stretch */
+    justify-items: start;
+  }
+  /* Place Save button in first row, first column */
+  #save-btn {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  /* Place Share button in first row, second column and align it to the right */
+  #twitter-share {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  /* Place first image option (Format) in second row, first column, centered */
+  .image-options:nth-of-type(1) {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+  /* Place second image option (Scale) in second row, second column, centered */
+  .image-options:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+  .image-options input, .image-options select {
+     width: 100%;
+  }
 }
 
 .image-options label {
@@ -168,6 +204,7 @@ button,
 .twitter-btn {
   background: #1da1f2;
   color: #fff;
+  margin-left: auto;
 }
 
 .twitter-btn:hover {
