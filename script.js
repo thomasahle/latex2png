@@ -44,11 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize CodeMirror editor
   const editor = CodeMirror.fromTextArea(elements.latexInput, {
     mode: "stex",
-    lineNumbers: true,
+    // lineNumbers: true,
+    autoCloseBrackets: true,
     matchBrackets: true,
-    lineWrapping: true,
+    inMathMode: true,
+    styleActiveLine: true,
+    // lineWrapping: true,
     theme: "default",
-    placeholder: `e.g. \\frac{1}{\\sqrt{2\\pi}} e^{-x^2/2}`
+    // placeholder: `e.g. \\frac{1}{\\sqrt{2\\pi}} e^{-x^2/2}`
   });
   
   // Store a reference to the editor for later use

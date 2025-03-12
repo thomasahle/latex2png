@@ -1,31 +1,39 @@
 # LaTeX2PNG Project Guidelines
 
 ## Build & Development
-- This is a static web application with no build process
-- Run one of these local servers to test:
-  - `python -m http.server`
+- Static web application with no build process
+- Local development servers:
+  - `python -m http.server` (preferred)
   - `npx http-server`
-- For mobile testing, use responsive design mode in browser devtools
-
-## Project Structure
-- `index.html`: Main HTML with semantic structure and external dependencies
-- `style.css`: CSS using variables for theming (light/dark) with responsive design
-- `script.js`: Vanilla JS with ES6+ syntax handling UI interaction and image conversion
-- External deps: MathJax, CodeMirror, html2canvas (loaded via CDN)
+- Device testing: Use browser dev tools responsive mode
+- Debugging: Check browser console for errors
 
 ## Code Style Guidelines
-- **HTML**: Semantic elements, double quotes for attributes, proper meta tags
-- **CSS**: Kebab-case class names, mobile-first, CSS variables for theming
+- **HTML**: 
+  - Semantic elements, double quotes for attributes
+  - Proper meta tags and accessibility attributes
+- **CSS**: 
+  - Kebab-case class names (e.g., `editor-container`)
+  - Mobile-first design (min-width media queries)
+  - CSS variables for theming in :root
 - **JavaScript**: 
-  - ES6+ with const/let (no var), arrow functions, async/await
-  - Event listeners with addEventListener (no inline handlers)
-  - localStorage for user preferences
-  - Try/catch for error handling
-  - Thorough browser compatibility checks
+  - ES6+ features: const/let (no var), arrow functions, async/await
+  - Event delegation pattern with addEventListener (no inline handlers)
+  - Debounce performance-critical functions
+  - Utilize localStorage for persistent settings
+  - Feature detection before using browser APIs
+  - Structured error handling with try/catch and user feedback
 
-## Error Handling & Accessibility
-- Check for browser API support before using features (e.g., Web Share API)
-- Provide fallbacks for unsupported features
-- Console error logging with meaningful messages
-- User-friendly error messages
-- Mobile-responsive UI with appropriate touch targets
+## External Dependencies
+- Load all dependencies via CDN with integrity hashes when possible
+- MathJax 3: LaTeX rendering engine
+- CodeMirror 5: Code editor with syntax highlighting
+  - Current options: stex mode, lineNumbers, matchBrackets, theme
+  - Enhancement options: autoCloseBrackets, styleActiveLine, lineWrapping, extraKeys
+  - LaTeX-specific addons: custom snippets, environment support, keyboard shortcuts
+- html2canvas: DOM-to-image conversion
+- Phosphor Icons: UI iconography
+
+## Project Roadmap (from TODO)
+- See TODO file for completed features and planned improvements
+- Add features that enhance usability without complicating the interface
