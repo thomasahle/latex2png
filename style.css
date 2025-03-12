@@ -133,6 +133,11 @@ a:hover {
   border-radius: 4px;
 }
 
+/* Style for the CodeMirror placeholder */
+.CodeMirror-placeholder.CodeMirror-line-like {
+  color: #bbb !important;
+}
+
 .preview-area {
   border: 1px solid var(--border-color);
   min-height: 200px;
@@ -403,6 +408,10 @@ button,
   color: var(--text-color);
 }
 
+[data-theme="dark"] .CodeMirror-placeholder.CodeMirror-line-like {
+  color: #666 !important;
+}
+
 [data-theme="dark"] .CodeMirror-gutters {
   background-color: var(--bg-color);
   border-right: 1px solid var(--border-color);
@@ -486,7 +495,7 @@ button,
   }
   
   .container {
-    height: calc(100% - 49px); /* 49px is navbar height */
+    height: calc(100% - 2rem); /* 49px is navbar height */
     margin: 0;
     max-width: 100%;
     display: flex;
