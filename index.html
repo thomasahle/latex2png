@@ -99,12 +99,13 @@
 
 <!-- Action row: Save image, Image Options, and Share -->
 <div class="action-row">
-  <div class="dropdown">
-    <button id="save-btn" class="primary-btn">Save image</button>
+  <div class="save-container">
+    <button id="save-btn" class="primary-btn">Save PNG</button>
+    <button id="format-toggle" class="format-toggle">▾</button>
     <div id="format-dropdown" class="dropdown-content">
-      <a data-format="png">PNG</a>
-      <a data-format="jpeg">JPEG</a>
-      <a data-format="svg">SVG</a>
+      <a data-format="png">Save PNG</a>
+      <a data-format="jpeg">Save JPEG</a>
+      <a data-format="svg">Save SVG</a>
     </div>
   </div>
   <button id="twitter-share" class="twitter-btn">Share</button>

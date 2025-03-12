@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const latexInput = document.getElementById("latex-input");
   const exampleLink = document.getElementById("example-link");
   const saveBtn = document.getElementById("save-btn");
+  const formatToggle = document.getElementById("format-toggle");
   const twitterShare = document.getElementById("twitter-share");
   const themeToggle = document.getElementById("theme-toggle");
   const formatDropdown = document.getElementById("format-dropdown");
@@ -83,20 +84,42 @@ P(E) = {n \choose k} p^k (1-p)^{n-k}
   // Track the last shown example
   let currentExampleIndex = -1;
 
+  // Save button directly downloads PNG
+  saveBtn.addEventListener('click', () => {
+    currentFormat = "png";
+    saveImage();
+  });
+
   // Format dropdown toggle
-  saveBtn.addEventListener('click', (e) => {
+  formatToggle.addEventListener('click', (e) => {
     e.stopPropagation();
     formatDropdown.classList.toggle('show');
     
-    // If dropdown is closed and not just being opened
-    if (!formatDropdown.classList.contains('show')) {
-      saveImage();
+    // Adjust dropdown position to prevent it from going off screen
+    if (formatDropdown.classList.contains('show')) {
+      // Get dropdown position data
+      const rect = formatDropdown.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const bottomSpace = viewportHeight - rect.bottom;
+      
+      // If dropdown goes below viewport
+      if (bottomSpace < 0) {
+        // Position dropdown above the button instead of below
+        formatDropdown.style.bottom = '100%';
+        formatDropdown.style.marginTop = '0';
+        formatDropdown.style.marginBottom = '5px';
+      } else {
+        // Reset to default (below button)
+        formatDropdown.style.bottom = 'auto';
+        formatDropdown.style.marginTop = '5px';
+        formatDropdown.style.marginBottom = '0';
+      }
     }
   });
 
   // Close dropdown when clicking elsewhere
   window.addEventListener('click', (e) => {
-    if (!e.target.matches('#save-btn')) {
+    if (!e.target.matches('#format-toggle')) {
       formatDropdown.classList.remove('show');
     }
   });
@@ -160,39 +183,77 @@ P(E) = {n \choose k} p^k (1-p)^{n-k}
     const previewArea = document.querySelector('.preview-area');
     previewArea.classList.add('hide-zoom-controls');
 
-    // Get theme state for background color
-    const isDark = document.body.getAttribute('data-theme') === 'dark';
-    let backgroundColor = null;
-    
-    // For JPEG, always use white background
-    // For PNG/SVG, use theme background in dark mode
-    if (currentFormat === "jpeg") {
-      backgroundColor = "#fff";
-    } else if (isDark) {
-      backgroundColor = "#333"; // dark theme background
+    try {
+      if (currentFormat === "svg") {
+        // For SVG, the most reliable approach is to use html2canvas to create a PNG
+        // and then embed that PNG inside an SVG
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        const backgroundColor = isDark ? "#333" : "#fff";
+        
+        // Create the PNG image
+        const canvas = await html2canvas(previewEl, {
+          scale: currentScale,
+          useCORS: true,
+          backgroundColor: backgroundColor
+        });
+        
+        // Convert the PNG to a data URL
+        const pngDataUrl = canvas.toDataURL('image/png');
+        
+        // Create SVG that embeds the PNG image
+        const svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">
+  <image width="${canvas.width}" height="${canvas.height}" xlink:href="${pngDataUrl}"/>
+</svg>`;
+        
+        // Create blob and trigger download
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'latex-equation.svg';
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // For PNG/JPEG, use html2canvas
+        // Get theme state for background color
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        let backgroundColor = null;
+        
+        // For JPEG, always use white background
+        // For PNG, use theme background in dark mode
+        if (currentFormat === "jpeg") {
+          backgroundColor = "#fff";
+        } else if (isDark) {
+          backgroundColor = "#333"; // dark theme background
+        }
+
+        let mimeType = "image/png";
+        if (currentFormat === "jpeg") mimeType = "image/jpeg";
+
+        // Use default scaling
+        const canvas = await html2canvas(previewEl, {
+          scale: currentScale,
+          useCORS: true,
+          backgroundColor: backgroundColor
+        });
+        
+        const dataUrl = canvas.toDataURL(mimeType);
+        
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `latex-image.${currentFormat}`;
+        link.click();
+      }
+    } catch (error) {
+      console.error("Error saving image:", error);
+      alert("Failed to save image. Try a different format.");
+    } finally {
+      // Restore elements
+      mmls.forEach(el => el.style.removeProperty("display"));
+      previewArea.classList.remove('hide-zoom-controls');
     }
-
-    let mimeType = "image/png";
-    if (currentFormat === "jpeg") mimeType = "image/jpeg";
-    else if (currentFormat === "svg") mimeType = "image/svg+xml";
-
-    // Use default scaling
-    const canvas = await html2canvas(previewEl, {
-      scale: currentScale,
-      useCORS: true,
-      backgroundColor: backgroundColor
-    });
-    
-    // Restore elements
-    mmls.forEach(el => el.style.removeProperty("display"));
-    previewArea.classList.remove('hide-zoom-controls');
-    
-    const dataUrl = canvas.toDataURL(mimeType);
-    
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `latex-image.${currentFormat}`;
-    link.click();
   }
 
   latexInput.addEventListener("input", renderLatex);
@@ -224,36 +285,27 @@ P(E) = {n \choose k} p^k (1-p)^{n-k}
     const previewArea = document.querySelector('.preview-area');
     previewArea.classList.add('hide-zoom-controls');
 
-    // Get theme state for background color
-    const isDark = document.body.getAttribute('data-theme') === 'dark';
-    let backgroundColor = null;
-    
-    if (currentFormat === "jpeg") {
-      backgroundColor = "#fff";
-    } else if (isDark) {
-      backgroundColor = "#333"; // dark theme background
-    }
-
-    let mimeType = "image/png";
-    if (currentFormat === "jpeg") mimeType = "image/jpeg";
-    else if (currentFormat === "svg") mimeType = "image/svg+xml";
-
-    html2canvas(previewEl, {
-      scale: currentScale,
-      useCORS: true,
-      backgroundColor: backgroundColor
-    }).then(canvas => {
-      // Restore elements
-      mmls.forEach(el => el.style.removeProperty("display"));
-      previewArea.classList.remove('hide-zoom-controls');
-
+    try {
+      // Always share as PNG for compatibility
+      // Get theme state for background color
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const backgroundColor = isDark ? "#333" : null;
+      
+      const canvas = await html2canvas(previewEl, {
+        scale: currentScale,
+        useCORS: true,
+        backgroundColor: backgroundColor
+      });
+      
       canvas.toBlob(async blob => {
         if (!blob) {
           alert("Failed to capture image.");
           return;
         }
+        
         // Create a File object from the blob
-        const file = new File([blob], `latex-image.${currentFormat}`, { type: mimeType });
+        const file = new File([blob], "latex-image.png", { type: "image/png" });
+        
         // Use Web Share API if supported with files
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
@@ -268,8 +320,15 @@ P(E) = {n \choose k} p^k (1-p)^{n-k}
         } else {
           alert("Your browser does not support direct image sharing. Please save the image and share manually.");
         }
-      }, mimeType);
-    });
+      }, "image/png");
+    } catch (error) {
+      console.error("Error sharing image:", error);
+      alert("Failed to share image.");
+    } finally {
+      // Restore elements
+      mmls.forEach(el => el.style.removeProperty("display"));
+      previewArea.classList.remove('hide-zoom-controls');
+    }
   });
 
   
