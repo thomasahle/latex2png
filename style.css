@@ -29,6 +29,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent; /* Improves mobile touch experience */
 }
 
 html.resizing {
@@ -46,6 +47,8 @@ body {
   background: var(--bg-color);
   color: var(--text-color);
   transition: background 0.3s, color 0.3s;
+  text-rendering: optimizeSpeed; /* Improves text rendering performance */
+  -webkit-font-smoothing: antialiased;
 }
 
 /* === TYPOGRAPHY === */
@@ -152,7 +155,12 @@ a:hover {
   overflow: auto;
   max-width: 100%;
   max-height: 400px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 }
+
 
 #preview {
   padding: 0.5rem 1rem;
@@ -208,13 +216,19 @@ a:hover {
 
 .zoom-slider {
   -webkit-appearance: none;
+  appearance: none;
   width: 80px;
   height: 5px;
   border-radius: 5px;
   background: var(--border-color);
   outline: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation; /* Prevent zoom-in on touch devices */
 }
 
+/* Thumb styles for WebKit browsers like Chrome, Safari */
 .zoom-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 15px;
@@ -224,12 +238,22 @@ a:hover {
   cursor: pointer;
 }
 
+/* Thumb styles for Firefox */
 .zoom-slider::-moz-range-thumb {
   width: 15px;
   height: 15px;
   border-radius: 50%;
   background: var(--primary-color);
   cursor: pointer;
+  border: none;
+}
+
+/* Track styles for Firefox */
+.zoom-slider::-moz-range-track {
+  width: 100%;
+  height: 5px;
+  background: var(--border-color);
+  border-radius: 5px;
 }
 
 .zoom-value {
@@ -379,10 +403,10 @@ button,
   background-color: var(--container-bg);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 10;
+  z-index: 100; /* Higher z-index to ensure it appears above other elements */
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  margin-top: 5px;
+  /* Positioning will be handled by JavaScript */
   right: 0;
 }
 
@@ -442,12 +466,18 @@ button,
 /* === RESPONSIVE STYLES === */
 /* Desktop side-by-side layout */
 @media (min-width: 768px) {
+  /* These styles will be applied via JS for better control */
   .side-by-side .editor-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: row !important;
     align-items: stretch;
-    height: 400px;
+    height: 400px; /* Default height, will be overridden by JS */
     width: 100%;
+  }
+  
+  /* Default display for non-side-by-side mode */
+  .editor-container {
+    display: block;
   }
   
   .side-by-side .form-area,
@@ -474,17 +504,12 @@ button,
   }
   
   .side-by-side .CodeMirror {
-    height: 100%;
+    height: 100% !important; /* Force height to take full container height */
     flex: 1;
+    min-height: 100%; /* Ensure minimum height */
   }
   
-  .side-by-side .preview-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
 }
-
 /* Mobile styles */
 @media (max-width: 767px) {
   html, body {
@@ -492,6 +517,13 @@ button,
     margin: 0;
     padding: 0;
     overflow: hidden;
+  }
+  
+  /* Force stacked layout in mobile regardless of side-by-side class */
+  .side-by-side .editor-container {
+    display: block !important; /* Override any inline styles */
+    flex-direction: column !important;
+    height: auto !important;
   }
   
   .container {
@@ -623,8 +655,5 @@ button,
     justify-self: end;
   }
   
-  .dropdown-content {
-    right: auto;
-    left: 0;
-  }
+  /* Dropdown positioning is now handled by JavaScript */
 }

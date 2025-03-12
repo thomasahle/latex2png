@@ -2,22 +2,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
-  <script>
-     window.dataLayer = window.dataLayer || [];
-     function gtag(){dataLayer.push(arguments);}
-     gtag('js', new Date());
-     gtag('config', 'G-40XB6Q54CE');
-  </script>
+  <!-- Performance optimizations: Preconnect to CDN domains -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
   <title>LaTeX to Image</title>
+
+  <!-- CSS first for faster rendering -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
 
   <!-- Meta Description -->
   <meta name="description" content="Convert LaTeX math equations to high-quality PNG, JPEG, or SVG images with our easy-to-use web tool. Preview, save, and share your equations online." />
-  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" sizes="32x32" />
 
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="LaTeX to Image" />
@@ -33,7 +33,7 @@
   <meta name="twitter:image" content="https://thomasahle.com/latex2png/og.png" />
   <meta name="twitter:site" content="@thomasahle" />
 
-  <!-- MathJax (with AMS extension for align environments) -->
+  <!-- MathJax configuration -->
   <script>
     window.MathJax = {
       loader: {
@@ -47,25 +47,30 @@
       }
     };
   </script>
+  
+  <!-- Defer non-critical scripts -->
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/stex/stex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/display/placeholder.min.js"></script>
+  <script async src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Core functionality scripts -->
+  <script defer src="script.js"></script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
-
-  <!-- html2canvas -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-  <!-- CodeMirror for syntax highlighting -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/stex/stex.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/display/placeholder.min.js"></script>
-
-  <!-- GitHub Buttons Script -->
+  
+  <!-- Non-critical scripts -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
   
-  <!-- Phosphor Icons -->
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-  <link rel="stylesheet" href="style.css" />
+  <!-- Analytics (load last) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
+  <script>
+     window.dataLayer = window.dataLayer || [];
+     function gtag(){dataLayer.push(arguments);}
+     gtag('js', new Date());
+     gtag('config', 'G-40XB6Q54CE');
+  </script>
 </head>
 <body>
   <!-- Navbar -->
@@ -137,6 +142,7 @@
   <button id="twitter-share" class="twitter-btn"><i class="ph ph-share-network"></i> Share</button>
 </div>
 
-  <script src="script.js"></script>
+  <!-- Our script is already loaded in the head with defer -->
+  <!-- <script src="script.js"></script> -->
 </body>
 </html>
