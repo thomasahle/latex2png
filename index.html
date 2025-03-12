@@ -36,8 +36,14 @@
   <!-- MathJax (with AMS extension for align environments) -->
   <script>
     window.MathJax = {
+      loader: {
+        load: ['[tex]/ams']
+      },
       tex: {
         packages: { '[+]': ['ams'] }
+      },
+      options: {
+        enableMenu: false
       }
     };
   </script>
@@ -46,8 +52,17 @@
   <!-- html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
+  <!-- CodeMirror for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/stex/stex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
+
   <!-- GitHub Buttons Script -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -81,34 +96,42 @@
       Need inspiration? <a href="#" id="example-link">Show example</a>.
     </p>
 
-    <!-- Form area -->
-    <div class="form-area">
-      <textarea id="latex-input" rows="5" placeholder="e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}"></textarea>
-    </div>
-
-    <!-- Preview area -->
-    <div class="preview-area">
+    <div class="editor-container">
+      <!-- Form area -->
+      <div class="form-area">
+        <textarea id="latex-input" rows="5" placeholder="e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}"></textarea>
+      </div>
+      
+      <!-- Resize handle -->
+      <div class="resize-handle" id="resize-handle"></div>
+  
+      <!-- Preview area -->
+      <div class="preview-area">
       <div class="zoom-controls">
         <span id="zoom-value" class="zoom-value">1.5x</span>
         <input type="range" min="1" max="5" step="0.1" value="1.5" class="zoom-slider" id="zoom-slider">
       </div>
+      <div class="layout-toggle" id="layout-toggle" title="Toggle layout orientation">
+        <i class="ph ph-square-split-horizontal layout-toggle-icon-horizontal"></i>
+        <i class="ph ph-square-split-vertical layout-toggle-icon-vertical"></i>
+      </div>
       <div class="preview-content">
         <div id="preview"></div>
       </div>
+    </div>
     </div>
 
 <!-- Action row: Save image, Image Options, and Share -->
 <div class="action-row">
   <div class="save-container">
     <button id="save-btn" class="primary-btn">Save PNG</button>
-    <button id="format-toggle" class="format-toggle">▾</button>
+    <button id="format-toggle" class="format-toggle"><i class="ph ph-caret-down"></i></button>
     <div id="format-dropdown" class="dropdown-content">
       <a data-format="png">Save PNG</a>
       <a data-format="jpeg">Save JPEG</a>
-      <a data-format="svg">Save SVG</a>
     </div>
   </div>
-  <button id="twitter-share" class="twitter-btn">Share</button>
+  <button id="twitter-share" class="twitter-btn"><i class="ph ph-share-network"></i> Share</button>
 </div>
 
   <script src="script.js"></script>

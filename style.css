@@ -6,6 +6,22 @@
   padding: 0;
 }
 
+/* Prevent text selection during resize */
+html.resizing {
+  user-select: none;
+  touch-action: none; /* Disable browser touch actions during resize */
+  overflow: hidden; /* Prevent scrolling during resize on mobile */
+}
+
+/* Different cursor based on layout mode */
+.side-by-side html.resizing {
+  cursor: ew-resize;
+}
+
+html.resizing:not(.side-by-side) {
+  cursor: ns-resize;
+}
+
 :root {
   --bg-color: #f8f9fa;
   --text-color: #333;
@@ -27,7 +43,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; */
   background: var(--bg-color);
   color: var(--text-color);
   transition: background 0.3s, color 0.3s;
@@ -97,6 +113,112 @@ a:hover {
   border-radius: 5px;
 }
 
+/* Editor container for layout management */
+.editor-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Side-by-side layout styles */
+.side-by-side .container {
+  max-width: 1200px; /* Wider container for side-by-side */
+}
+
+/* Mobile layout - always stack on small screens regardless of layout mode */
+@media (max-width: 767px) {
+  /* Force stacked layout on mobile */
+  .side-by-side .editor-container {
+    display: block; /* Override flex display */
+  }
+  
+  .side-by-side .form-area,
+  .side-by-side .preview-area {
+    width: 100% !important; /* Override any inline width styles */
+    flex: none !important; /* Override any flex properties */
+    display: block;
+  }
+  
+  /* Keep resize handle horizontal on mobile */
+  .side-by-side .resize-handle {
+    width: 100%;
+    cursor: ns-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Keep handle indicator horizontal on mobile */
+  .side-by-side .resize-handle::before {
+    width: 60px;
+    height: 6px;
+    transform: none;
+  }
+  
+  /* Set a reasonable fixed height for editor on mobile */
+  .side-by-side .CodeMirror {
+    height: 200px;
+  }
+  
+  /* Hide layout toggle button on mobile screens */
+  .layout-toggle,
+  #layout-toggle {
+    display: none !important;
+  }
+}
+
+/* Desktop layout */
+@media (min-width: 768px) {
+  .side-by-side .editor-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 400px; /* Fixed height for the container */
+    width: 100%; /* Full width of the container */
+  }
+  
+  .side-by-side .form-area,
+  .side-by-side .preview-area {
+    flex: 1; /* Both areas take equal space */
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Full height of the container */
+    overflow: auto; /* Add scrolling if content overflows */
+    min-width: 0; /* Allow areas to shrink below content size */
+  }
+  
+  /* Convert resize handle to vertical in side-by-side mode */
+  .side-by-side .resize-handle {
+    height: 100%; /* Full height of the container */
+    cursor: ew-resize;
+    margin: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Make the handle indicator vertical */
+  .side-by-side .resize-handle::before {
+    width: 4px;
+    height: 60px;
+    transform: none;
+  }
+  
+  /* Make the editor fill its container in side-by-side mode */
+  .side-by-side .CodeMirror {
+    height: 100%;
+    flex: 1;
+  }
+  
+  /* Make the preview content expand in side-by-side mode */
+  .side-by-side .preview-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+}
+
 h1 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
@@ -121,6 +243,105 @@ textarea {
   border: 1px solid var(--border-color);
   background-color: var(--container-bg);
   color: var(--text-color);
+}
+
+/* CodeMirror styling */
+.CodeMirror {
+  height: 200px;
+  font-family: monospace;
+  font-size: 1rem;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* Resize handle */
+.resize-handle {
+  background-color: var(--bg-color);
+  cursor: ns-resize;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none; /* Prevent browser handling of touch actions */
+}
+
+.resize-handle::before {
+  content: '';
+  width: 60px;
+  height: 6px;
+  background-color: var(--border-color);
+  border-radius: 3px;
+  margin: 5px;
+}
+
+/* Make resize handle easier to grab on mobile */
+@media (max-width: 768px) {
+  .resize-handle::before {
+    height: 8px;
+    width: 80px;
+    margin: 5px;
+  }
+}
+
+.resize-handle:hover, .resize-handle.dragging {
+  background-color: var(--primary-color);
+  opacity: 0.1;
+}
+
+.resize-handle:hover::before, .resize-handle.dragging::before {
+  background-color: var(--primary-color);
+  opacity: 0.8;
+}
+
+/* Make CodeMirror respect dark mode */
+[data-theme="dark"] .CodeMirror {
+  background-color: var(--container-bg);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .CodeMirror-gutters {
+  background-color: var(--bg-color);
+  border-right: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .CodeMirror-linenumber {
+  color: #999;
+}
+
+/* Style the cursor in dark mode */
+[data-theme="dark"] .CodeMirror-cursor {
+  border-left: 1px solid #ccc;
+}
+
+/* Style the selection in dark mode */
+[data-theme="dark"] .CodeMirror-selected {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Style syntax highlighting for LaTeX */
+.cm-s-default .cm-keyword {
+  color: #708;
+}
+
+[data-theme="dark"] .cm-s-default .cm-keyword {
+  color: #c792ea;
+}
+
+.cm-s-default .cm-bracket {
+  color: #997;
+}
+
+[data-theme="dark"] .cm-s-default .cm-bracket {
+  color: #89ddff;
+}
+
+.cm-s-default .cm-atom {
+  color: #219;
+}
+
+[data-theme="dark"] .cm-s-default .cm-atom {
+  color: #f78c6c;
 }
 
 @media (max-width: 600px) {
@@ -222,6 +443,11 @@ button,
   background: #1da1f2;
   color: #fff;
   margin-left: auto;
+  gap: 6px;
+}
+
+.twitter-btn .ph-share-network {
+  font-size: 18px;
 }
 
 .twitter-btn:hover {
@@ -242,7 +468,7 @@ button,
 }
 
 .format-toggle {
-  padding: 0.5rem 0.5rem;
+  padding: 0.05rem 0.5rem .1rem 0.5rem;
   background: var(--primary-color);
   color: #fff;
   border-top-left-radius: 0;
@@ -252,7 +478,12 @@ button,
   align-items: center;
   justify-content: center;
   width: 2.5rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
+}
+
+/* Style the Phosphor icon */
+.format-toggle .ph-caret-down {
+  font-size: 18px;
 }
 
 .format-toggle:hover {
@@ -311,8 +542,63 @@ button,
   width: fit-content;
 }
 
-/* Add a class to hide zoom controls during image capture */
-.hide-zoom-controls .zoom-controls {
+/* Layout toggle button */
+.layout-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0.05);
+  padding: 0;
+  border-radius: 4px;
+  z-index: 10;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  line-height: 32px; /* Match height for vertical centering */
+  text-align: center;
+}
+
+.layout-toggle:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Phosphor icon styling */
+.layout-toggle-icon-horizontal,
+.layout-toggle-icon-vertical {
+  font-size: 20px;
+  color: inherit;
+  transition: opacity 0.3s ease;
+}
+
+/* Default layout (stacked): show horizontal, hide vertical */
+.layout-toggle-icon-horizontal {
+  display: inline-block;
+  opacity: 1;
+}
+
+.layout-toggle-icon-vertical {
+  display: none;
+  opacity: 0;
+}
+
+/* Side-by-side layout: show vertical, hide horizontal */
+.side-by-side .layout-toggle-icon-horizontal {
+  display: none;
+  opacity: 0;
+}
+
+.side-by-side .layout-toggle-icon-vertical {
+  display: inline-block;
+  opacity: 1;
+}
+
+/* Add a class to hide controls during image capture */
+.hide-zoom-controls .zoom-controls,
+.hide-zoom-controls .layout-toggle {
   display: none;
 }
 
@@ -351,7 +637,6 @@ button,
 
 /* Preview area */
 .preview-area {
-  margin-bottom: 1.5rem;
   border: 1px solid var(--border-color);
   min-height: 200px;
   text-align: center;
