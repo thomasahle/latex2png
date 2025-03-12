@@ -217,6 +217,7 @@ button,
   border: 1px solid #ddd;
   min-height: 200px;
   text-align: center;
+  overflow: auto;
 }
 
 #preview {
