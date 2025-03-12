@@ -1,27 +1,4 @@
-
-/* Basic resets */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Prevent text selection during resize */
-html.resizing {
-  user-select: none;
-  touch-action: none; /* Disable browser touch actions during resize */
-  overflow: hidden; /* Prevent scrolling during resize on mobile */
-}
-
-/* Different cursor based on layout mode */
-.side-by-side html.resizing {
-  cursor: ew-resize;
-}
-
-html.resizing:not(.side-by-side) {
-  cursor: ns-resize;
-}
-
+/* === VARIABLES === */
 :root {
   --bg-color: #f8f9fa;
   --text-color: #333;
@@ -30,6 +7,11 @@ html.resizing:not(.side-by-side) {
   --primary-color: #007bff;
   --primary-hover: #0056b3;
   --navbar-bg: #ffffff;
+  --handle-size: 24px; /* Mobile resize handle height */
+  --action-row-height: 45px; /* Approximate height of action row with margins */
+  --mobile-breakpoint: 768px;
+  --twitter-color: #1da1f2;
+  --twitter-hover: #117ab8;
 }
 
 [data-theme="dark"] {
@@ -42,14 +24,71 @@ html.resizing:not(.side-by-side) {
   --navbar-bg: #1a1a1a;
 }
 
+/* === BASIC RESET === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html.resizing {
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  cursor: ns-resize;
+}
+
+.side-by-side html.resizing {
+  cursor: ew-resize;
+}
+
 body {
-  /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; */
   background: var(--bg-color);
   color: var(--text-color);
   transition: background 0.3s, color 0.3s;
 }
 
-/* Navbar */
+/* === TYPOGRAPHY === */
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.description {
+  margin-bottom: .5rem;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* === LAYOUT === */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: var(--container-bg);
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+}
+
+.side-by-side .container {
+  max-width: 1200px;
+}
+
+.editor-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* === NAVBAR === */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -64,7 +103,6 @@ body {
   font-size: 1.2rem;
 }
 
-/* Make the right section a flex container with centered items */
 .navbar-right {
   display: flex;
   align-items: center;
@@ -72,25 +110,7 @@ body {
   margin-bottom: -5px;
 }
 
-.navbar-right a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.navbar-right a:hover {
-  text-decoration: underline;
-}
-
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* Theme toggle */
+/* === THEME TOGGLE === */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -103,149 +123,7 @@ a:hover {
   margin-right: 0.3rem;
 }
 
-/* Container */
-.container {
-  max-width: 900px;
-  margin: 2rem auto;
-  background: var(--container-bg);
-  padding: 2rem;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-}
-
-/* Editor container for layout management */
-.editor-container {
-  position: relative;
-  margin-bottom: 1rem;
-}
-
-/* Side-by-side layout styles */
-.side-by-side .container {
-  max-width: 1200px; /* Wider container for side-by-side */
-}
-
-/* Mobile layout - always stack on small screens regardless of layout mode */
-@media (max-width: 767px) {
-  /* Force stacked layout on mobile */
-  .side-by-side .editor-container {
-    display: block; /* Override flex display */
-  }
-  
-  .side-by-side .form-area,
-  .side-by-side .preview-area {
-    width: 100% !important; /* Override any inline width styles */
-    flex: none !important; /* Override any flex properties */
-    display: block;
-  }
-  
-  /* Keep resize handle horizontal on mobile */
-  .side-by-side .resize-handle {
-    width: 100%;
-    cursor: ns-resize;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Keep handle indicator horizontal on mobile */
-  .side-by-side .resize-handle::before {
-    width: 60px;
-    height: 6px;
-    transform: none;
-  }
-  
-  /* Set a reasonable fixed height for editor on mobile */
-  .side-by-side .CodeMirror {
-    height: 200px;
-  }
-  
-  /* Hide layout toggle button on mobile screens */
-  .layout-toggle,
-  #layout-toggle {
-    display: none !important;
-  }
-}
-
-/* Desktop layout */
-@media (min-width: 768px) {
-  .side-by-side .editor-container {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: 400px; /* Fixed height for the container */
-    width: 100%; /* Full width of the container */
-  }
-  
-  .side-by-side .form-area,
-  .side-by-side .preview-area {
-    flex: 1; /* Both areas take equal space */
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* Full height of the container */
-    overflow: auto; /* Add scrolling if content overflows */
-    min-width: 0; /* Allow areas to shrink below content size */
-  }
-  
-  /* Convert resize handle to vertical in side-by-side mode */
-  .side-by-side .resize-handle {
-    height: 100%; /* Full height of the container */
-    cursor: ew-resize;
-    margin: 0;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Make the handle indicator vertical */
-  .side-by-side .resize-handle::before {
-    width: 4px;
-    height: 60px;
-    transform: none;
-  }
-  
-  /* Make the editor fill its container in side-by-side mode */
-  .side-by-side .CodeMirror {
-    height: 100%;
-    flex: 1;
-  }
-  
-  /* Make the preview content expand in side-by-side mode */
-  .side-by-side .preview-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
-}
-
-h1 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  font-weight: 500;
-}
-
-.description {
-  margin-bottom: .5rem;
-  line-height: 1.4;
-}
-
-
-textarea {
-  width: 100%;
-  height: 200px;
-  font-family: monospace;
-  font-size: 1rem;
-  padding: 0.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
-  resize: vertical;
-  border: 1px solid var(--border-color);
-  background-color: var(--container-bg);
-  color: var(--text-color);
-}
-
-/* CodeMirror styling */
+/* === EDITOR & PREVIEW === */
 .CodeMirror {
   height: 200px;
   font-family: monospace;
@@ -255,7 +133,28 @@ textarea {
   border-radius: 4px;
 }
 
-/* Resize handle */
+.preview-area {
+  border: 1px solid var(--border-color);
+  min-height: 200px;
+  text-align: center;
+  background-color: var(--container-bg);
+  position: relative;
+  box-sizing: border-box;
+  padding-top: 10px;
+}
+
+.preview-content {
+  overflow: auto;
+  max-width: 100%;
+  max-height: 400px;
+}
+
+#preview {
+  padding: 0.5rem 1rem;
+  display: inline-block;
+}
+
+/* === RESIZE HANDLE === */
 .resize-handle {
   background-color: var(--bg-color);
   cursor: ns-resize;
@@ -263,7 +162,8 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: none; /* Prevent browser handling of touch actions */
+  touch-action: none;
+  height: var(--handle-size); /* Default height */
 }
 
 .resize-handle::before {
@@ -273,15 +173,6 @@ textarea {
   background-color: var(--border-color);
   border-radius: 3px;
   margin: 5px;
-}
-
-/* Make resize handle easier to grab on mobile */
-@media (max-width: 768px) {
-  .resize-handle::before {
-    height: 8px;
-    width: 80px;
-    margin: 5px;
-  }
 }
 
 .resize-handle:hover, .resize-handle.dragging {
@@ -294,132 +185,117 @@ textarea {
   opacity: 0.8;
 }
 
-/* Make CodeMirror respect dark mode */
-[data-theme="dark"] .CodeMirror {
-  background-color: var(--container-bg);
-  color: var(--text-color);
+/* === ZOOM CONTROLS === */
+.zoom-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(0,0,0,0.05);
+  padding: 5px 10px;
+  border-radius: 4px;
+  z-index: 10;
+  pointer-events: auto;
+  width: fit-content;
 }
 
-[data-theme="dark"] .CodeMirror-gutters {
-  background-color: var(--bg-color);
-  border-right: 1px solid var(--border-color);
+.zoom-slider {
+  -webkit-appearance: none;
+  width: 80px;
+  height: 5px;
+  border-radius: 5px;
+  background: var(--border-color);
+  outline: none;
 }
 
-[data-theme="dark"] .CodeMirror-linenumber {
-  color: #999;
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
 }
 
-/* Style the cursor in dark mode */
-[data-theme="dark"] .CodeMirror-cursor {
-  border-left: 1px solid #ccc;
+.zoom-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
 }
 
-/* Style the selection in dark mode */
-[data-theme="dark"] .CodeMirror-selected {
-  background-color: rgba(255, 255, 255, 0.1);
+.zoom-value {
+  font-size: 0.8rem;
+  min-width: 2.5em;
+  text-align: center;
 }
 
-/* Style syntax highlighting for LaTeX */
-.cm-s-default .cm-keyword {
-  color: #708;
+/* === LAYOUT TOGGLE === */
+.layout-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0.05);
+  padding: 0;
+  border-radius: 4px;
+  z-index: 10;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
 }
 
-[data-theme="dark"] .cm-s-default .cm-keyword {
-  color: #c792ea;
+.layout-toggle:hover {
+  background-color: var(--primary-color);
+  color: white;
 }
 
-.cm-s-default .cm-bracket {
-  color: #997;
+.layout-toggle-icon-horizontal,
+.layout-toggle-icon-vertical {
+  font-size: 20px;
+  color: inherit;
+  transition: opacity 0.3s ease;
 }
 
-[data-theme="dark"] .cm-s-default .cm-bracket {
-  color: #89ddff;
+.layout-toggle-icon-horizontal {
+  display: inline-block;
+  opacity: 1;
 }
 
-.cm-s-default .cm-atom {
-  color: #219;
+.layout-toggle-icon-vertical {
+  display: none;
+  opacity: 0;
 }
 
-[data-theme="dark"] .cm-s-default .cm-atom {
-  color: #f78c6c;
+.side-by-side .layout-toggle-icon-horizontal {
+  display: none;
+  opacity: 0;
 }
 
-@media (max-width: 600px) {
-   h1, .description .extra, .theme-toggle-text {
-      display: none;
-   }
-   .container {
-    padding: 1rem;
-    margin: 1rem auto;
-   }
-   #enter-latex {
-    display: none;
-   }
+.side-by-side .layout-toggle-icon-vertical {
+  display: inline-block;
+  opacity: 1;
 }
 
-/* Action row and image options */
+.hide-zoom-controls .zoom-controls,
+.hide-zoom-controls .layout-toggle {
+  display: none;
+}
 
+/* === BUTTONS & ACTIONS === */
 .action-row {
   display: flex;
   grid-gap: 1rem;
   align-items: center;
 }
 
-.image-options {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-@media (max-width: 600px) {
-  .action-row {
-    display: grid;
-    grid-template-columns: auto auto;  /* columns sized to content */
-    grid-template-rows: auto auto;
-    grid-gap: 1rem;
-    /* Don't force grid items to stretch */
-    justify-items: start;
-  }
-  /* Place Save button in first row, first column */
-  #save-btn {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  /* Place Share button in first row, second column and align it to the right */
-  #twitter-share {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-  }
-  /* Place first image option (Format) in second row, first column, centered */
-  .image-options:nth-of-type(1) {
-    grid-column: 1;
-    grid-row: 2;
-    justify-self: stretch;
-  }
-  /* Place second image option (Scale) in second row, second column, centered */
-  .image-options:nth-of-type(2) {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: stretch;
-  }
-  .image-options input, .image-options select {
-     width: 100%;
-  }
-}
-
-.image-options label {
-  margin-right: 0.25rem;
-  font-size: 0.9rem;
-}
-
-.image-options select,
-.image-options input {
-  padding: 0.3rem;
-  font-size: 0.9rem;
-}
-
-/* Buttons */
 button,
 .twitter-btn {
   cursor: pointer;
@@ -443,25 +319,25 @@ button,
 }
 
 .twitter-btn {
-  background: #1da1f2;
+  background: var(--twitter-color);
   color: #fff;
   margin-left: auto;
   gap: 6px;
+}
+
+.twitter-btn:hover {
+  background: var(--twitter-hover);
 }
 
 .twitter-btn .ph-share-network {
   font-size: 18px;
 }
 
-.twitter-btn:hover {
-  background: #117ab8;
-}
-
-/* Save container and dropdown styles */
+/* === SAVE DROPDOWN === */
 .save-container {
   position: relative;
   display: inline-flex;
-  z-index: 1; /* Ensure proper stacking for dropdown */
+  z-index: 1;
 }
 
 #save-btn {
@@ -484,7 +360,6 @@ button,
   font-size: 1rem;
 }
 
-/* Style the Phosphor icon */
 .format-toggle .ph-caret-down {
   font-size: 18px;
 }
@@ -506,13 +381,6 @@ button,
   right: 0;
 }
 
-@media (max-width: 600px) {
-  .dropdown-content {
-    right: auto;
-    left: 0;
-  }
-}
-
 .dropdown-content.show {
   display: block;
 }
@@ -529,134 +397,225 @@ button,
   background-color: rgba(0,0,0,0.05);
 }
 
-/* Zoom controls */
-.zoom-controls {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: rgba(0,0,0,0.05);
-  padding: 5px 10px;
-  border-radius: 4px;
-  z-index: 10;
-  pointer-events: auto;
-  width: fit-content;
-}
-
-/* Layout toggle button */
-.layout-toggle {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0,0,0,0.05);
-  padding: 0;
-  border-radius: 4px;
-  z-index: 10;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  line-height: 32px; /* Match height for vertical centering */
-  text-align: center;
-}
-
-.layout-toggle:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-/* Phosphor icon styling */
-.layout-toggle-icon-horizontal,
-.layout-toggle-icon-vertical {
-  font-size: 20px;
-  color: inherit;
-  transition: opacity 0.3s ease;
-}
-
-/* Default layout (stacked): show horizontal, hide vertical */
-.layout-toggle-icon-horizontal {
-  display: inline-block;
-  opacity: 1;
-}
-
-.layout-toggle-icon-vertical {
-  display: none;
-  opacity: 0;
-}
-
-/* Side-by-side layout: show vertical, hide horizontal */
-.side-by-side .layout-toggle-icon-horizontal {
-  display: none;
-  opacity: 0;
-}
-
-.side-by-side .layout-toggle-icon-vertical {
-  display: inline-block;
-  opacity: 1;
-}
-
-/* Add a class to hide controls during image capture */
-.hide-zoom-controls .zoom-controls,
-.hide-zoom-controls .layout-toggle {
-  display: none;
-}
-
-.zoom-slider {
-  -webkit-appearance: none;
-  width: 80px;
-  height: 5px;
-  border-radius: 5px;
-  background: var(--border-color);
-  outline: none;
-}
-
-.zoom-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  cursor: pointer;
-}
-
-.zoom-slider::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  cursor: pointer;
-}
-
-.zoom-value {
-  font-size: 0.8rem;
-  min-width: 2.5em;
-  text-align: center;
-}
-
-/* Preview area */
-.preview-area {
-  border: 1px solid var(--border-color);
-  min-height: 200px;
-  text-align: center;
+/* === DARK MODE ADJUSTMENTS === */
+[data-theme="dark"] .CodeMirror {
   background-color: var(--container-bg);
-  position: relative;
-  box-sizing: border-box;
-  padding-top: 10px;
+  color: var(--text-color);
 }
 
-/* Create a scrollable container for the preview content */
-.preview-content {
-  overflow: auto;
-  max-width: 100%;
-  max-height: 400px; /* Adjust as needed */
+[data-theme="dark"] .CodeMirror-gutters {
+  background-color: var(--bg-color);
+  border-right: 1px solid var(--border-color);
 }
 
-#preview {
-  padding: 0.5rem 1rem;
-  display: inline-block;
+[data-theme="dark"] .CodeMirror-linenumber {
+  color: #999;
+}
+
+[data-theme="dark"] .CodeMirror-cursor {
+  border-left: 1px solid #ccc;
+}
+
+[data-theme="dark"] .CodeMirror-selected {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* CodeMirror syntax highlighting */
+.cm-s-default .cm-keyword { color: #708; }
+[data-theme="dark"] .cm-s-default .cm-keyword { color: #c792ea; }
+
+.cm-s-default .cm-bracket { color: #997; }
+[data-theme="dark"] .cm-s-default .cm-bracket { color: #89ddff; }
+
+.cm-s-default .cm-atom { color: #219; }
+[data-theme="dark"] .cm-s-default .cm-atom { color: #f78c6c; }
+
+/* === RESPONSIVE STYLES === */
+/* Desktop side-by-side layout */
+@media (min-width: 768px) {
+  .side-by-side .editor-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 400px;
+    width: 100%;
+  }
+  
+  .side-by-side .form-area,
+  .side-by-side .preview-area {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    min-width: 0;
+  }
+  
+  .side-by-side .resize-handle {
+    height: 100%;
+    cursor: ew-resize;
+    margin: 0;
+  }
+  
+  .side-by-side .resize-handle::before {
+    width: 4px;
+    height: 60px;
+    transform: none;
+  }
+  
+  .side-by-side .CodeMirror {
+    height: 100%;
+    flex: 1;
+  }
+  
+  .side-by-side .preview-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .container {
+    height: calc(100% - 49px); /* 49px is navbar height */
+    margin: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 0.5rem;
+  }
+  
+  .description {
+    padding: 0 0.5rem;
+  }
+  
+  .editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    overflow: hidden;
+    height: auto;
+  }
+  
+  .form-area {
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .preview-area {
+    /* Note: JS will override this with dynamic calculations */
+    flex: 0 0 calc(60% - var(--handle-size));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .CodeMirror {
+    flex: 1;
+    height: auto !important;
+  }
+  
+  .preview-content {
+    flex: 1;
+    overflow: auto;
+    max-height: none;
+  }
+  
+  .resize-handle {
+    width: 100%;
+    height: var(--handle-size); /* Use the common variable */
+    cursor: ns-resize;
+    flex-shrink: 0;
+  }
+  
+  .resize-handle::before {
+    width: 60px;
+    height: 6px;
+    transform: none;
+  }
+  
+  .action-row {
+    margin-top: 0.5rem;
+    flex-shrink: 0; /* Prevent it from shrinking */
+  }
+  
+  .layout-toggle {
+    display: none !important;
+  }
+  
+  .resize-handle {
+    height: var(--handle-size);
+    background-color: rgba(0, 0, 0, 0.02);
+    transition: background-color 0.2s;
+  }
+
+  .resize-handle::before {
+    height: 8px;
+    width: 80px;
+    margin: 5px;
+    border-radius: 4px;
+  }
+  
+  .resize-handle:active,
+  .resize-handle.dragging {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .resize-handle:active::before,
+  .resize-handle.dragging::before {
+    background-color: var(--primary-color);
+  }
+}
+
+/* Extra small mobile styles */
+@media (max-width: 600px) {
+  h1, .description .extra, .theme-toggle-text {
+    display: none;
+  }
+  
+  .container {
+    padding: 1rem;
+    margin: 0 auto;
+  }
+  
+  .action-row {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    grid-gap: 1rem;
+    justify-items: start;
+  }
+  
+  #save-btn {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  
+  #twitter-share {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  
+  .dropdown-content {
+    right: auto;
+    left: 0;
+  }
 }

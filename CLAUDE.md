@@ -1,33 +1,31 @@
 # LaTeX2PNG Project Guidelines
 
 ## Build & Development
-- This is a simple static web application with no build process
-- To test the app, open `index.html` in a browser
-- For local development, you can use a simple HTTP server:
+- This is a static web application with no build process
+- Run one of these local servers to test:
   - `python -m http.server`
   - `npx http-server`
+- For mobile testing, use responsive design mode in browser devtools
+
+## Project Structure
+- `index.html`: Main HTML with semantic structure and external dependencies
+- `style.css`: CSS using variables for theming (light/dark) with responsive design
+- `script.js`: Vanilla JS with ES6+ syntax handling UI interaction and image conversion
+- External deps: MathJax, CodeMirror, html2canvas (loaded via CDN)
 
 ## Code Style Guidelines
+- **HTML**: Semantic elements, double quotes for attributes, proper meta tags
+- **CSS**: Kebab-case class names, mobile-first, CSS variables for theming
+- **JavaScript**: 
+  - ES6+ with const/let (no var), arrow functions, async/await
+  - Event listeners with addEventListener (no inline handlers)
+  - localStorage for user preferences
+  - Try/catch for error handling
+  - Thorough browser compatibility checks
 
-### HTML
-- Use semantic HTML5 elements
-- Include proper meta tags for SEO and social sharing
-- Use double quotes for HTML attributes
-
-### CSS
-- Use kebab-case for class names (e.g., `preview-area`)
-- Mobile-first approach with media queries for larger screens
-- Organize CSS by component/section with clear comments
-
-### JavaScript
-- Use ES6+ syntax with `const`/`let` over `var`
-- Use arrow functions for event listeners and callbacks
-- Prefer async/await for asynchronous operations
-- Handle errors with try/catch blocks
-- Use `addEventListener` rather than inline event handlers
-- Document complex functions with comments
-
-### General
-- Follow consistent 2-space indentation
-- Keep code modular and focused on single responsibilities
-- Ensure web accessibility standards are followed
+## Error Handling & Accessibility
+- Check for browser API support before using features (e.g., Web Share API)
+- Provide fallbacks for unsupported features
+- Console error logging with meaningful messages
+- User-friendly error messages
+- Mobile-responsive UI with appropriate touch targets
