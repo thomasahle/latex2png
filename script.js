@@ -538,11 +538,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const sampleLatexExamples = [
     // Recurrence relation example
     String.raw`f(1,m) &= \exp(-m), \\
-f(2,m) &= \exp(-2m) + (m+m^2)\exp(-3m), \\
-f(3,m) &= \exp(-3m) + (2m+4m^2)\exp(-4m) \\
-       &\quad + \left(\frac{1}{2}m^2 + 2m^3 + \frac{9}{4}m^4\right)\exp(-5m), \\
-f(4,m) &= \,?`,
-    
+f(2,m) &= \exp(-2m)
+        + (m + m^2)\exp(-3m), \\
+f(3,m) &= \exp(-3m)
+        + (2m + 4m^2)\exp(-4m)
+        + \left(\frac{1}{2}m^2 + 2m^3 + \frac{9}{4}m^4\right)\exp(-5m), \\
+f(4,m) &= \exp(-4m)
+        + (3m + 9m^2)\exp(-5m)
+        + (-2m^2 + 6m^3 + 16m^4)\exp(-6m)
+        + \left(\frac16m^3 - \frac72m^4 + \frac{16}3m^5 + \frac{64}{9}m^6\right)\exp(-7m), \\
+f(5,m) &= ?
+`,
     // Cross product with determinant
     String.raw`\mathbf{V}_1 \times \mathbf{V}_2 =
 \begin{vmatrix}
