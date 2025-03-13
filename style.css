@@ -120,10 +120,21 @@ a:hover {
   cursor: pointer;
   font-size: 0.9rem;
   user-select: none;
+  margin-top:-3px;
 }
 
-.theme-toggle-icon {
+#theme-toggle-icon {
   margin-right: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0.05);
+  padding: 0;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
 }
 
 /* === EDITOR & PREVIEW === */
@@ -630,6 +641,10 @@ button,
   h1, .description .extra, .theme-toggle-text {
     display: none;
   }
+
+  .navbar-right {
+     gap: 0.5rem;
+   }
   
   .container {
     padding: 1rem;

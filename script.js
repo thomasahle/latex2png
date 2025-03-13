@@ -266,16 +266,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // Theme functionality
   // =========================================
   
+  function setToggleIcon(icon_name) {
+     const icon = document.getElementById('theme-toggle-icon');
+     icon.className = `ph ${icon_name}`;
+  }
+  
   function initTheme() {
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
     
     if (savedTheme === 'dark') {
       document.body.setAttribute('data-theme', 'dark');
-      elements.themeToggle.querySelector('.theme-toggle-icon').textContent = '☀️';
+      setToggleIcon('ph-sun');
+      // elements.themeToggle.querySelector('#theme-toggle-icon').textContent = '☀️';
     } else {
       document.body.removeAttribute('data-theme');
-      elements.themeToggle.querySelector('.theme-toggle-icon').textContent = '🌙';
+      setToggleIcon('ph-moon-stars');
     }
     
     // Make sure CodeMirror refreshes to apply theme
@@ -290,11 +296,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isDark) {
       document.body.removeAttribute('data-theme');
       localStorage.setItem('theme', 'light');
-      elements.themeToggle.querySelector('.theme-toggle-icon').textContent = '🌙';
+      // elements.themeToggle.querySelector('#theme-toggle-icon').textContent = '🌙';
+      setToggleIcon('ph-moon-stars');
     } else {
       document.body.setAttribute('data-theme', 'dark');
       localStorage.setItem('theme', 'dark');
-      elements.themeToggle.querySelector('.theme-toggle-icon').textContent = '☀️';
+      // elements.themeToggle.querySelector('#theme-toggle-icon').textContent = '☀️';
+      setToggleIcon('ph-sun');
     }
     
     // Refresh CodeMirror to apply the theme change
