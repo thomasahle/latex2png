@@ -22,6 +22,16 @@
       min-width: 1em;
       vertical-align: middle;
     }
+    /* Reserve space for GitHub button to prevent navbar height flash */
+    .github-button {
+      display: inline-block;
+      min-height: 28px;
+      min-width: 100px;
+      visibility: hidden;
+    }
+    .github-button:defined {
+      visibility: visible;
+    }
   </style>
 
   <!-- CSS first for faster rendering -->
