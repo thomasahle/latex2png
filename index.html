@@ -11,6 +11,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LaTeX to Image</title>
+  
+  <!-- Prevent FOUC -->
+  <style>
+    body { visibility: hidden; }
+    body.loaded { visibility: visible; }
+  </style>
 
   <!-- CSS first for faster rendering -->
   <link rel="stylesheet" href="css/variables.css">

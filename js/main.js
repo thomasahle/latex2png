@@ -2,6 +2,9 @@ import { createLatexEditor } from './editor.js';
 
 // Code wrapped in an event listener for when DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // Remove FOUC prevention class
+  document.body.classList.add('loaded');
+  
   // Record start time for performance measurement
   const startTime = performance.now();
   // Cache DOM elements
