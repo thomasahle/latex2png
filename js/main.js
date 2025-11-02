@@ -738,14 +738,20 @@ f(5,m) &= ?
       // Fix color for html2canvas - replace currentColor with actual color
       const actualColor = window.getComputedStyle(elements.preview.querySelector('mjx-container')).color;
       
-      // Find the root g element that has currentColor
+      // Set color on the SVG element itself to ensure html2canvas picks it up
+      const svgElements = clonedPreview.querySelectorAll('svg');
+      svgElements.forEach(svg => {
+        svg.style.color = actualColor;
+      });
+      
+      // Find the root g element that has currentColor and replace it
       const rootG = clonedPreview.querySelector('g[stroke="currentColor"]');
       if (rootG) {
         rootG.setAttribute('stroke', actualColor);
         rootG.setAttribute('fill', actualColor);
       }
       
-      // Also update any explicit currentColor references
+      // Also update any explicit currentColor references throughout the SVG
       const allElements = clonedPreview.querySelectorAll('[stroke="currentColor"], [fill="currentColor"]');
       allElements.forEach(el => {
         if (el.getAttribute('stroke') === 'currentColor') {
@@ -1037,10 +1043,15 @@ f(5,m) &= ?
   
   // Save as PNG or JPEG
   async function saveAsRaster() {
-    const isDark = document.body.getAttribute('data-theme') === 'dark';
-    // For JPEG, use appropriate background (JPEG doesn't support transparency)
-    // In dark mode, use dark background; in light mode, use white background
-    const backgroundColor = currentFormat === "jpeg" ? (isDark ? "#1a1a1a" : "#fff") : null;
+    // For PNG, use transparent background
+    // For JPEG, use the same background color as the browser preview
+    let backgroundColor = null;
+    if (currentFormat === "jpeg") {
+      const previewArea = document.querySelector('.preview-area');
+      const computedStyle = window.getComputedStyle(previewArea);
+      backgroundColor = computedStyle.backgroundColor;
+    }
+    
     const mimeType = currentFormat === "jpeg" ? "image/jpeg" : "image/png";
     
     const canvas = await generateImage(backgroundColor);
