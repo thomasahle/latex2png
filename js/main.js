@@ -85,14 +85,18 @@ document.addEventListener("DOMContentLoaded", () => {
     handleEditorChange
   );
   
+  // Helper: Double backslashes before giving to CodeMirror (it collapses them)
+  function setEditorValue(text) {
+    const doubledBackslashes = text.replace(/\\/g, '\\\\');
+    cm6Editor.setValue(doubledBackslashes);
+  }
+  
   // Load content from URL parameter or localStorage
   const urlParams = new URLSearchParams(window.location.search);
   const latexParam = urlParams.get('latex');
   
   if (latexParam) {
-    // Double backslashes before giving to CodeMirror (it collapses them)
-    const doubledBackslashes = latexParam.replace(/\\/g, '\\\\');
-    cm6Editor.setValue(doubledBackslashes);
+    setEditorValue(latexParam);
     // Delay enabling localStorage to avoid saving the collapsed version
     setTimeout(() => {
       shouldSaveToLocalStorage = true;
@@ -100,10 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     const savedContent = localStorage.getItem('latexContent');
     if (savedContent) {
-      cm6Editor.setValue(savedContent);
+      setEditorValue(savedContent);
     }
-    // Enable localStorage saving immediately for localStorage loads
-    shouldSaveToLocalStorage = true;
+    // Delay enabling localStorage to avoid saving the collapsed version
+    setTimeout(() => {
+      shouldSaveToLocalStorage = true;
+    }, 500);
   }
   
   // Enhanced compatibility layer for CM5 -> CM6 migration
@@ -125,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Store a reference to the editor for later use (compatibility layer)
   const latexInput = {
     getValue: () => editor.getValue(),
-    setValue: (text) => editor.setValue(text)
+    setValue: (text) => setEditorValue(text)
   };
 
   // =========================================
