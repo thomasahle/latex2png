@@ -16,9 +16,12 @@
   <style>
     body { visibility: hidden; }
     body.loaded { visibility: visible; }
-    /* Hide Phosphor icons until loaded to prevent flash */
-    i.ph { opacity: 0; transition: opacity 0.2s; }
-    i.ph-fill, i.ph-duotone, i.ph-bold, i.ph-light, i.ph-thin { opacity: 1; }
+    /* Reserve space for icons to prevent layout shift */
+    i.ph {
+      display: inline-block;
+      width: 1.2em;
+      height: 1.2em;
+    }
   </style>
 
   <!-- CSS first for faster rendering -->
