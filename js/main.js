@@ -737,20 +737,22 @@ f(5,m) &= ?
       
       // Fix color for html2canvas - replace currentColor with actual color
       const actualColor = window.getComputedStyle(elements.preview.querySelector('mjx-container')).color;
-      const allGElements = clonedPreview.querySelectorAll('g');
-      allGElements.forEach(g => {
-        if (g.getAttribute('stroke') === 'currentColor') {
-          g.setAttribute('stroke', actualColor);
+      
+      // Find the root g element that has currentColor
+      const rootG = clonedPreview.querySelector('g[stroke="currentColor"]');
+      if (rootG) {
+        rootG.setAttribute('stroke', actualColor);
+        rootG.setAttribute('fill', actualColor);
+      }
+      
+      // Also update any explicit currentColor references
+      const allElements = clonedPreview.querySelectorAll('[stroke="currentColor"], [fill="currentColor"]');
+      allElements.forEach(el => {
+        if (el.getAttribute('stroke') === 'currentColor') {
+          el.setAttribute('stroke', actualColor);
         }
-        if (g.getAttribute('fill') === 'currentColor') {
-          g.setAttribute('fill', actualColor);
-        }
-        // Also set it if not set (to override inherited currentColor)
-        if (!g.getAttribute('stroke')) {
-          g.setAttribute('stroke', actualColor);
-        }
-        if (!g.getAttribute('fill')) {
-          g.setAttribute('fill', actualColor);
+        if (el.getAttribute('fill') === 'currentColor') {
+          el.setAttribute('fill', actualColor);
         }
       });
 
@@ -1036,7 +1038,9 @@ f(5,m) &= ?
   // Save as PNG or JPEG
   async function saveAsRaster() {
     const isDark = document.body.getAttribute('data-theme') === 'dark';
-    const backgroundColor = currentFormat === "jpeg" ? (isDark ? "#333" : "#fff") : null;
+    // For JPEG, use appropriate background (JPEG doesn't support transparency)
+    // In dark mode, use dark background; in light mode, use white background
+    const backgroundColor = currentFormat === "jpeg" ? (isDark ? "#1a1a1a" : "#fff") : null;
     const mimeType = currentFormat === "jpeg" ? "image/jpeg" : "image/png";
     
     const canvas = await generateImage(backgroundColor);
