@@ -1226,8 +1226,16 @@ f(5,m) &= ?
     }
   }, 50);
   
-  // Initial render
-  renderLatex();
+  // Initial render - wait for MathJax to be ready
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    renderLatex();
+  } else {
+    window.addEventListener('load', () => {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        renderLatex();
+      }
+    });
+  }
   
   // Log performance metrics (only for development)
   const loadTime = performance.now() - startTime; 
