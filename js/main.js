@@ -637,7 +637,19 @@ f(5,m) &= ?
   &+ \frac{q^6}{(1-q)(1-q^2)} \\
   &+ \cdots \\
   &= \prod_{j=0}^{\infty} \frac{1}{(1-q^{5j+2})(1-q^{5j+3})} \\
-  &\quad \text{for } |q| < 1.`
+  &\quad \text{for } |q| < 1.`,
+    
+    // Chemistry equation
+    String.raw`\ce{CO2 + C -> 2 CO}`,
+    
+    // Physics with braket notation
+    String.raw`\bra{\psi} \hat{H} \ket{\phi} = E \braket{\psi|\phi}`,
+    
+    // Colored equation with cancellation
+    String.raw`\color{blue}{x^2} + \color{red}{\cancel{2xy}} + y^2 = (x+y)^2 - \cancel{2xy}`,
+    
+    // Bold symbols
+    String.raw`\boldsymbol{\nabla} \times \boldsymbol{E} = -\frac{\partial \boldsymbol{B}}{\partial t}`
   ];
 
   // Track the last shown example
