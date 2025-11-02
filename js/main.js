@@ -961,8 +961,19 @@ f(5,m) &= ?
     const displayWidth = bbox.width;
     const displayHeight = bbox.height;
     
+    // Get the computed color for the text
+    const computedStyle = window.getComputedStyle(mjxContainer);
+    const textColor = computedStyle.color;
+    
     // Clone the SVG to avoid modifying the displayed version
     const clonedSvg = svgElement.cloneNode(true);
+    
+    // Replace currentColor with the actual color
+    const gElements = clonedSvg.querySelectorAll('g[stroke="currentColor"]');
+    gElements.forEach(g => {
+      g.setAttribute('stroke', textColor);
+      g.setAttribute('fill', textColor);
+    });
     
     // Get the original viewBox
     const viewBox = clonedSvg.getAttribute('viewBox');

@@ -1,1 +1,9 @@
+# Vim swap files
 *.swp
+
+# Node modules and build output
+node_modules/
+build/
+
+# Environment files
+.env

@@ -34,3 +34,12 @@
 
 .cm-s-default .cm-atom { color: #219; }
 [data-theme="dark"] .cm-s-default .cm-atom { color: #f78c6c; }
+
+/* Math preview colors */
+[data-theme="dark"] #preview {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] mjx-container {
+  color: var(--text-color) !important;
+}
