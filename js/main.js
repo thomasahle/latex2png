@@ -81,10 +81,17 @@ document.addEventListener("DOMContentLoaded", () => {
     handleEditorChange
   );
   
-  // Load saved content from localStorage
-  const savedContent = localStorage.getItem('latexContent');
-  if (savedContent) {
-    cm6Editor.setValue(savedContent);
+  // Load content from URL parameter or localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  const latexParam = urlParams.get('latex');
+  
+  if (latexParam) {
+    cm6Editor.setValue(latexParam);
+  } else {
+    const savedContent = localStorage.getItem('latexContent');
+    if (savedContent) {
+      cm6Editor.setValue(savedContent);
+    }
   }
   
   // Enhanced compatibility layer for CM5 -> CM6 migration
@@ -1248,28 +1255,23 @@ f(5,m) &= ?
         showToast("Clipboard not supported");
       }
     } else if (currentShareMethod === "twitter") {
-      // Share to Twitter with PNG image
+      // Share to Twitter - auto-download PNG and open tweet composer
       try {
         const canvas = await generateImage(null);
-        canvas.toBlob(async blob => {
-          if (!blob) {
-            showToast("Failed to generate image");
-            return;
-          }
-          
-          const file = new File([blob], "latex-equation.png", { type: "image/png" });
-          const text = encodeURIComponent("Check out my LaTeX equation!");
-          
-          // Create a data URL for the image
-          const reader = new FileReader();
-          reader.onloadend = function() {
-            // Open Twitter with text - image must be uploaded separately
-            const tweetUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`;
-            window.open(tweetUrl, '_blank', 'width=550,height=420');
-            showToast("Opening Twitter... (Note: upload the saved PNG manually)");
-          };
-          reader.readAsDataURL(blob);
-        }, "image/png");
+        const dataUrl = canvas.toDataURL("image/png");
+        
+        // Auto-download the PNG
+        downloadFile(dataUrl, "latex-equation.png");
+        
+        // Open Twitter with text
+        const text = encodeURIComponent("Check out my LaTeX equation!");
+        const shareUrl = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(latexCode);
+        const tweetUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
+        
+        setTimeout(() => {
+          window.open(tweetUrl, '_blank', 'width=550,height=420');
+          showToast("✓ PNG downloaded! Upload it to your tweet");
+        }, 100);
       } catch (error) {
         console.error("Error preparing Twitter share:", error);
         showToast("Failed to prepare share");
