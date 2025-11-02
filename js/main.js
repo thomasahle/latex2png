@@ -735,29 +735,19 @@ f(5,m) &= ?
         el.style.fontSize = `${currentScale * 100}%`;
       });
       
-      // Fix color for html2canvas - replace currentColor with actual color
+      // Fix color for html2canvas - set explicit color on all SVG elements
       const actualColor = window.getComputedStyle(elements.preview.querySelector('mjx-container')).color;
       
-      // Set color on the SVG element itself to ensure html2canvas picks it up
-      const svgElements = clonedPreview.querySelectorAll('svg');
-      svgElements.forEach(svg => {
-        svg.style.color = actualColor;
-      });
-      
-      // Find the root g element that has currentColor and replace it
-      const rootG = clonedPreview.querySelector('g[stroke="currentColor"]');
-      if (rootG) {
-        rootG.setAttribute('stroke', actualColor);
-        rootG.setAttribute('fill', actualColor);
-      }
-      
-      // Also update any explicit currentColor references throughout the SVG
-      const allElements = clonedPreview.querySelectorAll('[stroke="currentColor"], [fill="currentColor"]');
+      // Replace currentColor in all elements
+      const allElements = clonedPreview.querySelectorAll('svg *');
       allElements.forEach(el => {
-        if (el.getAttribute('stroke') === 'currentColor') {
+        const stroke = el.getAttribute('stroke');
+        const fill = el.getAttribute('fill');
+        
+        if (stroke === 'currentColor' || stroke) {
           el.setAttribute('stroke', actualColor);
         }
-        if (el.getAttribute('fill') === 'currentColor') {
+        if (fill === 'currentColor' || fill) {
           el.setAttribute('fill', actualColor);
         }
       });
