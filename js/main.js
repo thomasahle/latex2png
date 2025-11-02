@@ -708,6 +708,13 @@ f(5,m) &= ?
     if (!latexCode) {
       elements.preview.innerHTML = "$$\\text{intentionally blank}$$";
       await MathJax.typesetPromise([elements.preview]);
+      
+      // Apply zoom scaling
+      const mjxContainers = elements.preview.querySelectorAll('mjx-container');
+      mjxContainers.forEach(el => {
+        el.style.display = 'inline-block';
+        el.style.fontSize = `${currentScale * 100}%`;
+      });
       return;
     }
     
