@@ -734,6 +734,25 @@ f(5,m) &= ?
         el.style.display = 'block';
         el.style.fontSize = `${currentScale * 100}%`;
       });
+      
+      // Fix color for html2canvas - replace currentColor with actual color
+      const actualColor = window.getComputedStyle(elements.preview.querySelector('mjx-container')).color;
+      const allGElements = clonedPreview.querySelectorAll('g');
+      allGElements.forEach(g => {
+        if (g.getAttribute('stroke') === 'currentColor') {
+          g.setAttribute('stroke', actualColor);
+        }
+        if (g.getAttribute('fill') === 'currentColor') {
+          g.setAttribute('fill', actualColor);
+        }
+        // Also set it if not set (to override inherited currentColor)
+        if (!g.getAttribute('stroke')) {
+          g.setAttribute('stroke', actualColor);
+        }
+        if (!g.getAttribute('fill')) {
+          g.setAttribute('fill', actualColor);
+        }
+      });
 
       // Use html2canvas with the cloned preview
       const canvas = await html2canvas(clonedPreview, {
