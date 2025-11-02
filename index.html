@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Performance optimizations: Preconnect to CDN domains -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="dns-prefetch" href="https://buttons.github.io">
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LaTeX to Image</title>
+
+  <!-- CSS first for faster rendering -->
+
+
+  <!-- Meta Description -->
+  <meta name="description" content="Convert LaTeX math equations to high-quality PNG, JPEG, or SVG images with our easy-to-use web tool. Preview, save, and share your equations online." />
+  <link rel="icon" type="image/png" href="/assets/favicon-c0kSQElC.png" sizes="32x32" width="32" height="32" />
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="LaTeX to Image" />
+  <meta property="og:description" content="Effortlessly convert LaTeX math equations into high-quality images (PNG, JPEG, SVG)." />
+  <meta property="og:image" content="https://thomasahle.com/latex2png/og.png" />
+  <meta property="og:url" content="https://thomasahle.com/latex2png" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LaTeX to Image" />
+  <meta name="twitter:description" content="Convert LaTeX math equations into high-quality images (PNG, JPEG, SVG)." />
+  <meta name="twitter:image" content="https://thomasahle.com/latex2png/og.png" />
+  <meta name="twitter:site" content="@thomasahle" />
+
+  <!-- MathJax configuration -->
+  <script>
+    window.MathJax = {
+      loader: {
+        load: ['[tex]/ams']
+      },
+      tex: {
+        packages: { '[+]': ['ams'] }
+      },
+      // options: {
+      //   enableMenu: false
+      // }
+    };
+  </script>
+  
+  <!-- Defer non-critical scripts -->
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script async src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Core functionality scripts -->
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
+  
+  <!-- Non-critical scripts -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  
+  <!-- Analytics (load last) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
+  <script>
+     window.dataLayer = window.dataLayer || [];
+     function gtag(){dataLayer.push(arguments);}
+     gtag('js', new Date());
+     gtag('config', 'G-40XB6Q54CE');
+  </script>
+  <script type="module" crossorigin src="/assets/main-BZVr338y.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/latex-Cab-N9uy.js">
+  <link rel="modulepreload" crossorigin href="/assets/codemirror-B1Uo-md0.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BMBCTvP4.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <span class="site-title">LaTeX to Image</span>
+    </div>
+    <div class="navbar-right">
+      <div class="theme-toggle" id="theme-toggle">
+        <i id="theme-toggle-icon" class="ph ph-moon-stars"></i>
+        <span class="theme-toggle-text">Toggle theme</span>
+      </div>
+      <a class="github-button"
+         href="https://github.com/thomasahle/latex2png"
+         data-icon="octicon-star"
+         data-size="large"
+         data-show-count="true"
+         aria-label="Star thomasahle/latex2png on GitHub">
+         Star on Github
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Heading and description -->
+    <h1>Convert LaTeX math equations to PNG/JPEG/SVG images</h1>
+    <p class="description">
+    <span class="extra">
+      Simply type in your LaTeX below and watch the preview update in real time.
+      </span>
+      Need inspiration? <a href="#" id="example-link">Show example</a>.
+    </p>
+
+    <div class="editor-container">
+      <!-- Form area -->
+      <div class="form-area">
+        <textarea id="latex-input" rows="5" placeholder="e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}"></textarea>
+      </div>
+      
+      <!-- Resize handle -->
+      <div class="resize-handle" id="resize-handle"></div>
+  
+      <!-- Preview area -->
+      <div class="preview-area">
+      <div class="zoom-controls">
+        <span id="zoom-value" class="zoom-value">1.5x</span>
+        <input type="range" min="1" max="5" step="0.1" value="1.5" class="zoom-slider" id="zoom-slider">
+      </div>
+      <div class="layout-toggle" id="layout-toggle" title="Toggle layout orientation">
+        <i class="ph ph-square-split-horizontal layout-toggle-icon-horizontal"></i>
+        <i class="ph ph-square-split-vertical layout-toggle-icon-vertical"></i>
+      </div>
+      <div class="preview-content">
+        <div id="preview"></div>
+      </div>
+    </div>
+    </div>
+
+<!-- Action row: Save image, Image Options, and Share -->
+<div class="action-row">
+  <div class="save-container">
+    <button id="save-btn" class="primary-btn">Save PNG</button>
+    <button id="format-toggle" class="format-toggle"><i class="ph ph-caret-down"></i></button>
+    <div id="format-dropdown" class="dropdown-content">
+      <a data-format="png">Save PNG</a>
+      <a data-format="jpeg">Save JPEG</a>
+      <a data-format="svg">Save SVG</a>
+    </div>
+  </div>
+  <button id="twitter-share" class="twitter-btn"><i class="ph ph-share-network"></i> Share</button>
+</div>
+
+  <!-- Our script is already loaded in the head with defer -->
+</body>
+</html>
