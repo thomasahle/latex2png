@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/latex2png/',
   build: {
     outDir: 'dist',
     rollupOptions: {
