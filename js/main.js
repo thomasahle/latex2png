@@ -55,6 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Debounced version of renderLatex for better performance
   const debouncedRenderLatex = debounce(renderLatex, 150);
   
+  // Save content to localStorage on change
+  function handleEditorChange(text) {
+    localStorage.setItem('latexContent', text);
+    debouncedRenderLatex();
+  }
+  
   // Get the parent container and create a wrapper for CM6
   const formArea = elements.latexInput.parentElement;
   const editorWrapper = document.createElement('div');
@@ -67,8 +73,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize CodeMirror 6 editor
   const cm6Editor = createLatexEditor(
     editorWrapper,
-    debouncedRenderLatex
+    handleEditorChange
   );
+  
+  // Load saved content from localStorage
+  const savedContent = localStorage.getItem('latexContent');
+  if (savedContent) {
+    cm6Editor.setValue(savedContent);
+  }
   
   // Enhanced compatibility layer for CM5 -> CM6 migration
   const editor = {
