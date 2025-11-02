@@ -43,3 +43,46 @@
 [data-theme="dark"] mjx-container {
   color: var(--text-color) !important;
 }
+
+/* CodeMirror 6 dark mode */
+[data-theme="dark"] .codemirror-wrapper {
+  background-color: var(--container-bg);
+}
+
+[data-theme="dark"] .cm-editor {
+  background-color: var(--container-bg);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .cm-content {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .cm-placeholder {
+  color: #666 !important;
+}
+
+[data-theme="dark"] .cm-cursor {
+  border-left-color: #ccc;
+}
+
+/* Autocomplete dropdown in dark mode */
+[data-theme="dark"] .cm-tooltip-autocomplete {
+  background: var(--container-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .cm-completionLabel {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .cm-completionMatchedText {
+  color: var(--text-color) !important;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .cm-tooltip-autocomplete ul li[aria-selected] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-color) !important;
+}

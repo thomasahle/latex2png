@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="css/actions.css">
   <link rel="stylesheet" href="css/dark-mode.css">
   <link rel="stylesheet" href="css/responsive.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+
 
   <!-- Meta Description -->
   <meta name="description" content="Convert LaTeX math equations to high-quality PNG, JPEG, or SVG images with our easy-to-use web tool. Preview, save, and share your equations online." />
@@ -59,23 +59,10 @@
   
   <!-- Defer non-critical scripts -->
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/stex/stex.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/display/placeholder.min.js"></script>
   <script async src="https://unpkg.com/@phosphor-icons/web"></script>
   
   <!-- Core functionality scripts -->
-  <script defer src="js/dom.js"></script>
-  <script defer src="js/utils.js"></script>
-  <script defer src="js/resize.js"></script>
-  <script defer src="js/theme.js"></script>
-  <script defer src="js/layout.js"></script>
-  <script defer src="js/zoom.js"></script>
-  <script defer src="js/render.js"></script>
-  <script defer src="js/examples.js"></script>
-  <script defer src="js/saveShare.js"></script>
-  <script defer src="js/main.js"></script>
+  <script type="module" src="js/main.js"></script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
   
   <!-- Non-critical scripts -->

@@ -4,6 +4,7 @@
 # Node modules and build output
 node_modules/
 build/
+dist/
 
 # Environment files
 .env

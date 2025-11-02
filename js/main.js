@@ -1,3 +1,5 @@
+import { createLatexEditor } from './editor.js';
+
 // Code wrapped in an event listener for when DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   // Record start time for performance measurement
@@ -41,20 +43,50 @@ document.addEventListener("DOMContentLoaded", () => {
   // Helper functions
   const isMobileDevice = () => window.innerWidth < MOBILE_BREAKPOINT;
   
-  // Initialize CodeMirror editor
-  const editor = CodeMirror.fromTextArea(elements.latexInput, {
-    mode: "stex",
-    // lineNumbers: true,
-    autoCloseBrackets: true,
-    matchBrackets: true,
-    inMathMode: true,
-    styleActiveLine: true,
-    // lineWrapping: true,
-    theme: "default",
-    // placeholder: `e.g. \\frac{1}{\\sqrt{2\\pi}} e^{-x^2/2}`
-  });
+  // Create debounce function for better performance
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
   
-  // Store a reference to the editor for later use
+  // Debounced version of renderLatex for better performance
+  const debouncedRenderLatex = debounce(renderLatex, 150);
+  
+  // Get the parent container and create a wrapper for CM6
+  const formArea = elements.latexInput.parentElement;
+  const editorWrapper = document.createElement('div');
+  editorWrapper.className = 'codemirror-wrapper';
+  
+  // Replace textarea with editor wrapper
+  formArea.insertBefore(editorWrapper, elements.latexInput);
+  elements.latexInput.style.display = 'none';
+  
+  // Initialize CodeMirror 6 editor
+  const cm6Editor = createLatexEditor(
+    editorWrapper,
+    debouncedRenderLatex
+  );
+  
+  // Enhanced compatibility layer for CM5 -> CM6 migration
+  const editor = {
+    ...cm6Editor,
+    // Override getWrapperElement to return the outer wrapper instead of cm-editor
+    getWrapperElement: () => editorWrapper,
+    // Add setSize method for CM5 compatibility (CM6 handles sizing via CSS)
+    setSize: (width, height) => {
+      if (height !== null) {
+        editorWrapper.style.height = `${height}px`;
+      }
+      if (width !== null) {
+        editorWrapper.style.width = `${width}px`;
+      }
+    }
+  };
+  
+  // Store a reference to the editor for later use (compatibility layer)
   const latexInput = {
     getValue: () => editor.getValue(),
     setValue: (text) => editor.setValue(text)
@@ -1176,21 +1208,6 @@ f(5,m) &= ?
   
   // Initial render
   renderLatex();
-
-  // Create debounce function for better performance
-  function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
-  
-  // Debounced version of renderLatex for better performance
-  const debouncedRenderLatex = debounce(renderLatex, 150);
-  
-  // Listen for changes in the editor
-  editor.on("change", debouncedRenderLatex);
   
   // Log performance metrics (only for development)
   const loadTime = performance.now() - startTime; 

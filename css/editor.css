@@ -1,4 +1,6 @@
 /* === EDITOR & PREVIEW === */
+
+/* CodeMirror 5 styles (legacy) */
 .CodeMirror {
   height: 200px;
   font-family: monospace;
@@ -8,9 +10,86 @@
   border-radius: 4px;
 }
 
-/* Style for the CodeMirror placeholder */
 .CodeMirror-placeholder.CodeMirror-line-like {
   color: #bbb !important;
+}
+
+/* CodeMirror 6 styles */
+.codemirror-wrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--container-bg);
+  height: 300px; /* Default height, can be overridden by JS */
+}
+
+.cm-editor {
+  height: 100%; /* Fill the wrapper */
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-scroller {
+  overflow: auto;
+}
+
+.cm-content {
+  padding: 10px;
+  min-height: 200px;
+}
+
+.cm-line {
+  padding: 0;
+}
+
+/* Placeholder styling */
+.cm-placeholder {
+  color: #bbb !important;
+  font-style: normal;
+}
+
+/* Syntax highlighting for LaTeX - using tag-based selectors */
+.cm-content .tok-keyword {
+  color: #090;
+}
+
+.cm-content .tok-variableName {
+  color: #090;
+}
+
+.cm-content .tok-propertyName {
+  color: #090;
+}
+
+.cm-content .tok-typeName {
+  color: #090;
+}
+
+.cm-content .tok-atom {
+  color: #090;
+}
+
+.cm-content .tok-operator {
+  color: inherit;
+}
+
+/* Autocomplete styling */
+.cm-tooltip-autocomplete {
+  border: 1px solid var(--border-color);
+  background: var(--container-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cm-completionIcon {
+  display: none;
+}
+
+.cm-completionLabel {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
 }
 
 .preview-area {
