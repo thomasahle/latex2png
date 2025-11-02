@@ -1,0 +1,39 @@
+/* === EDITOR & PREVIEW === */
+.CodeMirror {
+  height: 200px;
+  font-family: monospace;
+  font-size: 1rem;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* Style for the CodeMirror placeholder */
+.CodeMirror-placeholder.CodeMirror-line-like {
+  color: #bbb !important;
+}
+
+.preview-area {
+  border: 1px solid var(--border-color);
+  min-height: 200px;
+  text-align: center;
+  background-color: var(--container-bg);
+  position: relative;
+  box-sizing: border-box;
+  padding-top: 10px;
+}
+
+.preview-content {
+  overflow: auto;
+  max-width: 100%;
+  max-height: 400px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+#preview {
+  padding: 0.5rem 1rem;
+  display: inline-block;
+}

@@ -1,0 +1,197 @@
+/* === RESPONSIVE STYLES === */
+/* Desktop side-by-side layout */
+@media (min-width: 768px) {
+  /* These styles will be applied via JS for better control */
+  .side-by-side .editor-container {
+    display: flex;
+    flex-direction: row !important;
+    align-items: stretch;
+    height: 400px; /* Default height, will be overridden by JS */
+    width: 100%;
+  }
+  
+  /* Default display for non-side-by-side mode */
+  .editor-container {
+    display: block;
+  }
+  
+  .side-by-side .form-area,
+  .side-by-side .preview-area {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    min-width: 0;
+  }
+  
+  .side-by-side .resize-handle {
+    height: 100%;
+    cursor: ew-resize;
+    margin: 0;
+  }
+  
+  .side-by-side .resize-handle::before {
+    width: 4px;
+    height: 60px;
+    transform: none;
+  }
+  
+  .side-by-side .CodeMirror {
+    height: 100% !important; /* Force height to take full container height */
+    flex: 1;
+    min-height: 100%; /* Ensure minimum height */
+  }
+  
+}
+/* Mobile styles */
+@media (max-width: 767px) {
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  /* Force stacked layout in mobile regardless of side-by-side class */
+  .side-by-side .editor-container {
+    display: block !important; /* Override any inline styles */
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  
+  .container {
+    height: calc(100% - 2rem); /* 49px is navbar height */
+    margin: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 0.5rem;
+  }
+  
+  .description {
+    padding: 0 0.5rem;
+  }
+  
+  .editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    overflow: hidden;
+    height: auto;
+  }
+  
+  .form-area {
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .preview-area {
+    /* Note: JS will override this with dynamic calculations */
+    flex: 0 0 calc(60% - var(--handle-size));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .CodeMirror {
+    flex: 1;
+    height: auto !important;
+  }
+  
+  .preview-content {
+    flex: 1;
+    overflow: auto;
+    max-height: none;
+  }
+  
+  .resize-handle {
+    width: 100%;
+    height: var(--handle-size); /* Use the common variable */
+    cursor: ns-resize;
+    flex-shrink: 0;
+  }
+  
+  .resize-handle::before {
+    width: 60px;
+    height: 6px;
+    transform: none;
+  }
+  
+  .action-row {
+    margin-top: 0.5rem;
+    flex-shrink: 0; /* Prevent it from shrinking */
+  }
+  
+  .layout-toggle {
+    display: none !important;
+  }
+  
+  .resize-handle {
+    height: var(--handle-size);
+    background-color: rgba(0, 0, 0, 0.02);
+    transition: background-color 0.2s;
+  }
+
+  .resize-handle::before {
+    height: 8px;
+    width: 80px;
+    margin: 5px;
+    border-radius: 4px;
+  }
+  
+  .resize-handle:active,
+  .resize-handle.dragging {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .resize-handle:active::before,
+  .resize-handle.dragging::before {
+    background-color: var(--primary-color);
+  }
+}
+/* Extra small mobile styles */
+@media (max-width: 600px) {
+  h1, .description .extra, .theme-toggle-text {
+    display: none;
+  }
+
+  .navbar-right {
+     gap: 0.5rem;
+   }
+  
+  .container {
+    padding: 1rem;
+    margin: 0 auto;
+  }
+  
+  .action-row {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    grid-gap: 1rem;
+    justify-items: start;
+  }
+  
+  #save-btn {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  
+  #twitter-share {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  
+  /* Dropdown positioning is now handled by JavaScript */
+}

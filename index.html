@@ -12,7 +12,16 @@
   <title>LaTeX to Image</title>
 
   <!-- CSS first for faster rendering -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/controls.css">
+  <link rel="stylesheet" href="css/actions.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
 
   <!-- Meta Description -->
@@ -57,8 +66,17 @@
   <script async src="https://unpkg.com/@phosphor-icons/web"></script>
   
   <!-- Core functionality scripts -->
-  <script defer src="script.js"></script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script"></script>
+  <script defer src="js/dom.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/resize.js"></script>
+  <script defer src="js/theme.js"></script>
+  <script defer src="js/layout.js"></script>
+  <script defer src="js/zoom.js"></script>
+  <script defer src="js/render.js"></script>
+  <script defer src="js/examples.js"></script>
+  <script defer src="js/saveShare.js"></script>
+  <script defer src="js/main.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
   
   <!-- Non-critical scripts -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
@@ -137,12 +155,12 @@
     <div id="format-dropdown" class="dropdown-content">
       <a data-format="png">Save PNG</a>
       <a data-format="jpeg">Save JPEG</a>
+      <a data-format="svg">Save SVG</a>
     </div>
   </div>
   <button id="twitter-share" class="twitter-btn"><i class="ph ph-share-network"></i> Share</button>
 </div>
 
   <!-- Our script is already loaded in the head with defer -->
-  <!-- <script src="script.js"></script> -->
 </body>
 </html>

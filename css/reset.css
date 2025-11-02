@@ -1,0 +1,18 @@
+/* === BASIC RESET === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent; /* Improves mobile touch experience */
+}
+
+html.resizing {
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  cursor: ns-resize;
+}
+
+.side-by-side html.resizing {
+  cursor: ew-resize;
+}
