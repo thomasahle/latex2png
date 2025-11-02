@@ -61,8 +61,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const debouncedRenderLatex = debounce(renderLatex, 150);
   
   // Save content to localStorage on change
+  let shouldSaveToLocalStorage = false;
+  
   function handleEditorChange(text) {
-    localStorage.setItem('latexContent', text);
+    if (shouldSaveToLocalStorage) {
+      localStorage.setItem('latexContent', text);
+    }
     debouncedRenderLatex();
   }
   
@@ -86,12 +90,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const latexParam = urlParams.get('latex');
   
   if (latexParam) {
+    // Load from URL without saving to localStorage
     cm6Editor.setValue(latexParam);
+    // Now enable localStorage saving for future edits
+    shouldSaveToLocalStorage = true;
   } else {
     const savedContent = localStorage.getItem('latexContent');
     if (savedContent) {
       cm6Editor.setValue(savedContent);
     }
+    // Enable localStorage saving
+    shouldSaveToLocalStorage = true;
   }
   
   // Enhanced compatibility layer for CM5 -> CM6 migration
