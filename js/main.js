@@ -1250,9 +1250,8 @@ f(5,m) &= ?
     const latexCode = latexInput.getValue().trim();
     
     if (currentShareMethod === "link") {
-      // Share link with LaTeX in URL (double backslashes to preserve them)
-      const encodedLatex = latexCode.replace(/\\/g, '\\\\');
-      const url = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(encodedLatex);
+      // Share link with LaTeX in URL
+      const url = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(latexCode);
       
       if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
@@ -1273,9 +1272,8 @@ f(5,m) &= ?
         // Download the PNG
         downloadFile(dataUrl, "latex-equation.png");
         
-        // Open Twitter composer with text and link (double backslashes to preserve them)
-        const encodedLatex = latexCode.replace(/\\/g, '\\\\');
-        const shareUrl = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(encodedLatex);
+        // Open Twitter composer with text and link
+        const shareUrl = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(latexCode);
         const text = encodeURIComponent("Check out my LaTeX equation!");
         const tweetUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
         
