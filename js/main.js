@@ -90,16 +90,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const latexParam = urlParams.get('latex');
   
   if (latexParam) {
-    // Load from URL without saving to localStorage
-    cm6Editor.setValue(latexParam);
-    // Now enable localStorage saving for future edits
-    shouldSaveToLocalStorage = true;
+    // Double backslashes before giving to CodeMirror (it collapses them)
+    const doubledBackslashes = latexParam.replace(/\\/g, '\\\\');
+    cm6Editor.setValue(doubledBackslashes);
+    // Delay enabling localStorage to avoid saving the collapsed version
+    setTimeout(() => {
+      shouldSaveToLocalStorage = true;
+    }, 500);
   } else {
     const savedContent = localStorage.getItem('latexContent');
     if (savedContent) {
       cm6Editor.setValue(savedContent);
     }
-    // Enable localStorage saving
+    // Enable localStorage saving immediately for localStorage loads
     shouldSaveToLocalStorage = true;
   }
   
