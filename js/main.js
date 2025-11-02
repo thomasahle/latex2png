@@ -738,18 +738,12 @@ f(5,m) &= ?
       // Fix color for html2canvas - set explicit color on all SVG elements
       const actualColor = window.getComputedStyle(elements.preview.querySelector('mjx-container')).color;
       
-      // Replace currentColor in all elements
-      const allElements = clonedPreview.querySelectorAll('svg *');
-      allElements.forEach(el => {
-        const stroke = el.getAttribute('stroke');
-        const fill = el.getAttribute('fill');
-        
-        if (stroke === 'currentColor' || stroke) {
-          el.setAttribute('stroke', actualColor);
-        }
-        if (fill === 'currentColor' || fill) {
-          el.setAttribute('fill', actualColor);
-        }
+      // Set color on all g elements and their children to override currentColor inheritance
+      const allSvgElements = clonedPreview.querySelectorAll('svg, svg *');
+      allSvgElements.forEach(el => {
+        // Set both stroke and fill to ensure text renders correctly
+        el.style.stroke = actualColor;
+        el.style.fill = actualColor;
       });
 
       // Use html2canvas with the cloned preview
