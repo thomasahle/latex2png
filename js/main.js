@@ -706,7 +706,8 @@ f(5,m) &= ?
     lastRenderedZoom = currentScale;
     
     if (!latexCode) {
-      elements.preview.innerHTML = "";
+      elements.preview.innerHTML = "$$\\text{intentionally blank}$$";
+      await MathJax.typesetPromise([elements.preview]);
       return;
     }
     
