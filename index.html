@@ -168,8 +168,19 @@
       <a data-format="svg">Save SVG</a>
     </div>
   </div>
-  <button id="twitter-share" class="twitter-btn"><i class="ph ph-share-network"></i> Share</button>
+  <div class="share-container">
+    <button id="share-btn" class="twitter-btn"><i class="ph ph-share-network"></i> Share Link</button>
+    <button id="share-toggle" class="share-toggle"><i class="ph ph-caret-down"></i></button>
+    <div id="share-dropdown" class="dropdown-content">
+      <a data-share="link">Share Link</a>
+      <a data-share="twitter">Share to Twitter</a>
+      <a data-share="other">Share Image</a>
+    </div>
+  </div>
 </div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
 
   <!-- Our script is already loaded in the head with defer -->
 </body>

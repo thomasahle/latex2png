@@ -49,6 +49,14 @@ button,
   z-index: 1;
 }
 
+/* === SHARE DROPDOWN === */
+.share-container {
+  position: relative;
+  display: inline-flex;
+  z-index: 1;
+  margin-left: auto;
+}
+
 #save-btn {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
@@ -104,4 +112,55 @@ button,
 
 .dropdown-content a:hover {
   background-color: rgba(0,0,0,0.05);
+}
+
+/* === SHARE BUTTON STYLING === */
+#share-btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: 0;
+}
+
+.share-toggle {
+  padding: 0.05rem 0.5rem .1rem 0.5rem;
+  background: var(--twitter-color);
+  color: #fff;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  font-size: 1rem;
+}
+
+.share-toggle:hover {
+  background: var(--twitter-hover);
+}
+
+/* === TOAST NOTIFICATION === */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--container-bg);
+  color: var(--text-color);
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
 }

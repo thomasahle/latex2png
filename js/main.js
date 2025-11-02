@@ -13,7 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
     exampleLink: document.getElementById("example-link"),
     saveBtn: document.getElementById("save-btn"),
     formatToggle: document.getElementById("format-toggle"),
-    twitterShare: document.getElementById("twitter-share"),
+    shareBtn: document.getElementById("share-btn"),
+    shareToggle: document.getElementById("share-toggle"),
+    shareDropdown: document.getElementById("share-dropdown"),
     themeToggle: document.getElementById("theme-toggle"),
     formatDropdown: document.getElementById("format-dropdown"),
     zoomSlider: document.getElementById("zoom-slider"),
@@ -953,16 +955,24 @@ f(5,m) &= ?
 
   // Close dropdown when clicking anywhere
   document.addEventListener('click', (e) => {
-    // Only process if dropdown is actually shown and click is outside the dropdown
+    // Close format dropdown if open
     if (elements.formatDropdown.classList.contains('show')) {
-      // Check if click is outside both the dropdown and the toggle button
       if (!elements.formatDropdown.contains(e.target) && 
           !e.target.matches('#format-toggle') && 
           !elements.formatToggle.contains(e.target)) {
         closeFormatDropdown();
       }
     }
-  }, true); // Use capture phase for earlier processing
+    
+    // Close share dropdown if open
+    if (elements.shareDropdown.classList.contains('show')) {
+      if (!elements.shareDropdown.contains(e.target) && 
+          !e.target.matches('#share-toggle') && 
+          !elements.shareToggle.contains(e.target)) {
+        closeShareDropdown();
+      }
+    }
+  }, true);
 
   // Format selection - direct and immediate handling 
   elements.formatDropdown.querySelectorAll('a').forEach(item => {
@@ -996,9 +1006,15 @@ f(5,m) &= ?
   
   // Close dropdown with Escape key
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && elements.formatDropdown.classList.contains('show')) {
-      closeFormatDropdown();
-      e.preventDefault(); // Prevent other escape handlers
+    if (e.key === 'Escape') {
+      if (elements.formatDropdown.classList.contains('show')) {
+        closeFormatDropdown();
+        e.preventDefault();
+      }
+      if (elements.shareDropdown.classList.contains('show')) {
+        closeShareDropdown();
+        e.preventDefault();
+      }
     }
   });
 
@@ -1129,41 +1145,171 @@ f(5,m) &= ?
   // Share functionality
   // =========================================
   
-  // Share image using the Web Share API
-  elements.twitterShare.addEventListener("click", async () => {
-    try {
-      // Always share as PNG for compatibility with transparent background
-      const canvas = await generateImage(null);
-      
-      canvas.toBlob(async blob => {
-        if (!blob) {
-          alert("Failed to capture image.");
-          return;
-        }
-        
-        // Create a File object from the blob
-        const file = new File([blob], "latex-image.png", { type: "image/png" });
-        
-        // Use Web Share API if supported with files
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: "LaTeX Image",
-              text: "Check out my LaTeX equation rendered as an image!"
-            });
-          } catch (error) {
-            console.error("Error sharing", error);
-          }
-        } else {
-          alert("Your browser does not support direct image sharing. Please save the image and share manually.");
-        }
-      }, "image/png");
-    } catch (error) {
-      console.error("Error sharing image:", error);
-      alert("Failed to share image.");
+  let currentShareMethod = "link";
+  
+  // Toast notification helper
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+  
+  // Share button directly triggers link sharing
+  elements.shareBtn.addEventListener('click', () => {
+    currentShareMethod = "link";
+    closeShareDropdown();
+    shareContent();
+  });
+  
+  // Share dropdown toggle
+  elements.shareToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const isOpen = elements.shareDropdown.classList.contains('show');
+    
+    closeFormatDropdown();
+    
+    if (!isOpen) {
+      elements.shareDropdown.classList.add('show');
+      positionShareDropdown();
     }
   });
+  
+  // Close share dropdown
+  function closeShareDropdown() {
+    elements.shareDropdown.classList.remove('show');
+    elements.shareDropdown.style.display = 'none';
+  }
+  
+  // Position share dropdown (similar to format dropdown)
+  function positionShareDropdown() {
+    elements.shareDropdown.style.visibility = 'hidden';
+    elements.shareDropdown.style.display = 'block';
+    
+    elements.shareDropdown.style.bottom = '';
+    elements.shareDropdown.style.top = '';
+    elements.shareDropdown.style.left = '';
+    elements.shareDropdown.style.right = '';
+    
+    const dropdownRect = elements.shareDropdown.getBoundingClientRect();
+    const shareContainerRect = elements.shareToggle.closest('.share-container').getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    const spaceBelow = viewportHeight - shareContainerRect.bottom;
+    const dropdownHeight = dropdownRect.height;
+    
+    if (spaceBelow < dropdownHeight + 5) {
+      elements.shareDropdown.style.bottom = '100%';
+      elements.shareDropdown.style.top = 'auto';
+      elements.shareDropdown.style.marginBottom = '5px';
+    } else {
+      elements.shareDropdown.style.top = '100%';
+      elements.shareDropdown.style.bottom = 'auto';
+      elements.shareDropdown.style.marginTop = '5px';
+    }
+    
+    elements.shareDropdown.style.right = '0';
+    elements.shareDropdown.style.visibility = '';
+  }
+  
+  // Share dropdown selection
+  elements.shareDropdown.querySelectorAll('a').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      currentShareMethod = e.target.getAttribute('data-share');
+      closeShareDropdown();
+      
+      setTimeout(() => shareContent(), 10);
+    });
+  });
+  
+  // Share content based on method
+  async function shareContent() {
+    const latexCode = latexInput.getValue().trim();
+    
+    if (currentShareMethod === "link") {
+      // Share link with LaTeX in URL
+      const url = window.location.origin + window.location.pathname + '?latex=' + encodeURIComponent(latexCode);
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast("✓ Link copied to clipboard!");
+        } catch (error) {
+          showToast("Failed to copy link");
+        }
+      } else {
+        showToast("Clipboard not supported");
+      }
+    } else if (currentShareMethod === "twitter") {
+      // Share to Twitter with PNG image
+      try {
+        const canvas = await generateImage(null);
+        canvas.toBlob(async blob => {
+          if (!blob) {
+            showToast("Failed to generate image");
+            return;
+          }
+          
+          const file = new File([blob], "latex-equation.png", { type: "image/png" });
+          const text = encodeURIComponent("Check out my LaTeX equation!");
+          
+          // Create a data URL for the image
+          const reader = new FileReader();
+          reader.onloadend = function() {
+            // Open Twitter with text - image must be uploaded separately
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(window.location.href)}`;
+            window.open(tweetUrl, '_blank', 'width=550,height=420');
+            showToast("Opening Twitter... (Note: upload the saved PNG manually)");
+          };
+          reader.readAsDataURL(blob);
+        }, "image/png");
+      } catch (error) {
+        console.error("Error preparing Twitter share:", error);
+        showToast("Failed to prepare share");
+      }
+    } else {
+      // Share Image: Use Web Share API
+      try {
+        const canvas = await generateImage(null);
+        
+        canvas.toBlob(async blob => {
+          if (!blob) {
+            showToast("Failed to generate image");
+            return;
+          }
+          
+          const file = new File([blob], "latex-image.png", { type: "image/png" });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: "LaTeX Image",
+                text: "Check out my LaTeX equation!"
+              });
+            } catch (error) {
+              if (error.name !== 'AbortError') {
+                console.error("Error sharing", error);
+                showToast("Share cancelled");
+              }
+            }
+          } else {
+            showToast("Image sharing not supported on this browser");
+          }
+        }, "image/png");
+      } catch (error) {
+        console.error("Error sharing image:", error);
+        showToast("Failed to share image");
+      }
+    }
+  }
 
   // =========================================
   // Example link
