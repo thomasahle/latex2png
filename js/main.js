@@ -228,8 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Apply the new ratio
       elements.formArea.style.flex = `0 0 ${formRatio * 100}%`;
       
-      // Account for resize handle and action row heights
-      elements.previewArea.style.flex = `0 0 calc(${(1 - formRatio) * 100}% - ${HANDLE_SIZE}px)`;
+      // Account for resize handle height - preview should fill remaining space
+      // Use flex-grow to fill remaining space after form area and handle
+      elements.previewArea.style.flex = `1 1 auto`;
       
       // Make sure CodeMirror refreshes to adjust to the new size
       requestAnimationFrame(() => {
