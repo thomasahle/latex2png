@@ -15,7 +15,7 @@
   </div>
   <div class="navbar-right">
     <div class="theme-toggle" on:click={toggleTheme}>
-      <i class={iconClass}></i>
+      <i id="theme-toggle-icon" class={iconClass}></i>
       <span class="theme-toggle-text">Toggle theme</span>
     </div>
     <a class="github-button"
