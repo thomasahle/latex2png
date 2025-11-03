@@ -1,0 +1,33 @@
+/* Import all existing CSS */
+@import '../css/variables.css';
+@import '../css/reset.css';
+@import '../css/base.css';
+@import '../css/navbar.css';
+@import '../css/layout.css';
+@import '../css/editor.css';
+@import '../css/controls.css';
+@import '../css/actions.css';
+@import '../css/dark-mode.css';
+@import '../css/responsive.css';
+
+/* FOUC prevention */
+body { visibility: hidden; }
+body.loaded { visibility: visible; }
+
+/* Reserve space for icons */
+button i.ph {
+  display: inline-block;
+  min-width: 1em;
+  vertical-align: middle;
+}
+
+/* Reserve space for GitHub button */
+.github-button {
+  display: inline-block;
+  min-height: 28px;
+  min-width: 100px;
+  visibility: hidden;
+}
+.github-button:defined {
+  visibility: visible;
+}
