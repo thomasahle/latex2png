@@ -89,18 +89,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
   const latexParam = urlParams.get('latex');
   
-  if (latexParam) {
-    // Delay loading to avoid LaTeX language mode initialization race condition
-    // that causes backslashes to be incorrectly processed
-    setTimeout(() => {
+  // Delay loading to avoid LaTeX language mode initialization race condition
+  // that causes backslashes to be incorrectly processed
+  setTimeout(() => {
+    if (latexParam) {
       cm6Editor.setValue(latexParam);
-    }, 100);
-  } else {
-    const savedContent = localStorage.getItem('latexContent');
-    if (savedContent) {
-      cm6Editor.setValue(savedContent);
+    } else {
+      const savedContent = localStorage.getItem('latexContent');
+      if (savedContent) {
+        cm6Editor.setValue(savedContent);
+      }
     }
-  }
+  }, 100);
   
   // Enable localStorage saving after initialization
   setTimeout(() => {
@@ -407,8 +407,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedRatio = localStorage.getItem('sideRatio');
       
       // Also apply saved height to ensure consistent sizing
-      const savedHeight = localStorage.getItem('editorHeight') || '400';
-      const parsedHeight = parseInt(savedHeight, 10);
+      const savedHeight = localStorage.getItem('editorHeight') || '500';
+      const parsedHeight = Math.max(parseInt(savedHeight, 10), 400); // Minimum 400px
       
       // Set the editor height directly - this helps maintain consistent height after refresh
       editor.setSize(null, parsedHeight);
