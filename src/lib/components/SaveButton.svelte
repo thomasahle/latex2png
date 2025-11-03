@@ -17,11 +17,11 @@
     svg: 'Save SVG'
   };
   
-  async function saveImage() {
+  async function saveImage(format = $saveFormat) {
     const previewElement = document.getElementById('preview');
     
     try {
-      if ($saveFormat === 'svg') {
+      if (format === 'svg') {
         // SVG export logic
         const svgElement = previewElement.querySelector('svg');
         if (!svgElement) {
@@ -42,8 +42,8 @@
       } else {
         // PNG/JPEG export
         const canvas = await generateImage(previewElement, $zoom, null);
-        const mimeType = $saveFormat === 'jpeg' ? 'image/jpeg' : 'image/png';
-        const extension = $saveFormat === 'jpeg' ? 'jpg' : 'png';
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+        const extension = format === 'jpeg' ? 'jpg' : 'png';
         const dataUrl = canvas.toDataURL(mimeType);
         
         const link = document.createElement('a');
@@ -58,17 +58,24 @@
   }
   
   function handleSelectFormat(format) {
-    saveFormat.set(format);
+    // In vanilla, selecting a format immediately saves
+    // Don't update the store, just save with that format
+    saveImage(format);
+  }
+  
+  function handleSaveClick() {
+    // Main button always saves as PNG (vanilla behavior)
+    saveImage('png');
   }
 </script>
 
 <ButtonWithDropdown
   buttonId="save-btn"
   buttonClass="primary-btn"
-  buttonText={formatLabels[$saveFormat]}
+  buttonText="Save PNG"
   toggleId="format-toggle"
   dropdownId="format-dropdown"
   items={formatItems}
-  onButtonClick={saveImage}
+  onButtonClick={handleSaveClick}
   onSelect={handleSelectFormat}
 />

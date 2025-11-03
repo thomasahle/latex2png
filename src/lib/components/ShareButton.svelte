@@ -18,33 +18,39 @@
     other: ' Share Image'
   };
   
-  async function handleShare() {
+  async function handleShareAction(method) {
     const latexCode = $latexContent.trim();
     const previewElement = document.getElementById('preview');
     const generateImageFn = async (bg) => await generateImage(previewElement, $zoom, bg);
     
-    if ($shareMethod === 'link') {
+    if (method === 'link') {
       await shareLink(latexCode);
-    } else if ($shareMethod === 'twitter') {
+    } else if (method === 'twitter') {
       await shareToTwitter(latexCode, generateImageFn);
-    } else if ($shareMethod === 'other') {
+    } else if (method === 'other') {
       await shareImage(generateImageFn);
     }
   }
   
+  function handleShareClick() {
+    // Main button always does link sharing (vanilla behavior)
+    handleShareAction('link');
+  }
+  
   function handleSelectMethod(method) {
-    shareMethod.set(method);
+    // In vanilla, selecting a method immediately executes it
+    handleShareAction(method);
   }
 </script>
 
 <ButtonWithDropdown
   buttonId="share-btn"
   buttonClass="twitter-btn"
-  buttonText={methodLabels[$shareMethod]}
+  buttonText=" Share Link"
   toggleId="share-toggle"
   dropdownId="share-dropdown"
   items={shareItems}
-  onButtonClick={handleShare}
+  onButtonClick={handleShareClick}
   onSelect={handleSelectMethod}
 >
   <i class="ph ph-share-network" slot="icon"></i>
