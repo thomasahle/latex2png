@@ -1,12 +1,11 @@
 /* === RESPONSIVE STYLES === */
 /* Desktop side-by-side layout */
 @media (min-width: 768px) {
-  /* These styles will be applied via JS for better control */
   .side-by-side .editor-container {
     display: flex;
     flex-direction: row !important;
     align-items: stretch;
-    height: 400px; /* Default height, will be overridden by JS */
+    height: var(--container-height, calc(100vh - 310px));
     width: 100%;
   }
   
@@ -15,9 +14,19 @@
     display: block;
   }
   
-  .side-by-side .form-area,
+  .side-by-side .form-area {
+    flex: var(--form-flex, 1);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    min-width: 0;
+    min-height: 0;
+  }
+  
   .side-by-side .preview-area {
-    flex: 1;
+    flex: var(--preview-flex, 1);
     margin: 0;
     display: flex;
     flex-direction: column;
@@ -95,7 +104,7 @@
   }
   
   .form-area {
-    flex: 0 0 40%;
+    flex: var(--mobile-form-flex, 0 0 40%);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -104,7 +113,7 @@
   
   .preview-area {
     /* Note: JS will override this with dynamic calculations */
-    flex: 0 0 calc(60% - var(--handle-size));
+    flex: var(--mobile-preview-flex, 1 1 0);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -210,5 +219,12 @@
     align-items: center;
     gap: 0.25rem;
     margin-top: 0.25rem;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .save-container,
+  .share-container {
+    position: static;
   }
 }

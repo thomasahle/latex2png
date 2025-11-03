@@ -3,23 +3,22 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  font-family: sans-serif;
   user-select: none;
-  margin-top:-3px;
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 #theme-toggle-icon {
   margin-right: 0.3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0,0,0,0.05);
-  padding: 0;
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  line-height: 28px;
-  text-align: center;
+  display: inline-block;
+  vertical-align: text-bottom;
 }
 
 /* === RESIZE HANDLE === */

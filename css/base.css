@@ -1,6 +1,7 @@
 body {
   background: var(--bg-color);
   color: var(--text-color);
+  font-family: serif;
   transition: background 0.3s, color 0.3s;
   text-rendering: optimizeSpeed; /* Improves text rendering performance */
   -webkit-font-smoothing: antialiased;

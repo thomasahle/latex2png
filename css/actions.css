@@ -12,6 +12,7 @@ button,
   border: none;
   border-radius: 4px;
   font-size: 0.95rem;
+  font-family: sans-serif;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -87,15 +88,13 @@ button,
 
 .dropdown-content {
   display: none;
-  position: absolute;
+  position: fixed;
   background-color: var(--container-bg);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 100; /* Higher z-index to ensure it appears above other elements */
+  z-index: 1000;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  /* Positioning will be handled by JavaScript */
-  right: 0;
 }
 
 .dropdown-content.show {

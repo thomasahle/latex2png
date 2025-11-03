@@ -1,25 +1,32 @@
 import { writable } from 'svelte/store';
 
 function createLayoutStore() {
-  const savedLayout = localStorage.getItem('layout') || 'stacked';
-  const { subscribe, set } = writable(savedLayout);
+  const savedLayout = (() => {
+    try {
+      return localStorage.getItem('layout') || 'stacked';
+    } catch {
+      return 'stacked';
+    }
+  })();
   
-  let currentLayout = savedLayout;
-  
-  subscribe(value => {
-    currentLayout = value;
-  });
+  const { subscribe, set, update } = writable(savedLayout);
   
   return {
     subscribe,
     set: (value) => {
       set(value);
-      localStorage.setItem('layout', value);
+      try {
+        localStorage.setItem('layout', value);
+      } catch {}
     },
     toggle: () => {
-      const newLayout = currentLayout === 'side-by-side' ? 'stacked' : 'side-by-side';
-      set(newLayout);
-      localStorage.setItem('layout', newLayout);
+      update(value => {
+        const next = value === 'side-by-side' ? 'stacked' : 'side-by-side';
+        try {
+          localStorage.setItem('layout', next);
+        } catch {}
+        return next;
+      });
     }
   };
 }

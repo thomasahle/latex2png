@@ -11,6 +11,7 @@
   let dropdownOpen = false;
   let dropdownElement;
   let toggleElement;
+  let isPositioned = false;
   
   function handleButtonClick() {
     dropdownOpen = false;
@@ -21,34 +22,47 @@
   
   function toggleDropdown(e) {
     e.stopPropagation();
-    dropdownOpen = !dropdownOpen;
     
-    if (dropdownOpen) {
-      // Opening - position the dropdown
-      setTimeout(() => positionDropdown(), 10);
+    if (!dropdownOpen) {
+      dropdownOpen = true;
+      isPositioned = false;
+      // Position immediately on next tick
+      requestAnimationFrame(() => {
+        positionDropdown();
+        isPositioned = true;
+      });
+    } else {
+      dropdownOpen = false;
     }
   }
   
   function positionDropdown() {
-    if (!dropdownElement) return;
+    if (!dropdownElement || !toggleElement) return;
     
-    // Get button and dropdown positions
-    const buttonRect = dropdownElement.parentElement?.getBoundingClientRect();
-    if (!buttonRect) return;
+    // Get button position (using fixed positioning now)
+    const buttonRect = toggleElement.getBoundingClientRect();
     
     const dropdownHeight = dropdownElement.offsetHeight;
     const spaceBelow = window.innerHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
     
-    // If not enough space below but enough above, open upward
-    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      dropdownElement.style.bottom = '100%';
+    // Align horizontally: left for save button, right for share button
+    if (buttonClass === 'primary-btn') {
+      dropdownElement.style.left = buttonRect.left + 'px';
+      dropdownElement.style.right = 'auto';
+    } else {
+      dropdownElement.style.left = 'auto';
+      dropdownElement.style.right = (window.innerWidth - buttonRect.right) + 'px';
+    }
+    
+    // Position vertically: above if not enough space below (with gap)
+    const gap = 8;
+    if (spaceBelow < dropdownHeight + gap && spaceAbove > dropdownHeight + gap) {
+      dropdownElement.style.bottom = (window.innerHeight - buttonRect.top + gap) + 'px';
       dropdownElement.style.top = 'auto';
-      dropdownElement.style.marginBottom = '0.5rem';
     } else {
       dropdownElement.style.bottom = 'auto';
-      dropdownElement.style.top = '100%';
-      dropdownElement.style.marginTop = '0.5rem';
+      dropdownElement.style.top = (buttonRect.bottom + gap) + 'px';
     }
   }
   
@@ -79,7 +93,7 @@
   <button id={toggleId} class="{buttonClass === 'primary-btn' ? 'format' : 'share'}-toggle" on:click={toggleDropdown} bind:this={toggleElement}>
     <i class="ph ph-caret-down"></i>
   </button>
-  <div id={dropdownId} class="dropdown-content" class:show={dropdownOpen} bind:this={dropdownElement}>
+  <div id={dropdownId} class="dropdown-content" class:show={dropdownOpen && isPositioned} bind:this={dropdownElement} style:visibility={dropdownOpen && !isPositioned ? 'hidden' : 'visible'}>
     {#each items as item}
       <a href="#" on:click|preventDefault={() => selectItem(item.value)}>{item.label}</a>
     {/each}

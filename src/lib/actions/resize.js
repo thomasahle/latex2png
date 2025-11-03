@@ -8,32 +8,24 @@ const isMobileDevice = () => window.innerWidth < MOBILE_BREAKPOINT;
 /**
  * Svelte action for handling resize functionality
  * @param {HTMLElement} node - The resize handle element
- * @param {{ isSideBySide: boolean, isMobile: boolean, editor: Object, elements: Object }} params
+ * @param {{ isSideBySide: boolean, isMobile: boolean, editor: Object, elements: Object, updateHeight: Function, updateFlex: Function, updateMobileFlex: Function }} params
  * @returns {{ destroy: () => void }}
  */
 export function resize(node, params) {
   // Destructure params (will be updated via update method)
-  let { isSideBySide, isMobile, editor, elements } = params;
+  let { isSideBySide, isMobile, editor, elements, updateHeight, updateFlex, updateMobileFlex } = params;
   
   // State variables
   let startY, startX, startHeight, formAreaWidth;
   
   // Calculate and apply layout ratio for side-by-side mode
   function calculateAndApplySideBySideRatio(ratio = 0.5) {
-    // Get container dimensions
-    const containerWidth = elements.container.offsetWidth;
-    const handleWidth = elements.resizeHandle.offsetWidth;
-    const availableWidth = containerWidth - handleWidth;
+    // Apply the ratio via CSS custom properties
+    if (updateFlex) {
+      updateFlex(ratio, 1 - ratio);
+    }
     
-    // Calculate percentage distribution
-    const formAreaPercent = (ratio * availableWidth / containerWidth) * 100;
-    const previewAreaPercent = ((1 - ratio) * availableWidth / containerWidth) * 100;
-    
-    // Apply the calculated percentages
-    elements.formArea.style.flex = '0 0 ' + formAreaPercent + '%';
-    elements.previewArea.style.flex = '0 0 ' + previewAreaPercent + '%';
-    
-    return { formAreaPercent, previewAreaPercent };
+    return { ratio };
   }
   
   // Vertical resize function (for stacked mode)
@@ -56,11 +48,10 @@ export function resize(node, params) {
       const desiredFormHeight = positionWithinContainer;
       const formHeight = Math.min(Math.max(desiredFormHeight, minFormHeight), maxFormHeight);
       
-      // Apply fixed pixel heights to avoid percentage overflow issues
-      elements.formArea.style.flex = `0 0 ${formHeight}px`;
-      
-      // Preview fills remaining space (will automatically account for borders with flex)
-      elements.previewArea.style.flex = `1 1 0`;
+      // Update via CSS custom properties (storing as pixel heights for mobile)
+      if (updateMobileFlex) {
+        updateMobileFlex(`0 0 ${formHeight}px`, `1 1 0`);
+      }
       
       // Make sure CodeMirror refreshes to adjust to the new size
       if (editor) {
@@ -77,9 +68,9 @@ export function resize(node, params) {
         // Store the height preference
         localStorage.setItem('editorHeight', newHeight);
         
-        // Update the container height if in side-by-side mode
-        if (document.body.classList.contains('side-by-side')) {
-          elements.container.style.height = newHeight + 'px';
+        // Update the container height if in side-by-side mode via CSS custom property
+        if (document.body.classList.contains('side-by-side') && updateHeight) {
+          updateHeight(newHeight);
         }
       }
     }
@@ -233,6 +224,9 @@ export function resize(node, params) {
       isMobile = newParams.isMobile;
       editor = newParams.editor;
       elements = newParams.elements;
+      updateHeight = newParams.updateHeight;
+      updateFlex = newParams.updateFlex;
+      updateMobileFlex = newParams.updateMobileFlex;
     },
     destroy() {
       node.removeEventListener('mousedown', handleMouseDown);
