@@ -65,10 +65,16 @@ export function createLatexEditor(parentElement, onChange) {
     refresh: () => {
       // CM6 handles this automatically, but keep for compatibility
     },
-    setSize: () => {
-      // CM6 handles sizing via CSS, keep for compatibility
+    setSize: (width, height) => {
+      // CM6 handles sizing via CSS - set on parent element
+      if (height !== null) {
+        parentElement.style.height = `${height}px`;
+      }
+      if (width !== null) {
+        parentElement.style.width = `${width}px`;
+      }
     },
-    getWrapperElement: () => view.dom,
+    getWrapperElement: () => parentElement,
     destroy: () => view.destroy(),
     view
   };

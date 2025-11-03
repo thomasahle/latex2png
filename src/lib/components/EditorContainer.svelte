@@ -73,16 +73,15 @@
     }
   }
   
-  // Export editor instance for resize action
-  export function setEditorInstance(instance) {
-    editorInstance = instance;
+  function handleEditorReady(event) {
+    editorInstance = event.detail;
   }
 </script>
 
 <div class="editor-container" bind:this={containerElement}>
   <!-- Form area -->
   <div class="form-area" bind:this={formArea}>
-    <LatexEditor bind:editorInstance />
+    <LatexEditor on:editorReady={handleEditorReady} bind:editorInstance />
   </div>
   
   <!-- Resize handle -->

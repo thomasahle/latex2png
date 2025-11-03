@@ -11,7 +11,10 @@ const isMobileDevice = () => window.innerWidth < MOBILE_BREAKPOINT;
  * @param {{ isSideBySide: boolean, isMobile: boolean, editor: Object, elements: Object }} params
  * @returns {{ destroy: () => void }}
  */
-export function resize(node, { isSideBySide, isMobile, editor, elements }) {
+export function resize(node, params) {
+  // Destructure params (will be updated via update method)
+  let { isSideBySide, isMobile, editor, elements } = params;
+  
   // State variables
   let startY, startX, startHeight, formAreaWidth;
   
@@ -60,14 +63,16 @@ export function resize(node, { isSideBySide, isMobile, editor, elements }) {
       elements.previewArea.style.flex = `1 1 0`;
       
       // Make sure CodeMirror refreshes to adjust to the new size
-      requestAnimationFrame(() => {
-        editor.refresh();
-      });
+      if (editor) {
+        requestAnimationFrame(() => {
+          editor.refresh();
+        });
+      }
     } else {
       // Original desktop stacked mode behavior
       const newHeight = startHeight + currentY - startY;
       // Set minimum height to prevent editor from disappearing
-      if (newHeight >= 100) {
+      if (newHeight >= 100 && editor) {
         editor.setSize(null, newHeight);
         // Store the height preference
         localStorage.setItem('editorHeight', newHeight);
@@ -114,9 +119,11 @@ export function resize(node, { isSideBySide, isMobile, editor, elements }) {
       
       // For mobile or touch, request animation frame for smoother resizing
       if (isMobile || isTouch) {
-        requestAnimationFrame(() => {
-          editor.refresh();
-        });
+        if (editor) {
+          requestAnimationFrame(() => {
+            editor.refresh();
+          });
+        }
       }
     }
   }
@@ -148,7 +155,9 @@ export function resize(node, { isSideBySide, isMobile, editor, elements }) {
     }
     
     // Make sure the editor refreshes properly after resize
-    editor.refresh();
+    if (editor) {
+      editor.refresh();
+    }
   }
   
   // Stop resize functions
@@ -186,7 +195,9 @@ export function resize(node, { isSideBySide, isMobile, editor, elements }) {
         });
       } else {
         // For desktop stacked mode: use the traditional approach
-        startHeight = parseInt(getComputedStyle(editor.getWrapperElement()).height, 10);
+        if (editor) {
+          startHeight = parseInt(getComputedStyle(editor.getWrapperElement()).height, 10);
+        }
       }
     }
     
@@ -214,8 +225,15 @@ export function resize(node, { isSideBySide, isMobile, editor, elements }) {
   node.addEventListener('mousedown', handleMouseDown);
   node.addEventListener('touchstart', handleTouchStart, { passive: false });
   
-  // Return destroy method for cleanup
+  // Return destroy and update methods
   return {
+    update(newParams) {
+      // Update parameters when they change
+      isSideBySide = newParams.isSideBySide;
+      isMobile = newParams.isMobile;
+      editor = newParams.editor;
+      elements = newParams.elements;
+    },
     destroy() {
       node.removeEventListener('mousedown', handleMouseDown);
       node.removeEventListener('touchstart', handleTouchStart);

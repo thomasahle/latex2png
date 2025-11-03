@@ -2,6 +2,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { createLatexEditor } from '../../../js/editor.js';
   import { latexContent } from '../stores/content.js';
+  import { createEventDispatcher } from 'svelte';
+  
+  const dispatch = createEventDispatcher();
   
   export let editorInstance = null;
   
@@ -12,7 +15,8 @@
   onMount(() => {
     // Create CodeMirror editor
     editor = createLatexEditor(editorElement, handleChange);
-    editorInstance = editor; // Export for parent
+    editorInstance = editor;
+    dispatch('editorReady', editor);
     
     // Load content with delay to avoid LaTeX language mode race condition
     const urlParams = new URLSearchParams(window.location.search);
