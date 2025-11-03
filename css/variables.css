@@ -7,6 +7,7 @@
   --primary-color: #007bff;
   --primary-hover: #0056b3;
   --navbar-bg: #ffffff;
+  --navbar-color: #333;
   --handle-size: 24px; /* Mobile resize handle height */
   --action-row-height: 45px; /* Approximate height of action row with margins */
   --mobile-breakpoint: 768px;
@@ -22,4 +23,5 @@
   --primary-color: #4dabf7;
   --primary-hover: #339af0;
   --navbar-bg: #1a1a1a;
+  --navbar-color: #fff;
 }
