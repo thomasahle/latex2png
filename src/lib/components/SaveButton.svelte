@@ -41,7 +41,14 @@
         URL.revokeObjectURL(url);
       } else {
         // PNG/JPEG export
-        const canvas = await generateImage(previewElement, $zoom, null);
+        // For JPEG, use background color from preview area (no transparency)
+        let backgroundColor = null;
+        if (format === 'jpeg') {
+          const previewArea = document.querySelector('.preview-area');
+          backgroundColor = window.getComputedStyle(previewArea).backgroundColor;
+        }
+        
+        const canvas = await generateImage(previewElement, $zoom, backgroundColor);
         const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
         const extension = format === 'jpeg' ? 'jpg' : 'png';
         const dataUrl = canvas.toDataURL(mimeType);
