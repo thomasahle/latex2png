@@ -220,17 +220,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const containerHeight = elements.container.offsetHeight;
       const containerRect = elements.container.getBoundingClientRect();
       
-      // Calculate ratio based on current Y position relative to container
-      // This makes the handle follow the cursor exactly, rather than using delta
+      // Calculate position relative to container, accounting for handle
+      const handleHeight = elements.resizeHandle.offsetHeight;
       const positionWithinContainer = Math.max(0, Math.min(currentY - containerRect.top, containerHeight));
-      const formRatio = Math.min(Math.max(positionWithinContainer / containerHeight, 0.1), 0.9);
       
-      // Apply the new ratio
-      elements.formArea.style.flex = `0 0 ${formRatio * 100}%`;
+      // Clamp form height to reasonable bounds (20% to 80% of container minus handle)
+      const minFormHeight = containerHeight * 0.2;
+      const maxFormHeight = containerHeight * 0.8 - handleHeight;
+      const desiredFormHeight = positionWithinContainer;
+      const formHeight = Math.min(Math.max(desiredFormHeight, minFormHeight), maxFormHeight);
       
-      // Account for resize handle height - preview should fill remaining space
-      // Use flex-grow to fill remaining space after form area and handle
-      elements.previewArea.style.flex = `1 1 auto`;
+      // Apply fixed pixel heights to avoid percentage overflow issues
+      elements.formArea.style.flex = `0 0 ${formHeight}px`;
+      
+      // Preview fills remaining space (will automatically account for borders with flex)
+      elements.previewArea.style.flex = `1 1 0`;
       
       // Make sure CodeMirror refreshes to adjust to the new size
       requestAnimationFrame(() => {

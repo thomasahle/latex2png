@@ -93,6 +93,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: border-box;
   }
   
   .preview-area {
@@ -101,11 +102,31 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-sizing: border-box;
+    min-height: 0; /* Allow shrinking below default 200px on mobile */
   }
   
   .CodeMirror {
     flex: 1;
     height: auto !important;
+  }
+  
+  .codemirror-wrapper {
+    flex: 1;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  
+  .cm-editor {
+    min-height: 0 !important; /* Allow shrinking on mobile */
+  }
+  
+  .cm-scroller {
+    min-height: 0 !important; /* Allow shrinking on mobile */
+  }
+  
+  .cm-content {
+    min-height: 0 !important; /* Allow shrinking below default on mobile */
   }
   
   .preview-content {
