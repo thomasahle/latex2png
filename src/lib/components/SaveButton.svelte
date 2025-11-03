@@ -1,13 +1,15 @@
 <script>
   import { saveFormat } from '../stores/format.js';
-  import { latexContent } from '../stores/content.js';
   import { zoom } from '../stores/zoom.js';
   import { generateImage } from '../utils/image-generation.js';
   import { showToast } from '../utils/share.js';
+  import ButtonWithDropdown from './ButtonWithDropdown.svelte';
   
-  let dropdownOpen = false;
-  let formatDropdown;
-  let formatToggle;
+  const formatItems = [
+    { label: 'Save PNG', value: 'png' },
+    { label: 'Save JPEG', value: 'jpeg' },
+    { label: 'Save SVG', value: 'svg' }
+  ];
   
   const formatLabels = {
     png: 'Save PNG',
@@ -55,38 +57,18 @@
     }
   }
   
-  function handleSave() {
-    dropdownOpen = false;
-    saveImage();
-  }
-  
-  function toggleDropdown(e) {
-    e.stopPropagation();
-    dropdownOpen = !dropdownOpen;
-  }
-  
-  function selectFormat(format) {
+  function handleSelectFormat(format) {
     saveFormat.set(format);
-    dropdownOpen = false;
-  }
-  
-  function handleClickOutside(e) {
-    if (dropdownOpen && formatDropdown && !formatDropdown.contains(e.target) && !formatToggle.contains(e.target)) {
-      dropdownOpen = false;
-    }
   }
 </script>
 
-<svelte:window on:click={handleClickOutside} />
-
-<div class="save-container">
-  <button id="save-btn" class="primary-btn" on:click={handleSave}>{formatLabels[$saveFormat]}</button>
-  <button id="format-toggle" class="format-toggle" on:click={toggleDropdown} bind:this={formatToggle}>
-    <i class="ph ph-caret-down"></i>
-  </button>
-  <div id="format-dropdown" class="dropdown-content" class:show={dropdownOpen} bind:this={formatDropdown}>
-    <a href="#" on:click|preventDefault={() => selectFormat('png')}>Save PNG</a>
-    <a href="#" on:click|preventDefault={() => selectFormat('jpeg')}>Save JPEG</a>
-    <a href="#" on:click|preventDefault={() => selectFormat('svg')}>Save SVG</a>
-  </div>
-</div>
+<ButtonWithDropdown
+  buttonId="save-btn"
+  buttonClass="primary-btn"
+  buttonText={formatLabels[$saveFormat]}
+  toggleId="format-toggle"
+  dropdownId="format-dropdown"
+  items={formatItems}
+  onButtonClick={saveImage}
+  onSelect={handleSelectFormat}
+/>
