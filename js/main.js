@@ -90,7 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const latexParam = urlParams.get('latex');
   
   if (latexParam) {
-    cm6Editor.setValue(latexParam);
+    // Delay loading to avoid LaTeX language mode initialization race condition
+    // that causes backslashes to be incorrectly processed
+    setTimeout(() => {
+      cm6Editor.setValue(latexParam);
+    }, 100);
   } else {
     const savedContent = localStorage.getItem('latexContent');
     if (savedContent) {
