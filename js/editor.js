@@ -26,7 +26,7 @@ export function createLatexEditor(parentElement, onChange) {
         languageData: {
           autocomplete: latexCompletionSource
         },
-        enableLinting: false  // Disable linting - we're only editing LaTeX snippets
+        enableLinting: false
       }),
       syntaxHighlighting(latexHighlighting),
       autocompletion({
