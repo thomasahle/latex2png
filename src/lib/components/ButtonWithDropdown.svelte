@@ -23,7 +23,7 @@
     e.stopPropagation();
     dropdownOpen = !dropdownOpen;
     
-    if (!dropdownOpen) {
+    if (dropdownOpen) {
       // Opening - position the dropdown
       setTimeout(() => positionDropdown(), 10);
     }
