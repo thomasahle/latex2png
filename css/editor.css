@@ -109,7 +109,7 @@
   flex: 1;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: safe center;
   padding-top: 1rem;
 }
 

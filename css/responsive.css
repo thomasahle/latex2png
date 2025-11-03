@@ -44,6 +44,11 @@
     min-height: 100%; /* Ensure minimum height */
   }
   
+  .side-by-side .codemirror-wrapper {
+    height: 100% !important;
+    flex: 1;
+  }
+  
 }
 /* Mobile styles */
 @media (max-width: 767px) {
@@ -62,7 +67,7 @@
   }
   
   .container {
-    height: calc(100% - 2rem); /* 49px is navbar height */
+    height: calc(100vh - 52px); /* 52px is navbar height */
     margin: 0;
     max-width: 100%;
     display: flex;
@@ -179,5 +184,30 @@
   .resize-handle.dragging::before {
     background-color: var(--primary-color);
   }
+  
+  /* Compact mobile styles */
+  h1, .description .extra, .theme-toggle-text {
+    display: none;
+  }
+
+  .navbar-right {
+     gap: 0.5rem;
+   }
+  
+  .container {
+    padding: 0.25rem;
+    margin: 0 auto;
+  }
+  
+  .description {
+    margin-bottom: 0.25rem;
+  }
+  
+  .action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+  }
 }
-/* Extra small mobile styles */
