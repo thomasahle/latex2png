@@ -4,6 +4,9 @@
   function toggleTheme() {
     theme.toggle();
   }
+  
+  // Reactive icon based on current theme
+  $: iconClass = $theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars';
 </script>
 
 <nav class="navbar">
@@ -12,7 +15,7 @@
   </div>
   <div class="navbar-right">
     <div class="theme-toggle" on:click={toggleTheme}>
-      <i class="ph ph-moon-stars"></i>
+      <i class={iconClass}></i>
       <span class="theme-toggle-text">Toggle theme</span>
     </div>
     <a class="github-button"
