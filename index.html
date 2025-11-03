@@ -58,9 +58,6 @@
   <!-- MathJax -->
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
   
-  <!-- GitHub buttons -->
-  <script async defer src="https://buttons.github.io/buttons.js"></script>
-  
   <!-- Analytics (load last) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
   <script>
@@ -71,38 +68,6 @@
   </script>
 </head>
 <body>
-  <!-- Navbar in static HTML so GitHub buttons script can process it -->
-  <nav class="navbar">
-    <div class="navbar-left">
-      <span class="site-title">LaTeX to Image</span>
-    </div>
-    <div class="navbar-right">
-      <div class="theme-toggle" id="theme-toggle">
-        <i id="theme-icon" class="ph ph-moon-stars"></i>
-        <span class="theme-toggle-text">Toggle theme</span>
-      </div>
-      <span id="github-button-placeholder"></span>
-    </div>
-  </nav>
-  
-  <script>
-    // Inject GitHub button after page loads to avoid Vite transformation
-    document.addEventListener('DOMContentLoaded', () => {
-      const placeholder = document.getElementById('github-button-placeholder');
-      if (placeholder) {
-        const a = document.createElement('a');
-        a.className = 'github-button';
-        a.href = 'https://github.com/thomasahle/latex2png';
-        a.setAttribute('data-icon', 'octicon-star');
-        a.setAttribute('data-size', 'large');
-        a.setAttribute('data-show-count', 'true');
-        a.setAttribute('aria-label', 'Star thomasahle/latex2png on GitHub');
-        a.textContent = 'Star on Github';
-        placeholder.replaceWith(a);
-      }
-    });
-  </script>
-  
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
 </body>

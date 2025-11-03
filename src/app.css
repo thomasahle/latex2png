@@ -31,3 +31,46 @@ button i.ph {
 .github-button:defined {
   visibility: visible;
 }
+
+/* GitHub link styled to match vanilla widget */
+.github-link-styled {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: white;
+  color: #24292f;
+  text-decoration: none;
+  border: 1px solid rgba(27,31,36,0.15);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.github-link-styled:hover {
+  background: #f3f4f6;
+  border-color: rgba(27,31,36,0.2);
+}
+
+.github-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  background: rgba(175,184,193,0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+[data-theme="dark"] .github-link-styled {
+  background: #21262d;
+  color: #c9d1d9;
+  border-color: rgba(240,246,252,0.1);
+}
+
+[data-theme="dark"] .github-link-styled:hover {
+  background: #30363d;
+  border-color: rgba(240,246,252,0.2);
+}
