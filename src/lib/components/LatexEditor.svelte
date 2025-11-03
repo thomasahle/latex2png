@@ -10,7 +10,6 @@
   
   let editorElement;
   let editor;
-  let isInitialized = false;
   
   onMount(() => {
     // Create CodeMirror editor
@@ -18,37 +17,14 @@
     editorInstance = editor;
     dispatch('editorReady', editor);
     
-    // Load content with delay to avoid LaTeX language mode race condition
-    const urlParams = new URLSearchParams(window.location.search);
-    const latexParam = urlParams.get('latex');
-    
-    setTimeout(() => {
-      if (latexParam) {
-        editor.setValue(latexParam);
-      } else {
-        const savedContent = localStorage.getItem('latexContent');
-        if (savedContent) {
-          editor.setValue(savedContent);
-        }
-      }
-      
-      // Enable localStorage saving after initialization
-      setTimeout(() => {
-        isInitialized = true;
-        latexContent.markInitialized();
-      }, 500);
-    }, 100);
-    
-    // Subscribe to store changes (for setting examples)
+    // Subscribe to store changes (for setting content from store)
     const unsubscribe = latexContent.subscribe(value => {
-      if (editor && isInitialized && value !== editor.getValue()) {
+      if (editor && value !== editor.getValue()) {
         editor.setValue(value);
       }
     });
     
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   });
   
   function handleChange(text) {
@@ -63,7 +39,3 @@
 </script>
 
 <div class="codemirror-wrapper" bind:this={editorElement}></div>
-
-<style>
-  /* Component-specific styles if needed */
-</style>

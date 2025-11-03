@@ -15,9 +15,8 @@
   let editorInstance;
   
   $: isSideBySide = $layout === 'side-by-side' && !isMobileDevice();
-  $: isMobile = isMobileDevice();
   
-  // Apply layout class to body
+  // Apply layout class to body reactively
   $: {
     if (typeof document !== 'undefined') {
       if (isSideBySide) {
@@ -29,8 +28,12 @@
   }
   
   onMount(() => {
-    // Initialize layout
-    initLayout();
+    // Apply saved height for side-by-side mode
+    if (isSideBySide && containerElement) {
+      const savedHeight = localStorage.getItem('editorHeight') || '500';
+      const parsedHeight = Math.max(parseInt(savedHeight, 10), 400);
+      containerElement.style.height = parsedHeight + 'px';
+    }
     
     // Force editor refresh after delay
     setTimeout(() => {
@@ -49,30 +52,6 @@
     }, 50);
   });
   
-  function initLayout() {
-    // Always use stacked layout on mobile
-    if ($layout === 'side-by-side' && !isMobileDevice()) {
-      document.body.classList.add('side-by-side');
-      
-      // Apply saved height
-      const savedHeight = localStorage.getItem('editorHeight') || '500';
-      const parsedHeight = Math.max(parseInt(savedHeight, 10), 400);
-      
-      if (containerElement) {
-        containerElement.style.height = parsedHeight + 'px';
-      }
-      
-      // Apply saved ratio if available
-      const savedRatio = localStorage.getItem('sideRatio');
-      if (savedRatio) {
-        const ratio = parseFloat(savedRatio);
-        // Apply ratio logic here if needed
-      }
-    } else if (isMobileDevice()) {
-      document.body.classList.remove('side-by-side');
-    }
-  }
-  
   function handleEditorReady(event) {
     editorInstance = event.detail;
   }
@@ -88,7 +67,7 @@
   <div 
     class="resize-handle" 
     bind:this={resizeHandle}
-    use:resize={{ isSideBySide, isMobile, editor: editorInstance, elements: { formArea, previewArea, container: containerElement, resizeHandle } }}
+    use:resize={{ isSideBySide, isMobile: isMobileDevice(), editor: editorInstance, elements: { formArea, previewArea, container: containerElement, resizeHandle } }}
   ></div>
 
   <!-- Preview area -->

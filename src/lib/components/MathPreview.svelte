@@ -55,16 +55,9 @@
   
   const debouncedRender = debounce(renderLatex, 150);
   
-  // Reactive rendering
-  $: if (previewElement && window.MathJax?.typesetPromise) {
+  // Reactive rendering when content or zoom changes
+  $: if (previewElement && window.MathJax?.typesetPromise && ($latexContent || $zoom)) {
     debouncedRender();
-  }
-  
-  $: if ($latexContent || $zoom) {
-    // Trigger re-render when content or zoom changes
-    if (previewElement && window.MathJax?.typesetPromise) {
-      debouncedRender();
-    }
   }
   
   onMount(() => {
