@@ -18,12 +18,6 @@
       <i id="theme-toggle-icon" class={iconClass}></i>
       <span class="theme-toggle-text">Toggle theme</span>
     </div>
-    <a href="https://github.com/thomasahle/latex2png" 
-       target="_blank"
-       rel="noopener noreferrer"
-       class="github-link"
-       aria-label="Star thomasahle/latex2png on GitHub">
-      ⭐ Star on GitHub
-    </a>
+    {@html '<a class="github-button" href="https://github.com/thomasahle/latex2png" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star thomasahle/latex2png on GitHub">Star on Github</a>'}
   </div>
 </nav>

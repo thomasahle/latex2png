@@ -31,22 +31,3 @@ button i.ph {
 .github-button:defined {
   visibility: visible;
 }
-
-/* GitHub link styling (Svelte version - simple link instead of widget) */
-.github-link {
-  color: inherit;
-  text-decoration: none;
-  padding: 6px 12px;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-
-.github-link:hover {
-  background-color: rgba(255,255,255,0.1);
-}
-
-[data-theme="dark"] .github-link {
-  border-color: rgba(255,255,255,0.3);
-}
