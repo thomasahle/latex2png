@@ -181,38 +181,3 @@
   }
 }
 /* Extra small mobile styles */
-@media (max-width: 600px) {
-  h1, .description .extra, .theme-toggle-text {
-    display: none;
-  }
-
-  .navbar-right {
-     gap: 0.5rem;
-   }
-  
-  .container {
-    padding: 1rem;
-    margin: 0 auto;
-  }
-  
-  .action-row {
-    display: grid;
-    grid-template-columns: auto auto;
-    grid-template-rows: auto auto;
-    grid-gap: 1rem;
-    justify-items: start;
-  }
-  
-  #save-btn {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  
-  #twitter-share {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-  }
-  
-  /* Dropdown positioning is now handled by JavaScript */
-}
