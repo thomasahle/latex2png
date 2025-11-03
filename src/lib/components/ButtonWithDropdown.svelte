@@ -22,6 +22,34 @@
   function toggleDropdown(e) {
     e.stopPropagation();
     dropdownOpen = !dropdownOpen;
+    
+    if (!dropdownOpen) {
+      // Opening - position the dropdown
+      setTimeout(() => positionDropdown(), 10);
+    }
+  }
+  
+  function positionDropdown() {
+    if (!dropdownElement) return;
+    
+    // Get button and dropdown positions
+    const buttonRect = dropdownElement.parentElement?.getBoundingClientRect();
+    if (!buttonRect) return;
+    
+    const dropdownHeight = dropdownElement.offsetHeight;
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+    
+    // If not enough space below but enough above, open upward
+    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+      dropdownElement.style.bottom = '100%';
+      dropdownElement.style.top = 'auto';
+      dropdownElement.style.marginBottom = '0.5rem';
+    } else {
+      dropdownElement.style.bottom = 'auto';
+      dropdownElement.style.top = '100%';
+      dropdownElement.style.marginTop = '0.5rem';
+    }
   }
   
   function selectItem(value) {

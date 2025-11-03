@@ -10,9 +10,9 @@
 @import '../css/dark-mode.css';
 @import '../css/responsive.css';
 
-/* FOUC prevention */
-body { visibility: hidden; }
-body.loaded { visibility: visible; }
+/* FOUC prevention - only hide specific elements that flash, not the whole page */
+.codemirror-wrapper { opacity: 0; transition: opacity 0.1s; }
+body.loaded .codemirror-wrapper { opacity: 1; }
 
 /* Reserve space for icons */
 button i.ph {

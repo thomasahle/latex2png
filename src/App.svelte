@@ -1,30 +1,30 @@
 <script>
-  import { onMount, tick } from 'svelte';
-  import Navbar from './lib/components/Navbar.svelte';
+  import { onMount } from 'svelte';
+  import { theme } from './lib/stores/theme.js';
   import Description from './lib/components/Description.svelte';
   import EditorContainer from './lib/components/EditorContainer.svelte';
   import ActionButtons from './lib/components/ActionButtons.svelte';
   import Toast from './lib/components/Toast.svelte';
   
-  onMount(async () => {
+  onMount(() => {
     document.body.classList.add('loaded');
     
-    // Wait for navbar to render, then manually trigger GitHub buttons script
-    await tick();
+    // Wire up theme toggle to static navbar
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
     
-    // The GitHub buttons script looks for .github-button elements
-    // Since Svelte renders after the script loads, we need to manually process
-    // Check if the script loaded and manually create the button if needed
-    setTimeout(() => {
-      // The script replaces the <a> with an iframe, but since we load after,
-      // it won't auto-process. The vanilla version works because the button
-      // is in static HTML. For Svelte, the button will just show as a regular link,
-      // which is acceptable.
-    }, 100);
+    if (themeToggle && themeIcon) {
+      themeToggle.addEventListener('click', () => {
+        theme.toggle();
+      });
+      
+      // Update icon when theme changes
+      theme.subscribe(currentTheme => {
+        themeIcon.className = currentTheme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars';
+      });
+    }
   });
 </script>
-
-<Navbar />
 
 <div class="container">
   <Description />

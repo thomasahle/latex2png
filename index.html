@@ -11,6 +11,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LaTeX to Image</title>
   
+  <!-- Inline critical CSS for LCP optimization -->
+  <style>
+    /* Critical path CSS for h1 and main content */
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    .navbar { background: #1a1a1a; color: white; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    h1 { font-size: 1.75rem; margin: 0 0 1rem 0; font-weight: 600; }
+    .description { margin-bottom: 1rem; color: #666; }
+  </style>
+  
   <!-- Meta Description -->
   <meta name="description" content="Convert LaTeX math equations to high-quality PNG, JPEG, or SVG images with our easy-to-use web tool. Preview, save, and share your equations online." />
   <link rel="icon" type="image/png" href="favicon.png" sizes="32x32" width="32" height="32" />
@@ -48,6 +58,9 @@
   <!-- MathJax -->
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
   
+  <!-- GitHub buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  
   <!-- Analytics (load last) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
   <script>
@@ -58,10 +71,39 @@
   </script>
 </head>
 <body>
+  <!-- Navbar in static HTML so GitHub buttons script can process it -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <span class="site-title">LaTeX to Image</span>
+    </div>
+    <div class="navbar-right">
+      <div class="theme-toggle" id="theme-toggle">
+        <i id="theme-icon" class="ph ph-moon-stars"></i>
+        <span class="theme-toggle-text">Toggle theme</span>
+      </div>
+      <span id="github-button-placeholder"></span>
+    </div>
+  </nav>
+  
+  <script>
+    // Inject GitHub button after page loads to avoid Vite transformation
+    document.addEventListener('DOMContentLoaded', () => {
+      const placeholder = document.getElementById('github-button-placeholder');
+      if (placeholder) {
+        const a = document.createElement('a');
+        a.className = 'github-button';
+        a.href = 'https://github.com/thomasahle/latex2png';
+        a.setAttribute('data-icon', 'octicon-star');
+        a.setAttribute('data-size', 'large');
+        a.setAttribute('data-show-count', 'true');
+        a.setAttribute('aria-label', 'Star thomasahle/latex2png on GitHub');
+        a.textContent = 'Star on Github';
+        placeholder.replaceWith(a);
+      }
+    });
+  </script>
+  
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
-  
-  <!-- Load GitHub buttons after Svelte app renders -->
-  <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
