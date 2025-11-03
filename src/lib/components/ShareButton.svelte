@@ -52,13 +52,13 @@
 <svelte:window on:click={handleClickOutside} />
 
 <div class="share-container">
-  <button class="twitter-btn" on:click={handleShare}>
+  <button id="share-btn" class="twitter-btn" on:click={handleShare}>
     <i class="ph ph-share-network"></i>{methodLabels[$shareMethod]}
   </button>
-  <button class="share-toggle" on:click={toggleDropdown} bind:this={shareToggle}>
+  <button id="share-toggle" class="share-toggle" on:click={toggleDropdown} bind:this={shareToggle}>
     <i class="ph ph-caret-down"></i>
   </button>
-  <div class="dropdown-content" class:show={dropdownOpen} bind:this={shareDropdown}>
+  <div id="share-dropdown" class="dropdown-content" class:show={dropdownOpen} bind:this={shareDropdown}>
     <a href="#" on:click|preventDefault={() => selectMethod('link')}>Share Link</a>
     <a href="#" on:click|preventDefault={() => selectMethod('twitter')}>Share to Twitter</a>
     <a href="#" on:click|preventDefault={() => selectMethod('other')}>Share Image</a>
