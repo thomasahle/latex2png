@@ -48,9 +48,6 @@
   <!-- MathJax -->
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
   
-  <!-- Non-critical scripts -->
-  <script async defer src="https://buttons.github.io/buttons.js"></script>
-  
   <!-- Analytics (load last) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
   <script>
@@ -63,5 +60,8 @@
 <body>
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
+  
+  <!-- Load GitHub buttons after Svelte app renders -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
