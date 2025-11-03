@@ -52,6 +52,42 @@ export async function shareToTwitter(latexCode, generateImageFn) {
   }
 }
 
+export async function copyImage(generateImageFn) {
+  try {
+    const canvas = await generateImageFn(null);
+    
+    // Convert canvas to blob
+    const blob = await new Promise(resolve => {
+      canvas.toBlob(resolve, 'image/png');
+    });
+    
+    if (!blob) {
+      showToast("Failed to generate image");
+      return;
+    }
+    
+    // Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.write) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': blob
+          })
+        ]);
+        showToast("✓ Image copied to clipboard!");
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        showToast("Failed to copy image - try Share Image instead");
+      }
+    } else {
+      showToast("Clipboard not supported - use Share Image to download");
+    }
+  } catch (error) {
+    console.error("Error copying image:", error);
+    showToast("Failed to copy image");
+  }
+}
+
 export async function shareImage(generateImageFn) {
   try {
     const canvas = await generateImageFn(null);

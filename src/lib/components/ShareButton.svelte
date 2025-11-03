@@ -2,12 +2,13 @@
   import { shareMethod } from '../stores/format.js';
   import { latexContent } from '../stores/content.js';
   import { zoom } from '../stores/zoom.js';
-  import { shareLink, shareToTwitter, shareImage } from '../utils/share.js';
+  import { shareLink, shareToTwitter, shareImage, copyImage } from '../utils/share.js';
   import { generateImage } from '../utils/image-generation.js';
   import ButtonWithDropdown from './ButtonWithDropdown.svelte';
   
   const shareItems = [
     { label: 'Share Link', value: 'link' },
+    { label: 'Copy Image', value: 'copy' },
     { label: 'Share to Twitter', value: 'twitter' },
     { label: 'Share Image', value: 'other' }
   ];
@@ -25,6 +26,8 @@
     
     if (method === 'link') {
       await shareLink(latexCode);
+    } else if (method === 'copy') {
+      await copyImage(generateImageFn);
     } else if (method === 'twitter') {
       await shareToTwitter(latexCode, generateImageFn);
     } else if (method === 'other') {
