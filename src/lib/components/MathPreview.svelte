@@ -1,18 +1,21 @@
 <script>
+  import { onMount } from 'svelte';
   import { latexContent } from '../stores/content.js';
   import { zoom } from '../stores/zoom.js';
   import { debounce } from '../utils/debounce.js';
   
-  let previewElement = $state(null);
-  let lastRenderedLatex = $state('');
-  let lastRenderedZoom = $state(0);
+  let previewElement;
+  let lastRenderedLatex = '';
+  let lastRenderedZoom = 0;
   
   async function renderLatex(forceRender = false) {
     const latexCode = $latexContent.trim();
     const currentZoom = $zoom;
     
+    // Skip rendering if content and zoom are unchanged
     if (latexCode === lastRenderedLatex && currentZoom === lastRenderedZoom && !forceRender) return;
     
+    // Update tracking variables
     lastRenderedLatex = latexCode;
     lastRenderedZoom = currentZoom;
     
@@ -20,6 +23,7 @@
       previewElement.innerHTML = "$$\\text{intentionally blank}$$";
       await window.MathJax.typesetPromise([previewElement]);
       
+      // Apply zoom scaling
       const mjxContainers = previewElement.querySelectorAll('mjx-container');
       mjxContainers.forEach(el => {
         el.style.display = 'inline-block';
@@ -28,14 +32,17 @@
       return;
     }
     
+    // Auto-wrap if the content doesn't already have an environment
     const shouldWrap = !latexCode.includes('\\begin{') && !latexCode.includes('\\end{');
     const processedLatex = shouldWrap ? `\\begin{align}\n${latexCode}\n\\end{align}` : latexCode;
     
+    // Update the preview
     previewElement.innerHTML = `$$${processedLatex}$$`;
     
     try {
       await window.MathJax.typesetPromise([previewElement]);
       
+      // Apply zoom scaling to the preview
       const mjxContainers = previewElement.querySelectorAll('mjx-container');
       mjxContainers.forEach(el => {
         el.style.display = 'inline-block';
@@ -48,13 +55,13 @@
   
   const debouncedRender = debounce(renderLatex, 150);
   
-  $effect(() => {
-    if (previewElement && window.MathJax?.typesetPromise && ($latexContent || $zoom)) {
-      debouncedRender();
-    }
-  });
+  // Reactive rendering when content or zoom changes
+  $: if (previewElement && window.MathJax?.typesetPromise && ($latexContent || $zoom)) {
+    debouncedRender();
+  }
   
-  $effect(() => {
+  onMount(() => {
+    // Initial render when MathJax is ready
     if (window.MathJax && window.MathJax.typesetPromise) {
       renderLatex();
     } else {

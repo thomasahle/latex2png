@@ -2,7 +2,7 @@
   import { latexContent } from '../stores/content.js';
   import { latexExamples } from '../utils/examples.js';
   
-  let currentExampleIndex = $state(-1);
+  let currentExampleIndex = -1;
   
   function showExample(e) {
     e.preventDefault();
@@ -16,5 +16,5 @@
   <span class="extra">
     Simply type in your LaTeX below and watch the preview update in real time.
   </span>
-  Need inspiration? <a href="#" onclick={showExample}>Show example</a>.
+  Need inspiration? <a href="#" on:click={showExample}>Show example</a>.
 </p>

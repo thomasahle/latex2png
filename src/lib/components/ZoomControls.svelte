@@ -14,7 +14,7 @@
     max="5" 
     step="0.1" 
     value={$zoom}
-    oninput={handleZoomChange}
+    on:input={handleZoomChange}
     class="zoom-slider"
   >
 </div>

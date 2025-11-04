@@ -1,20 +1,17 @@
 <script>
-  let { 
-    buttonId, 
-    buttonClass, 
-    buttonText, 
-    toggleId,
-    dropdownId,
-    onButtonClick, 
-    items = [], 
-    onSelect,
-    icon
-  } = $props();
+  export let buttonId;
+  export let buttonClass;
+  export let buttonText;
+  export let toggleId;
+  export let dropdownId;
+  export let onButtonClick;
+  export let items = []; // Array of {label, value}
+  export let onSelect;
   
-  let dropdownOpen = $state(false);
-  let dropdownElement = $state(null);
-  let toggleElement = $state(null);
-  let isPositioned = $state(false);
+  let dropdownOpen = false;
+  let dropdownElement;
+  let toggleElement;
+  let isPositioned = false;
   
   function handleButtonClick() {
     dropdownOpen = false;
@@ -29,6 +26,7 @@
     if (!dropdownOpen) {
       dropdownOpen = true;
       isPositioned = false;
+      // Position immediately on next tick
       requestAnimationFrame(() => {
         positionDropdown();
         isPositioned = true;
@@ -41,12 +39,14 @@
   function positionDropdown() {
     if (!dropdownElement || !toggleElement) return;
     
+    // Get button position (using fixed positioning now)
     const buttonRect = toggleElement.getBoundingClientRect();
+    
     const dropdownHeight = dropdownElement.offsetHeight;
     const spaceBelow = window.innerHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
     
-    // Align horizontally
+    // Align horizontally: left for save button, right for share button
     if (buttonClass === 'primary-btn') {
       dropdownElement.style.left = buttonRect.left + 'px';
       dropdownElement.style.right = 'auto';
@@ -55,7 +55,7 @@
       dropdownElement.style.right = (window.innerWidth - buttonRect.right) + 'px';
     }
     
-    // Position vertically with gap
+    // Position vertically: above if not enough space below (with gap)
     const gap = 8;
     if (spaceBelow < dropdownHeight + gap && spaceAbove > dropdownHeight + gap) {
       dropdownElement.style.bottom = (window.innerHeight - buttonRect.top + gap) + 'px';
@@ -84,18 +84,18 @@
   }
 </script>
 
-<svelte:window onclick={handleClickOutside} />
+<svelte:window on:click={handleClickOutside} />
 
 <div class="{buttonClass === 'primary-btn' ? 'save' : 'share'}-container">
-  <button id={buttonId} class={buttonClass} onclick={handleButtonClick}>
-    {#if icon}{@render icon()}{/if}{buttonText}
+  <button id={buttonId} class={buttonClass} on:click={handleButtonClick}>
+    <slot name="icon"></slot>{buttonText}
   </button>
-  <button id={toggleId} class="{buttonClass === 'primary-btn' ? 'format' : 'share'}-toggle" onclick={toggleDropdown} bind:this={toggleElement}>
+  <button id={toggleId} class="{buttonClass === 'primary-btn' ? 'format' : 'share'}-toggle" on:click={toggleDropdown} bind:this={toggleElement}>
     <i class="ph ph-caret-down"></i>
   </button>
   <div id={dropdownId} class="dropdown-content" class:show={dropdownOpen && isPositioned} bind:this={dropdownElement} style:visibility={dropdownOpen && !isPositioned ? 'hidden' : 'visible'}>
     {#each items as item}
-      <a href="#" onclick={(e) => { e.preventDefault(); selectItem(item.value); }}>{item.label}</a>
+      <a href="#" on:click|preventDefault={() => selectItem(item.value)}>{item.label}</a>
     {/each}
   </div>
 </div>
