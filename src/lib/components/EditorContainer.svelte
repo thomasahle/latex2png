@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { layout } from '../stores/layout.js';
   import { isMobileDevice } from '../utils/constants.js';
   import LatexEditor from './LatexEditor.svelte';
@@ -8,23 +7,21 @@
   import LayoutToggle from './LayoutToggle.svelte';
   import { resize } from '../actions/resize.js';
   
-  let resizeHandle;
-  let containerElement;
-  let formArea;
-  let previewArea;
-  let editorInstance;
+  let resizeHandle = $state(null);
+  let containerElement = $state(null);
+  let formArea = $state(null);
+  let previewArea = $state(null);
+  let editorInstance = $state(null);
   
-  // CSS custom properties for dynamic sizing
-  let containerHeight = 'calc(100vh - 310px)';
-  let formAreaFlex = '1';
-  let previewAreaFlex = '1';
-  let mobileFormFlex = '0 0 40%';
-  let mobilePreviewFlex = '1 1 0';
+  let containerHeight = $state('calc(100vh - 310px)');
+  let formAreaFlex = $state('1');
+  let previewAreaFlex = $state('1');
+  let mobileFormFlex = $state('0 0 40%');
+  let mobilePreviewFlex = $state('1 1 0');
   
-  $: isSideBySide = $layout === 'side-by-side' && !isMobileDevice();
+  let isSideBySide = $derived($layout === 'side-by-side' && !isMobileDevice());
   
-  // Apply layout class to body reactively
-  $: {
+  $effect(() => {
     if (typeof document !== 'undefined') {
       if (isSideBySide) {
         document.body.classList.add('side-by-side');
@@ -32,10 +29,9 @@
         document.body.classList.remove('side-by-side');
       }
     }
-  }
+  });
   
-  // Load saved dimensions
-  $: {
+  $effect(() => {
     if (isSideBySide) {
       const savedHeight = localStorage.getItem('editorHeight');
       if (savedHeight) {
@@ -51,10 +47,9 @@
         previewAreaFlex = `${1 - ratio}`;
       }
     }
-  }
+  });
   
-  onMount(() => {
-    // Force editor refresh after delay
+  $effect(() => {
     setTimeout(() => {
       if (editorInstance) {
         editorInstance.refresh();
@@ -66,7 +61,6 @@
     editorInstance = event.detail;
   }
   
-  // Functions for resize action to update CSS variables
   function updateMobileFlex(formFlex, previewFlex) {
     mobileFormFlex = formFlex;
     mobilePreviewFlex = previewFlex;
@@ -84,7 +78,7 @@
 >
   <!-- Form area -->
   <div class="form-area" bind:this={formArea}>
-    <LatexEditor on:editorReady={handleEditorReady} bind:editorInstance />
+    <LatexEditor bind:editorInstance oneditorReady={handleEditorReady} />
   </div>
   
   <!-- Resize handle -->

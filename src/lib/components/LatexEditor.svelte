@@ -1,21 +1,19 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
   import { createLatexEditor } from '../../../js/editor.js';
   import { latexContent } from '../stores/content.js';
-  import { createEventDispatcher } from 'svelte';
   
-  const dispatch = createEventDispatcher();
+  let { editorInstance = $bindable(null), oneditorReady } = $props();
   
-  export let editorInstance = null;
+  let editorElement = $state(null);
+  let editor = $state(null);
   
-  let editorElement;
-  let editor;
-  
-  onMount(() => {
+  $effect(() => {
     // Create CodeMirror editor
     editor = createLatexEditor(editorElement, handleChange);
     editorInstance = editor;
-    dispatch('editorReady', editor);
+    if (oneditorReady) {
+      oneditorReady({ detail: editor });
+    }
     
     // Subscribe to store changes (for setting content from store)
     const unsubscribe = latexContent.subscribe(value => {
@@ -24,18 +22,17 @@
       }
     });
     
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (editor) {
+        editor.destroy();
+      }
+    };
   });
   
   function handleChange(text) {
     latexContent.set(text);
   }
-  
-  onDestroy(() => {
-    if (editor) {
-      editor.destroy();
-    }
-  });
 </script>
 
 <div class="codemirror-wrapper" bind:this={editorElement}></div>

@@ -6,7 +6,7 @@
   }
 </script>
 
-<div class="layout-toggle" on:click={toggleLayout} title="Toggle layout orientation">
+<div class="layout-toggle" onclick={toggleLayout} title="Toggle layout orientation">
   <i class="ph ph-square-split-horizontal layout-toggle-icon-horizontal"></i>
   <i class="ph ph-square-split-vertical layout-toggle-icon-vertical"></i>
 </div>

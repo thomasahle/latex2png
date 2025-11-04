@@ -1,5 +1,4 @@
 <script>
-  import { saveFormat } from '../stores/format.js';
   import { zoom } from '../stores/zoom.js';
   import { generateImage } from '../utils/image-generation.js';
   import { showToast } from '../utils/share.js';
@@ -11,13 +10,7 @@
     { label: 'Save SVG', value: 'svg' }
   ];
   
-  const formatLabels = {
-    png: 'Save PNG',
-    jpeg: 'Save JPEG',
-    svg: 'Save SVG'
-  };
-  
-  async function saveImage(format = $saveFormat) {
+  async function saveImage(format = 'png') {
     const previewElement = document.getElementById('preview');
     
     try {
@@ -103,13 +96,10 @@
   }
   
   function handleSelectFormat(format) {
-    // In vanilla, selecting a format immediately saves
-    // Don't update the store, just save with that format
     saveImage(format);
   }
   
   function handleSaveClick() {
-    // Main button always saves as PNG (vanilla behavior)
     saveImage('png');
   }
 </script>

@@ -1,26 +1,24 @@
 <script>
-  import { onMount } from 'svelte';
   import { theme } from '../stores/theme.js';
   
-  let starCount = '';
+  let starCount = $state('');
   
   function toggleTheme() {
     theme.toggle();
   }
   
-  // Reactive icon based on current theme
-  $: iconClass = $theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars';
+  let iconClass = $derived($theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars');
   
-  onMount(async () => {
-    // Fetch actual star count from GitHub API
-    try {
-      const response = await fetch('https://api.github.com/repos/thomasahle/latex2png');
-      const data = await response.json();
-      starCount = data.stargazers_count || '';
-    } catch (error) {
-      console.error('Failed to fetch star count:', error);
-      // Leave empty if fetch fails
-    }
+  $effect(() => {
+    (async () => {
+      try {
+        const response = await fetch('https://api.github.com/repos/thomasahle/latex2png');
+        const data = await response.json();
+        starCount = data.stargazers_count || '';
+      } catch (error) {
+        console.error('Failed to fetch star count:', error);
+      }
+    })();
   });
 </script>
 
@@ -29,7 +27,7 @@
     <span class="site-title">LaTeX to Image</span>
   </div>
   <div class="navbar-right">
-    <div class="theme-toggle" on:click={toggleTheme}>
+    <div class="theme-toggle" onclick={toggleTheme}>
       <i id="theme-toggle-icon" class={iconClass}></i>
       <span class="theme-toggle-text">Toggle theme</span>
     </div>
