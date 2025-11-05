@@ -31,6 +31,7 @@
     class:md:p-8={!$fullscreen}
     class:md:block={!$fullscreen}
     class:border={!$fullscreen}
+    class:border-border={!$fullscreen}
   >
     {#if !$fullscreen}
       <h1 class="hidden md:block text-[1.5rem] font-medium mb-4 font-serif">

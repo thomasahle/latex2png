@@ -44,6 +44,9 @@
           ".ͼb": {
             color: "#00aa00",
           },
+          ".cm-cursor": {
+            borderLeftColor: "currentColor",
+          },
         }),
       ],
     });

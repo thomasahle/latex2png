@@ -6,6 +6,9 @@ export default {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
+      borderColor: {
+        DEFAULT: "hsl(var(--border) / <alpha-value>)",
+      },
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'sans-serif'],
         serif: ['serif'],

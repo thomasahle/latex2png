@@ -15,7 +15,7 @@
 
   // Styling helpers
   const handleBase =
-    "border flex items-center justify-center relative bg-slate-50 dark:bg-background " +
+    "border border-border flex items-center justify-center relative bg-slate-50 dark:bg-background " +
     "hover:bg-black/[0.02] dark:hover:bg-white/[0.05] active:bg-black/[0.05] dark:active:bg-white/[0.1] " +
     "select-none touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
 
@@ -35,6 +35,7 @@
 <div
   class="relative"
   class:border={!$fullscreen}
+  class:border-border={!$fullscreen}
   class:flex-1={$fullscreen}
   class:mb-0={true}
   class:h-[500px]={!$fullscreen}
