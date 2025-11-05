@@ -7,7 +7,7 @@
 </script>
 
 <nav class="border-b bg-card font-sans">
-  <div class="container mx-auto py-3 px-3 flex items-center justify-between">
+  <div class="mx-auto py-3 px-3 md:px-8 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <span class="text-lg inline md:hidden">LaTeX</span>
       <span class="text-lg hidden md:inline">LaTeX to Image</span>

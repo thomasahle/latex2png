@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import { layout } from "../stores/layout.js";
   import { fullscreen } from "../stores/fullscreen.js";
   import LatexEditor from "./LatexEditor.svelte";
@@ -11,6 +12,25 @@
   let direction = $derived(
     $layout === "side-by-side" ? "horizontal" : "vertical",
   );
+  
+  // Force stacked layout on mobile
+  onMount(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    
+    const handleResize = (e) => {
+      if (e.matches && $layout === 'side-by-side') {
+        layout.set('stacked');
+      }
+    };
+    
+    // Check on mount
+    if (mediaQuery.matches && $layout === 'side-by-side') {
+      layout.set('stacked');
+    }
+    
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  });
 
   // Styling helpers
   const handleBase =
