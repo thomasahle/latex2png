@@ -1,79 +1,61 @@
 <script>
-  import { onMount } from 'svelte';
-  import { latexContent } from '../stores/content.js';
-  import { zoom } from '../stores/zoom.js';
-  import { debounce } from '../utils/debounce.js';
-  
-  let previewElement;
-  let lastRenderedLatex = '';
-  let lastRenderedZoom = 0;
-  
-  async function renderLatex(forceRender = false) {
-    const latexCode = $latexContent.trim();
-    const currentZoom = $zoom;
-    
-    // Skip rendering if content and zoom are unchanged
-    if (latexCode === lastRenderedLatex && currentZoom === lastRenderedZoom && !forceRender) return;
-    
-    // Update tracking variables
-    lastRenderedLatex = latexCode;
-    lastRenderedZoom = currentZoom;
-    
-    if (!latexCode) {
-      previewElement.innerHTML = "$$\\text{intentionally blank}$$";
-      await window.MathJax.typesetPromise([previewElement]);
-      
-      // Apply zoom scaling
-      const mjxContainers = previewElement.querySelectorAll('mjx-container');
-      mjxContainers.forEach(el => {
-        el.style.display = 'inline-block';
-        el.style.fontSize = `${currentZoom * 100}%`;
+  import { onMount } from "svelte";
+  import { latexContent } from "../stores/content.js";
+  import { zoom } from "../stores/zoom.js";
+
+  let previewElement = $state(null);
+
+  function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  const renderMath = debounce((latex) => {
+    if (!previewElement || typeof window === "undefined" || !window.MathJax)
+      return;
+
+    const container = previewElement;
+    container.innerHTML = "";
+
+    if (!latex || latex.trim() === "") {
+      const blankEl = document.createElement("div");
+      blankEl.textContent = "\\[\\text{intentionally blank}\\]";
+      container.appendChild(blankEl);
+      window.MathJax.typesetPromise([container]).catch((err) => {
+        console.error("MathJax error:", err);
       });
       return;
     }
-    
-    // Auto-wrap if the content doesn't already have an environment
-    const shouldWrap = !latexCode.includes('\\begin{') && !latexCode.includes('\\end{');
-    const processedLatex = shouldWrap ? `\\begin{align}\n${latexCode}\n\\end{align}` : latexCode;
-    
-    // Update the preview
-    previewElement.innerHTML = `$$${processedLatex}$$`;
-    
-    try {
-      await window.MathJax.typesetPromise([previewElement]);
-      
-      // Apply zoom scaling to the preview
-      const mjxContainers = previewElement.querySelectorAll('mjx-container');
-      mjxContainers.forEach(el => {
-        el.style.display = 'inline-block';
-        el.style.fontSize = `${currentZoom * 100}%`;
-      });
-    } catch (error) {
-      console.error('Error rendering LaTeX:', error);
-    }
-  }
-  
-  const debouncedRender = debounce(renderLatex, 150);
-  
-  // Reactive rendering when content or zoom changes
-  $: if (previewElement && window.MathJax?.typesetPromise && ($latexContent || $zoom)) {
-    debouncedRender();
-  }
-  
+
+    const mathEl = document.createElement("div");
+    const hasAlignment = latex.includes("&") || latex.includes("\\\\");
+    mathEl.textContent = hasAlignment
+      ? "\\[\\begin{aligned}" + latex + "\\end{aligned}\\]"
+      : "\\[" + latex + "\\]";
+    container.appendChild(mathEl);
+
+    window.MathJax.typesetPromise([container]).catch((err) => {
+      console.error("MathJax error:", err);
+      container.innerHTML = '<p class="text-red-500">Error rendering LaTeX</p>';
+    });
+  }, 300);
+
+  let unsubscribe;
   onMount(() => {
-    // Initial render when MathJax is ready
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      renderLatex();
-    } else {
-      window.addEventListener('load', () => {
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          renderLatex();
-        }
-      });
-    }
+    unsubscribe = latexContent.subscribe((value) => {
+      renderMath(value);
+    });
+
+    return unsubscribe;
   });
 </script>
 
-<div class="preview-content">
-  <div id="preview" bind:this={previewElement}></div>
+<div
+  class="preview-content h-full overflow-auto"
+  style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 2rem;"
+>
+  <div id="math-preview" style="zoom: {$zoom};" bind:this={previewElement}></div>
 </div>
