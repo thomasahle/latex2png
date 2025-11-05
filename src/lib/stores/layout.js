@@ -6,6 +6,30 @@ function createLayoutStore() {
   })();
 
   const { subscribe, set, update } = writable(savedLayout);
+  
+  // Force stacked layout on mobile
+  if (typeof window !== 'undefined') {
+    const mediaQuery = window.matchMedia('(max-width: 639px)');
+    
+    const handleResize = (e) => {
+      if (e.matches) {
+        update(current => {
+          if (current === 'side-by-side') {
+            localStorage.setItem('layout', 'stacked');
+            return 'stacked';
+          }
+          return current;
+        });
+      }
+    };
+    
+    // Check on init
+    if (mediaQuery.matches) {
+      set('stacked');
+    }
+    
+    mediaQuery.addEventListener('change', handleResize);
+  }
 
   return {
     subscribe,
