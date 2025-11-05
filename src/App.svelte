@@ -23,8 +23,6 @@
   <div
     class="mx-auto max-w-full my-0 bg-card text-card-foreground border flex flex-col overflow-hidden"
     class:h-[calc(100vh-52px)]={$fullscreen}
-    class:md:max-w-[900px]={!$fullscreen}
-    class:md:max-w-[1200px]={$layout === "side-by-side" && !$fullscreen}
     class:md:h-auto={!$fullscreen}
     class:md:my-8={!$fullscreen}
     class:md:rounded-lg={!$fullscreen}
