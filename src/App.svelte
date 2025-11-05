@@ -21,7 +21,10 @@
   <Navbar />
 
   <div
-    class="mx-auto max-w-full my-0 bg-card text-card-foreground border flex flex-col overflow-hidden"
+    class="mx-auto my-0 bg-card text-card-foreground border flex flex-col overflow-hidden"
+    class:max-w-full={true}
+    class:md:max-w-[900px]={!$fullscreen && $layout === 'stacked'}
+    class:md:max-w-[1200px]={!$fullscreen && $layout === 'side-by-side'}
     class:h-[calc(100vh-52px)]={$fullscreen}
     class:md:h-auto={!$fullscreen}
     class:md:my-8={!$fullscreen}
