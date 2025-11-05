@@ -1,16 +1,18 @@
 <script>
   import { Button } from "$lib/components/ui/button";
   import { onMount } from "svelte";
-  
+
   let stars = $state(16);
-  
+
   onMount(async () => {
     try {
-      const res = await fetch('https://api.github.com/repos/thomasahle/latex2png');
+      const res = await fetch(
+        "https://api.github.com/repos/thomasahle/latex2png",
+      );
       const data = await res.json();
       stars = data.stargazers_count || 16;
     } catch (e) {
-      console.error('Failed to fetch star count:', e);
+      console.error("Failed to fetch star count:", e);
     }
   });
 </script>

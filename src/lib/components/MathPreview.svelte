@@ -54,8 +54,12 @@
 </script>
 
 <div
-  class="preview-content h-full overflow-auto"
-  style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 2rem;"
+  class="h-full overflow-auto"
+  style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 1rem;"
 >
-  <div id="math-preview" style="zoom: {$zoom};" bind:this={previewElement}></div>
+  <div
+    id="math-preview"
+    style="zoom: {$zoom};"
+    bind:this={previewElement}
+  ></div>
 </div>

@@ -41,6 +41,9 @@
           "&.cm-editor.cm-focused": {
             outline: "1px solid #aaaaff",
           },
+          ".ͼb": {
+            color: "#00aa00",
+          },
         }),
       ],
     });

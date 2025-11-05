@@ -3,17 +3,12 @@
   import ThemeToggle from "./ThemeToggle.svelte";
   import GitHubButton from "./GitHubButton.svelte";
   import ShareButton from "./ShareButton.svelte";
-  import SaveButton from "./SaveButton.svelte";
 </script>
 
-<nav class="border-b bg-card font-sans">
+<nav class="border-b bg-card font-sans flex-none">
   <div class="mx-auto py-3 px-3 md:px-8 flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <span class="text-lg inline md:hidden">LaTeX</span>
-      <span class="text-lg hidden md:inline">LaTeX to Image</span>
-
-      <div class="md:hidden"><SaveButton compact /></div>
-      <div class="hidden md:flex"><SaveButton /></div>
+      <span class="font-serif mr-2">LaTeX to Image</span>
     </div>
 
     <div class="flex items-center gap-2">

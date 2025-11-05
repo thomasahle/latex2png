@@ -21,23 +21,24 @@
   <Navbar />
 
   <div
-    class="mx-auto my-0 bg-card text-card-foreground border flex flex-col overflow-hidden"
+    class="mx-auto flex flex-1 flex-col my-0 bg-card text-card-foreground"
     class:max-w-full={true}
-    class:md:max-w-[900px]={!$fullscreen && $layout === 'stacked'}
-    class:md:max-w-[1200px]={!$fullscreen && $layout === 'side-by-side'}
-    class:h-[calc(100vh-52px)]={$fullscreen}
-    class:md:h-auto={!$fullscreen}
+    class:md:max-w-[900px]={!$fullscreen}
+    class:h-[calc(100vh-62px)]={$fullscreen}
+    class:h-auto={!$fullscreen}
     class:md:my-8={!$fullscreen}
     class:md:rounded-lg={!$fullscreen}
-    class:p-1={!$fullscreen}
     class:md:p-8={!$fullscreen}
     class:md:block={!$fullscreen}
+    class:border={!$fullscreen}
   >
     {#if !$fullscreen}
-      <h1 class="hidden md:block text-[1.5rem] font-medium mb-4">
+      <h1 class="hidden md:block text-[1.5rem] font-medium mb-4 font-serif">
         Convert LaTeX math equations to PNG/JPEG/SVG images
       </h1>
-      <p class="leading-[1.4] mb-1 md:mb-2 text-muted-foreground px-2 md:px-0">
+      <p
+        class="mb-1 md:mb-2 text-muted-foreground px-2 md:px-0 text-sm font-serif"
+      >
         <span class="hidden sm:inline"
           >Simply type in your LaTeX below and watch the preview update in real
           time.

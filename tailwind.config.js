@@ -8,7 +8,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'sans-serif'],
-        serif: ['system-ui', '-apple-system', 'sans-serif'],
+        serif: ['serif'],
       },
       colors: {
         border: "hsl(var(--border) / <alpha-value>)",

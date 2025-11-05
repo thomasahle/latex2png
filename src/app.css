@@ -47,12 +47,17 @@
     --input: 0 0% 20%;
     --ring: 0 0% 83.1%;
   }
-  
+
   [data-theme="dark"] nav {
     background-color: #1a1a1a !important;
   }
-  
+
   [data-theme="dark"] .cm-editor {
     background-color: #333 !important;
+  }
+
+  .font-serif {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
