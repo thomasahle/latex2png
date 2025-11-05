@@ -51,4 +51,8 @@
   [data-theme="dark"] nav {
     background-color: #1a1a1a !important;
   }
+  
+  [data-theme="dark"] .cm-editor {
+    background-color: #333 !important;
+  }
 }

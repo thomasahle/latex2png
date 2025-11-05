@@ -14,18 +14,18 @@
 
   // Styling helpers
   const handleBase =
-    "flex items-center justify-center relative bg-slate-50 " +
-    "hover:bg-black/[0.02] active:bg-black/[0.05] " +
+    "flex items-center justify-center relative bg-slate-50 dark:bg-background " +
+    "hover:bg-black/[0.02] dark:hover:bg-white/[0.05] active:bg-black/[0.05] dark:active:bg-white/[0.1] " +
     "select-none touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
 
   const handleVertical =
     "!h-4 cursor-ns-resize " +
-    "before:content-[''] before:absolute before:w-[40px] before:h-[4px] before:bg-border before:rounded-sm " +
+    "before:content-[''] before:absolute before:w-[60px] before:h-[6px] before:bg-border before:rounded-sm " +
     "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
 
   const handleHorizontal =
     "!w-4 cursor-ew-resize " +
-    "before:content-[''] before:absolute before:h-[40px] before:w-[4px] before:bg-border before:rounded-sm " +
+    "before:content-[''] before:absolute before:h-[60px] before:w-[6px] before:bg-border before:rounded-sm " +
     "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
 </script>
 
