@@ -38,7 +38,7 @@
     --secondary: 0 0% 20%;
     --secondary-foreground: 0 0% 93.3%;
     --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 60%;
+    --muted-foreground: 0 0% 40%;
     --accent: 0 0% 20%;
     --accent-foreground: 0 0% 93.3%;
     --destructive: 0 62.8% 30.6%;
@@ -46,5 +46,9 @@
     --border: 0 0% 33.3%;
     --input: 0 0% 20%;
     --ring: 0 0% 83.1%;
+  }
+  
+  [data-theme="dark"] nav {
+    background-color: #1a1a1a !important;
   }
 }
