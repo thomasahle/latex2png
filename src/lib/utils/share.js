@@ -1,12 +1,13 @@
 import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
+import { get } from "svelte/store";
+import { latexContent } from "../stores/content.js";
 
 const IS_SECURE = window.isSecureContext;
 
 // ---------- helpers ----------
 function getLatexCode() {
-  const el = document.querySelector(".cm-content");
-  return el?.textContent ?? "";
+  return get(latexContent);
 }
 
 async function nextFrame() {
@@ -99,7 +100,6 @@ async function renderCanvas(previewElement, scaleOverride) {
 
 // ---------- public API ----------
 export async function shareLink(options = {}) {
-  // FIXME: The line breaks in the LaTeX code are not preserved correctly in the URL.
   const url = await buildShareUrl(options);
   try {
     if (IS_SECURE && navigator.clipboard?.writeText) {
