@@ -10,7 +10,7 @@
   let { compact = false } = $props();
 
   const items = [
-    { label: "Share Link", action: shareLink },
+    { label: "Copy Link", action: shareLink },
     { label: "Copy Image", action: copyImage },
     { label: "Share to Twitter", action: shareToTwitter },
     { label: "Share Image", action: shareImage },
