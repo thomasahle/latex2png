@@ -1,12 +1,17 @@
 <script>
-  import { layout } from '../stores/layout.js';
-  
-  function toggleLayout() {
-    layout.toggle();
-  }
+  import { layout } from "../stores/layout.js";
+  import { Button } from "$lib/components/ui/button";
 </script>
 
-<div class="layout-toggle" on:click={toggleLayout} title="Toggle layout orientation">
-  <i class="ph ph-square-split-horizontal layout-toggle-icon-horizontal"></i>
-  <i class="ph ph-square-split-vertical layout-toggle-icon-vertical"></i>
-</div>
+<Button
+  variant="secondary"
+  size="icon"
+  aria-label="Toggle layout orientation"
+  onclick={() => layout.toggle()}
+>
+  {#if $layout === "stacked"}
+    <i class="ph ph-square-split-horizontal"></i>
+  {:else}
+    <i class="ph ph-square-split-vertical"></i>
+  {/if}
+</Button>

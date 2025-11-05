@@ -9,8 +9,17 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@internationalized/date": "^3.10.0",
+    "@lucide/svelte": "^0.544.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
+    "autoprefixer": "^10.4.21",
+    "bits-ui": "^2.14.2",
+    "paneforge": "^1.0.2",
+    "postcss": "^8.5.6",
     "svelte": "^5.43.2",
+    "tailwind-variants": "^3.1.1",
+    "tailwindcss": "^3.4.18",
+    "tailwindcss-animate": "^1.0.7",
     "vite": "^6.4.1"
   },
   "dependencies": {
@@ -21,9 +30,18 @@
     "@codemirror/view": "^6.0.0",
     "@floating-ui/dom": "^1.7.4",
     "@lezer/highlight": "^1.0.0",
+    "@sveltejs/mcp": "^0.1.11",
+    "clsx": "^2.1.1",
     "codemirror": "^6.0.1",
     "codemirror-lang-latex": "^0.2.0",
     "html2canvas": "^1.4.1",
-    "svelte-codemirror-editor": "^2.1.0"
+    "jspdf": "^3.0.3",
+    "n": "^10.2.0",
+    "shadcn-svelte": "^1.0.10",
+    "svelte-codemirror-editor": "^2.1.0",
+    "svelte-sonner": "^1.0.5",
+    "svg2pdf.js": "^2.6.0",
+    "tabbable": "^6.3.0",
+    "tailwind-merge": "^3.3.1"
   }
 }

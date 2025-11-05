@@ -2,29 +2,21 @@ import { writable } from 'svelte/store';
 
 function createLayoutStore() {
   const savedLayout = (() => {
-    try {
-      return localStorage.getItem('layout') || 'stacked';
-    } catch {
-      return 'stacked';
-    }
+    return localStorage.getItem('layout') || 'stacked';
   })();
-  
+
   const { subscribe, set, update } = writable(savedLayout);
-  
+
   return {
     subscribe,
     set: (value) => {
       set(value);
-      try {
-        localStorage.setItem('layout', value);
-      } catch {}
+      localStorage.setItem('layout', value);
     },
     toggle: () => {
       update(value => {
         const next = value === 'side-by-side' ? 'stacked' : 'side-by-side';
-        try {
-          localStorage.setItem('layout', next);
-        } catch {}
+        localStorage.setItem('layout', next);
         return next;
       });
     }

@@ -3,13 +3,13 @@ import { writable } from 'svelte/store';
 function createContentStore() {
   const { subscribe, set, update } = writable('');
   let initialized = false;
-  
+
   // Initialize content from URL or localStorage with delay to avoid race condition
   if (typeof window !== 'undefined') {
     setTimeout(() => {
       const urlParams = new URLSearchParams(window.location.search);
       const latexParam = urlParams.get('latex');
-      
+
       if (latexParam) {
         set(latexParam);
       } else {
@@ -18,14 +18,14 @@ function createContentStore() {
           set(savedContent);
         }
       }
-      
+
       // Enable localStorage saving after initialization
       setTimeout(() => {
         initialized = true;
       }, 500);
     }, 100);
   }
-  
+
   return {
     subscribe,
     set: (value) => {
