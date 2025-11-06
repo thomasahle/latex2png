@@ -1,6 +1,7 @@
 <script>
   import { Button } from "$lib/components/ui/button";
   import { onMount } from "svelte";
+  import { trackEvent } from "../utils/analytics.js";
 
   let stars = $state(16);
 
@@ -15,6 +16,10 @@
       console.error("Failed to fetch star count:", e);
     }
   });
+  
+  function handleClick() {
+    trackEvent('click_github_link', { stars });
+  }
 </script>
 
 <Button
@@ -23,6 +28,7 @@
   target="_blank"
   rel="noopener noreferrer"
   class="gap-2 text-xs"
+  onclick={handleClick}
 >
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
     <path

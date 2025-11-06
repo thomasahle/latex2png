@@ -3,13 +3,16 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { theme } from "../stores/theme.js";
   import { vimMode } from "../stores/vimMode.js";
+  import { trackEvent } from "../utils/analytics.js";
 
   function toggleTheme() {
     theme.toggle();
+    trackEvent('toggle_theme', { theme: $theme === 'dark' ? 'light' : 'dark' });
   }
 
   function toggleVim() {
     vimMode.toggle();
+    trackEvent('toggle_vim_mode', { enabled: !$vimMode });
   }
 </script>
 
