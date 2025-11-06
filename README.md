@@ -1,1 +1,1 @@
-[![Repository Preview](og.png)](https://thomasahle.com/latex2png)
+[![Repository Preview](public/og.png)](https://thomasahle.com/latex2png)
