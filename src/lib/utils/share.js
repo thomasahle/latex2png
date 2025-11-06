@@ -2,6 +2,7 @@ import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
+import { trackEvent, trackError } from "./analytics.js";
 
 const IS_SECURE = window.isSecureContext;
 
@@ -109,8 +110,10 @@ export async function shareLink(options = {}) {
       await fallbackCopyText(url);
       toast.success("Link copied!");
     }
-  } catch {
+    trackEvent('share', { method: 'copy_link' });
+  } catch (error) {
     toast.error("Failed to copy link");
+    trackError(error, { context: 'shareLink' });
   }
 }
 
@@ -120,12 +123,20 @@ export async function shareToTwitter() {
   const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
 
   const win = window.open(intent, "_blank", "noopener,noreferrer,width=550,height=420");
-  if (!win) toast.error("Popup blocked by the browser");
+  if (!win) {
+    toast.error("Popup blocked by the browser");
+    trackError(new Error('Twitter popup blocked'), { context: 'shareToTwitter' });
+  } else {
+    trackEvent('share', { method: 'twitter' });
+  }
 }
 
 export async function copyImage() {
   const previewElement = document.querySelector("#math-preview");
-  if (!previewElement) return;
+  if (!previewElement) {
+    trackError(new Error('Preview not found'), { context: 'copyImage' });
+    return;
+  }
 
   try {
     const scale = await getZoomScale();
@@ -136,24 +147,29 @@ export async function copyImage() {
       try {
         await navigator.clipboard.write([new window.ClipboardItem({ [blob.type]: blob })]);
         toast.success("Image copied to clipboard!");
+        trackEvent('share', { method: 'copy_image' });
         return;
       } catch (e) {
-        // fall through to download
         console.error("Clipboard write failed, falling back to download:", e);
       }
     }
 
     downloadBlob(blob, "latex-image.png");
     toast.info("Clipboard not supported; downloaded the image instead.");
+    trackEvent('share', { method: 'copy_image_fallback' });
   } catch (error) {
     console.error("Error copying image:", error);
     toast.error("Failed to copy image");
+    trackError(error, { context: 'copyImage' });
   }
 }
 
 export async function shareImage() {
   const previewElement = document.querySelector("#math-preview");
-  if (!previewElement) return;
+  if (!previewElement) {
+    trackError(new Error('Preview not found'), { context: 'shareImage' });
+    return;
+  }
 
   try {
     const scale = await getZoomScale();
@@ -168,26 +184,29 @@ export async function shareImage() {
           title: "LaTeX Image",
           text: "Check out my LaTeX equation!"
         });
+        trackEvent('share', { method: 'native_share' });
         return;
       } catch (err) {
-        if (err?.name === "AbortError") return; // user cancelled
+        if (err?.name === "AbortError") return;
         console.error("Share failed; falling back:", err);
       }
     }
 
-    // Fallback: try copying image, then download
     if (IS_SECURE && navigator.clipboard?.write && "ClipboardItem" in window) {
       try {
         await navigator.clipboard.write([new window.ClipboardItem({ [blob.type]: blob })]);
         toast.info("Image copied to clipboard (sharing not supported).");
+        trackEvent('share', { method: 'share_fallback_clipboard' });
         return;
       } catch { }
     }
 
     downloadBlob(blob, "latex-image.png");
     toast.info("Image sharing not supported; downloaded the image instead.");
+    trackEvent('share', { method: 'share_fallback_download' });
   } catch (error) {
     console.error("Error sharing image:", error);
     toast.error("Failed to share image");
+    trackError(error, { context: 'shareImage' });
   }
 }

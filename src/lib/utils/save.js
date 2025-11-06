@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import { zoom } from '../stores/zoom.js';
 import { toast } from '../components/ui/sonner';
 import { generateImage, downloadImage, downloadPdf } from './image-generation.js';
+import { trackEvent, trackError } from './analytics.js';
 
 function downloadFile(url, filename) {
   const link = document.createElement("a");
@@ -14,41 +15,65 @@ export async function savePNG() {
   const previewElement = document.querySelector('#math-preview');
   if (!previewElement) {
     toast.error('Preview not found');
+    trackError(new Error('Preview not found'), { context: 'savePNG' });
     return;
   }
 
-  const zoomScale = get(zoom);
-  const canvas = await generateImage(previewElement, zoomScale, null);
-  downloadImage(canvas, 'latex-equation.png');
+  try {
+    const zoomScale = get(zoom);
+    const canvas = await generateImage(previewElement, zoomScale, null);
+    downloadImage(canvas, 'latex-equation.png');
+    trackEvent('save_image', { format: 'png', zoom: zoomScale });
+  } catch (error) {
+    trackError(error, { context: 'savePNG' });
+    throw error;
+  }
 }
 
 export async function saveJPEG() {
   const previewElement = document.querySelector('#math-preview');
   if (!previewElement) {
     toast.error('Preview not found');
+    trackError(new Error('Preview not found'), { context: 'saveJPEG' });
     return;
   }
 
-  const zoomScale = get(zoom);
-  const canvas = await generateImage(previewElement, zoomScale, '#ffffff');
-  downloadImage(canvas, 'latex-equation.jpg');
+  try {
+    const zoomScale = get(zoom);
+    const canvas = await generateImage(previewElement, zoomScale, '#ffffff');
+    downloadImage(canvas, 'latex-equation.jpg');
+    trackEvent('save_image', { format: 'jpeg', zoom: zoomScale });
+  } catch (error) {
+    trackError(error, { context: 'saveJPEG' });
+    throw error;
+  }
 }
 
 export async function saveSVG() {
   const previewElement = document.querySelector('#math-preview');
-  if (!previewElement) return;
+  if (!previewElement) {
+    trackError(new Error('Preview not found'), { context: 'saveSVG' });
+    return;
+  }
   
   const mjxContainer = previewElement.querySelector('mjx-container svg');
   if (!mjxContainer) {
     toast.error('No SVG found to save');
+    trackError(new Error('No SVG found to save'), { context: 'saveSVG' });
     return;
   }
   
-  const svgData = new XMLSerializer().serializeToString(mjxContainer);
-  const blob = new Blob([svgData], { type: 'image/svg+xml' });
-  const url = URL.createObjectURL(blob);
-  downloadFile(url, 'latex-equation.svg');
-  URL.revokeObjectURL(url);
+  try {
+    const svgData = new XMLSerializer().serializeToString(mjxContainer);
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    downloadFile(url, 'latex-equation.svg');
+    URL.revokeObjectURL(url);
+    trackEvent('save_image', { format: 'svg' });
+  } catch (error) {
+    trackError(error, { context: 'saveSVG' });
+    throw error;
+  }
 }
 
 export async function savePDF() {
@@ -95,8 +120,10 @@ export async function savePDF() {
     await pdf.svg(svg, { x: 0, y: 0, width, height });
     
     pdf.save('latex-equation.pdf');
+    trackEvent('save_image', { format: 'pdf' });
   } catch (error) {
     console.error('Error in savePDF:', error);
     toast.error(`Failed to generate PDF: ${error.message}`);
+    trackError(error, { context: 'savePDF' });
   }
 }

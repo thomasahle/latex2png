@@ -7,6 +7,7 @@
   import { latexExamples } from "./lib/utils/examples.js";
   import { layout } from "./lib/stores/layout.js";
   import { fullscreen } from "./lib/stores/fullscreen.js";
+  import { trackEvent } from "./lib/utils/analytics.js";
 
   onMount(() => document.body.classList.add("loaded"));
 
@@ -14,6 +15,7 @@
     const randomExample =
       latexExamples[Math.floor(Math.random() * latexExamples.length)];
     latexContent.set(randomExample);
+    trackEvent('show_example', { example_index: latexExamples.indexOf(randomExample) });
   }
 </script>
 
