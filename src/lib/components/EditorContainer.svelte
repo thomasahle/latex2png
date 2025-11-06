@@ -67,8 +67,7 @@
           </div>
 
           <div class="absolute bottom-2.5 right-2.5 z-10 font-sans">
-            <div class="md:hidden"><SaveButton compact /></div>
-            <div class="hidden md:flex"><SaveButton /></div>
+            <SaveButton />
           </div>
 
           <MathPreview />
