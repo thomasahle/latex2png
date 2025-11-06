@@ -22,6 +22,14 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
     previewArea.classList.add('hide-zoom-controls');
   }
   
+  // Measure the actual MathJax content dimensions
+  const mjxContainer = previewElement.querySelector('mjx-container');
+  if (!mjxContainer) {
+    throw new Error('No MathJax content found');
+  }
+  
+  const bbox = mjxContainer.getBoundingClientRect();
+  
   // Create a cloned preview element for capture (to avoid layout changes)
   const clonedPreview = previewElement.cloneNode(true);
   
@@ -31,11 +39,12 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
   
   const captureContainer = document.createElement('div');
   captureContainer.className = 'capture-container';
-  captureContainer.style.position = 'absolute';
+  captureContainer.style.position = 'fixed';
   captureContainer.style.left = '-9999px';
   captureContainer.style.top = '0';
-  captureContainer.appendChild(clonedPreview);
+  captureContainer.style.display = 'inline-block';
   document.body.appendChild(captureContainer);
+  captureContainer.appendChild(clonedPreview);
 
   try {
     // Make sure the cloned preview has the correct content displayed
@@ -44,8 +53,13 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
     mjxContainers.forEach(el => {
       el.style.visibility = 'visible';
       el.style.display = 'inline-block';
+      // Use fontSize instead of zoom for better cross-browser consistency
       el.style.fontSize = `${zoomScale * 100}%`;
+      el.style.zoom = '1'; // Reset zoom to prevent Firefox spacing issues
     });
+    
+    // Remove zoom from cloned preview itself
+    clonedPreview.style.zoom = '1';
     
     // Fix color for html2canvas - set explicit color on all SVG elements
     // Force black text on white backgrounds for PDFs/JPEGs
@@ -61,8 +75,11 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
       el.style.color = actualColor;
     });
 
-    // Use html2canvas with the cloned preview
-    const canvas = await html2canvas(clonedPreview, {
+    // Wait for browser to finish layout
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
+    // Use html2canvas on the container to include padding
+    const canvas = await html2canvas(captureContainer, {
       scale: 2,
       useCORS: true,
       backgroundColor: backgroundColor,
