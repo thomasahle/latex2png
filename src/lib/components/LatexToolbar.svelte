@@ -378,7 +378,7 @@
       sideOffset={0}
       bind:ref={contentEl}
       class={`w-[420px] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
-        menuOpen ? "" : "opacity-0 pointer-events-none"
+        menuOpen ? "" : "!hidden"
       }`}
       aria-hidden={!menuOpen}
       inert={!menuOpen}

@@ -12,3 +12,17 @@
 - [x] There's a bug where the latex-toolbar menu might be hidden, but I can still click buttons. Maybe it's just invisible but should be display:none?
 - [x] switching layout mode (horizontal vs vertical) has gotten quite slow (1-2 seconds to switch) which indicates too much stuff is being recomputed
 - [x] Some symbols in the menu, like \Overrightarrow or \utilde seem to require latex packages that we don't currently include in mathjax imports, like the undertilde package. Check all commands to make sure we have all the packages we need.
+
+
+There's a bug where the latex-toolbar menu might be hidden, but it blocks the menu items /
+other clickable dom elements.
+Easiest way to reproduce is to:
+1) Open and close the latex-toolbar menu
+2) go to full screen mode (using the gear button)
+3) open the share menu (next to the gear button)
+4) try to click share-image (bottom of the menu)
+you can't click it because something invisible is "over" it.
+Similarly we don't get a text cursor when hovering the input field below the button
+
+
+there's already a server running. connect to http://localhost:5174/latex2png/
