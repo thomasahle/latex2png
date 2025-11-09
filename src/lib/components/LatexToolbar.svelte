@@ -93,7 +93,8 @@
     const nextTarget = event?.relatedTarget;
     const isNodeTarget =
       typeof Node !== "undefined" && nextTarget instanceof Node;
-    const movingIntoTrigger = isNodeTarget && triggerRegionEl?.contains(nextTarget);
+    const movingIntoTrigger =
+      isNodeTarget && triggerRegionEl?.contains(nextTarget);
     if (movingIntoTrigger) return;
     if (!hasInteractedInsideToolbar) {
       menuOpen = false;
@@ -125,7 +126,12 @@
       : cmd?.subcommands?.[0];
     if (!defaultCommand) return;
     markToolbarInteraction();
-    insertLatex(defaultCommand.latex, category, defaultCommand.label, defaultCommand.tooltip);
+    insertLatex(
+      defaultCommand.latex,
+      category,
+      defaultCommand.label,
+      defaultCommand.tooltip,
+    );
     lastSubTriggerPointerType = null;
   }
 
@@ -218,7 +224,12 @@
     };
 
     document.addEventListener("pointerdown", handleGlobalPointerDown, true);
-    return () => document.removeEventListener("pointerdown", handleGlobalPointerDown, true);
+    return () =>
+      document.removeEventListener(
+        "pointerdown",
+        handleGlobalPointerDown,
+        true,
+      );
   });
 
   // Update active section based on scroll position
@@ -290,8 +301,7 @@
     if (ref && contentEl) {
       const containerTop = contentEl.getBoundingClientRect().top;
       const elementTop = ref.getBoundingClientRect().top;
-      const targetTop =
-        contentEl.scrollTop + (elementTop - containerTop) - 8; // 8px padding
+      const targetTop = contentEl.scrollTop + (elementTop - containerTop) - 8; // 8px padding
       if (typeof contentEl.scrollTo === "function") {
         contentEl.scrollTo({ top: targetTop, behavior: "smooth" });
       } else {
@@ -334,6 +344,17 @@
 
     setTimeout(() => view.focus(), 0);
   }
+
+  function getNavSections() {
+    const sections = [];
+    if (recentCommands.length > 0) {
+      sections.push({ key: "Recent", title: "Recent", type: "emoji", icon: "🕐" });
+    }
+    for (const group of toolbarCommands) {
+      sections.push({ key: group.category, title: group.category, type: "latex", icon: group.icon });
+    }
+    return sections;
+  }
 </script>
 
 <div class="font-sans">
@@ -356,8 +377,8 @@
       forceMount
       sideOffset={0}
       bind:ref={contentEl}
-      class={`w-[420px] max-h-[460px] overflow-y-auto p-3 focus:outline-none relative transition-opacity duration-150 ${
-        menuOpen ? '' : 'opacity-0 pointer-events-none'
+      class={`w-[420px] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
+        menuOpen ? "" : "opacity-0 pointer-events-none"
       }`}
       aria-hidden={!menuOpen}
       data-latex-toolbar-layer
@@ -414,10 +435,18 @@
                   >
                     <DropdownMenu.SubTrigger
                       showIcon={false}
-                      class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent"
+                      class="relative h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent cursor-pointer"
                       title={cmd.tooltip}
                     >
-                      <MathSymbol latex={cmd.label} />
+                      <span
+                        aria-hidden="true"
+                        class="absolute inset-0 flex items-center justify-center text-muted-foreground/25 text-lg font-semibold pointer-events-none"
+                      >
+                        ✦
+                      </span>
+                      <span class="relative z-10 flex items-center justify-center">
+                        <MathSymbol latex={cmd.label} />
+                      </span>
                     </DropdownMenu.SubTrigger>
                   </div>
                   <DropdownMenu.SubContent
@@ -473,36 +502,24 @@
 
       <!-- Section Navigation Buttons -->
       <div
-        class="sticky bottom-0 -mx-3 -mb-3 bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3 z-10"
+        class="fixed bottom-0 left-0 w-full bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3 z-10"
       >
         <div class="flex items-center gap-1.5 overflow-x-auto">
-          <!-- TODO: Fix redundancy here -->
-          {#if recentCommands.length > 0}
+          {#each getNavSections() as section (section.key)}
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full {activeSection ===
-              'Recent'
-                ? 'bg-accent'
-                : ''}"
-              onclick={() => scrollToSection("Recent")}
-              title="Recent"
+              class={`h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full text-xs ${
+                activeSection === section.key ? "bg-accent" : ""
+              }`}
+              onclick={() => scrollToSection(section.key)}
+              title={section.title}
             >
-              <span class="text-sm">🕐</span>
-            </Button>
-          {/if}
-          {#each toolbarCommands as group}
-            <Button
-              variant="ghost"
-              size="sm"
-              class="h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full text-xs {activeSection ===
-              group.category
-                ? 'bg-accent'
-                : ''}"
-              onclick={() => scrollToSection(group.category)}
-              title={group.category}
-            >
-              <MathSymbol latex={group.icon} />
+              {#if section.type === "emoji"}
+                <span class="text-sm">{section.icon}</span>
+              {:else}
+                <MathSymbol latex={section.icon} />
+              {/if}
             </Button>
           {/each}
         </div>

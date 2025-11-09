@@ -6,3 +6,6 @@
 - [x] clicking in the LatexToolbar navigation bar should trigger smooth scrolling, not a sudden jump
 - [x] Section Navigation Buttons flash when the latex-toolbar opens
 - [x] when hovering the trigger button and slowly moving the mouse down, the menu closes, as there's some empty space between the button and the menu
+- [x] For groups like int or oint, when hovering a menu of options appear (good), but if we just click the main button, it should insert the default symbol. _and use the pointer cursor_
+- [x] Add a small icon behind the latex symbol on buttons that expand to make them visually distinguished
+- [x] Fix TODOs in the code
