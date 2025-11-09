@@ -52,7 +52,9 @@
     class:border-border={!$fullscreen}
   >
     {#if !$fullscreen}
-      <h1 class="hidden md:block text-[1.5rem] font-medium mb-4 font-serif">
+      <h1
+        class="hidden sm:block px-2 md:px-0 text-[1.5rem] font-medium mb-4 font-serif"
+      >
         Convert LaTeX math equations to PNG/JPEG/SVG images
       </h1>
       <p

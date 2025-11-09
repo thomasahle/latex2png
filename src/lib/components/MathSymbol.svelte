@@ -8,7 +8,7 @@
     if (!container) return;
     katex.render(latex, container, {
       displayMode: !inline,
-      throwOnError: true,
+      throwOnError: false,
     });
   }
 
