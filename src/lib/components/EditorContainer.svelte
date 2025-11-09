@@ -2,13 +2,14 @@
   import { layout } from "../stores/layout.js";
   import { fullscreen } from "../stores/fullscreen.js";
   import LatexEditor from "./LatexEditor.svelte";
+  import LatexToolbar from "./LatexToolbar.svelte";
   import MathPreview from "./MathPreview.svelte";
   import ZoomControls from "./ZoomControls.svelte";
   import LayoutToggle from "./LayoutToggle.svelte";
   import * as Resizable from "$lib/components/ui/resizable";
   import SaveButton from "./SaveButton.svelte";
 
-  let editorInstance = $state(null);
+  let { editorInstance = $bindable(null) } = $props();
   let direction = $derived(
     $layout === "side-by-side" ? "horizontal" : "vertical",
   );
@@ -20,14 +21,13 @@
     "select-none touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
 
   const handleVertical =
-    "border-x-0 " +
-    "!h-4 cursor-ns-resize " +
-    "before:content-[''] before:absolute before:w-[60px] before:h-[6px] before:bg-border before:rounded-sm " +
+    "border-x-0 !h-4 cursor-ns-resize before:w-[60px] before:h-[6px]" +
+    "before:content-[''] before:absolute before:bg-border before:rounded-sm " +
     "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
 
   const handleHorizontal =
-    "border-y-0 " +
-    "!w-4 cursor-ew-resize " +
+    "border-y-0 !w-4 cursor-ew-resize " +
+    "" +
     "before:content-[''] before:absolute before:h-[60px] before:w-[6px] before:bg-border before:rounded-sm " +
     "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
 </script>
@@ -43,7 +43,12 @@
   {#key direction}
     <Resizable.PaneGroup {direction}>
       <Resizable.Pane defaultSize={50} minSize={30} id="editor-pane">
-        <LatexEditor bind:editorInstance />
+        <div class="relative h-full">
+          <div class="absolute top-2.5 right-2.5 z-10">
+            <LatexToolbar {editorInstance} />
+          </div>
+          <LatexEditor bind:editorInstance />
+        </div>
       </Resizable.Pane>
 
       <Resizable.Handle

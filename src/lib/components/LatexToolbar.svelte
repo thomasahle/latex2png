@@ -2,17 +2,26 @@
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import MathSymbol from "./MathSymbol.svelte";
-  import { editorInstance } from "../stores/editor.js";
   import { snippet } from "@codemirror/autocomplete";
+
+  let { editorInstance } = $props();
 
   const toolbarCommands = [
     {
       category: "Common",
       icon: "∑",
       commands: [
-        { label: "\\frac{a}{b}", latex: "\\frac{${1}}{${2}}", tooltip: "Fraction" },
+        {
+          label: "\\frac{a}{b}",
+          latex: "\\frac{${1}}{${2}}",
+          tooltip: "Fraction",
+        },
         { label: "\\sqrt{x}", latex: "\\sqrt{${1}}", tooltip: "Square root" },
-        { label: "\\sqrt[n]{x}", latex: "\\sqrt[${1}]{${2}}", tooltip: "Nth root" },
+        {
+          label: "\\sqrt[n]{x}",
+          latex: "\\sqrt[${1}]{${2}}",
+          tooltip: "Nth root",
+        },
         { label: "x^n", latex: "^{${1}}", tooltip: "Superscript" },
         { label: "x_n", latex: "_{${1}}", tooltip: "Subscript" },
         { label: "\\int", latex: "\\int_{${1}}^{${2}}", tooltip: "Integral" },
@@ -68,9 +77,17 @@
         { label: "\\in", latex: "\\in", tooltip: "Element of" },
         { label: "\\notin", latex: "\\notin", tooltip: "Not element of" },
         { label: "\\subset", latex: "\\subset", tooltip: "Subset" },
-        { label: "\\subseteq", latex: "\\subseteq", tooltip: "Subset or equal" },
+        {
+          label: "\\subseteq",
+          latex: "\\subseteq",
+          tooltip: "Subset or equal",
+        },
         { label: "\\supset", latex: "\\supset", tooltip: "Superset" },
-        { label: "\\supseteq", latex: "\\supseteq", tooltip: "Superset or equal" },
+        {
+          label: "\\supseteq",
+          latex: "\\supseteq",
+          tooltip: "Superset or equal",
+        },
         { label: "\\cup", latex: "\\cup", tooltip: "Union" },
         { label: "\\cap", latex: "\\cap", tooltip: "Intersection" },
         { label: "\\forall", latex: "\\forall", tooltip: "For all" },
@@ -87,26 +104,58 @@
       icon: "→",
       commands: [
         { label: "\\to", latex: "\\to", tooltip: "Right arrow" },
-        { label: "\\rightarrow", latex: "\\rightarrow", tooltip: "Right arrow" },
+        {
+          label: "\\rightarrow",
+          latex: "\\rightarrow",
+          tooltip: "Right arrow",
+        },
         { label: "\\Rightarrow", latex: "\\Rightarrow", tooltip: "Implies" },
         { label: "\\leftarrow", latex: "\\leftarrow", tooltip: "Left arrow" },
         { label: "\\Leftarrow", latex: "\\Leftarrow", tooltip: "Implied by" },
-        { label: "\\leftrightarrow", latex: "\\leftrightarrow", tooltip: "Left-right arrow" },
-        { label: "\\Leftrightarrow", latex: "\\Leftrightarrow", tooltip: "If and only if" },
+        {
+          label: "\\leftrightarrow",
+          latex: "\\leftrightarrow",
+          tooltip: "Left-right arrow",
+        },
+        {
+          label: "\\Leftrightarrow",
+          latex: "\\Leftrightarrow",
+          tooltip: "If and only if",
+        },
         { label: "\\uparrow", latex: "\\uparrow", tooltip: "Up arrow" },
         { label: "\\downarrow", latex: "\\downarrow", tooltip: "Down arrow" },
-        { label: "\\updownarrow", latex: "\\updownarrow", tooltip: "Up-down arrow" },
+        {
+          label: "\\updownarrow",
+          latex: "\\updownarrow",
+          tooltip: "Up-down arrow",
+        },
         { label: "\\mapsto", latex: "\\mapsto", tooltip: "Maps to" },
-        { label: "\\longrightarrow", latex: "\\longrightarrow", tooltip: "Long right arrow" },
-        { label: "\\Longrightarrow", latex: "\\Longrightarrow", tooltip: "Long implies" },
+        {
+          label: "\\longrightarrow",
+          latex: "\\longrightarrow",
+          tooltip: "Long right arrow",
+        },
+        {
+          label: "\\Longrightarrow",
+          latex: "\\Longrightarrow",
+          tooltip: "Long implies",
+        },
       ],
     },
     {
       category: "Brackets",
       icon: "⟨⟩",
       commands: [
-        { label: "\\left( \\right)", latex: "\\left(${1}\\right)", tooltip: "Parentheses" },
-        { label: "\\left[ \\right]", latex: "\\left[${1}\\right]", tooltip: "Brackets" },
+        {
+          label: "\\left( \\right)",
+          latex: "\\left(${1}\\right)",
+          tooltip: "Parentheses",
+        },
+        {
+          label: "\\left[ \\right]",
+          latex: "\\left[${1}\\right]",
+          tooltip: "Brackets",
+        },
         {
           label: "\\left\\{ \\right\\}",
           latex: "\\left\\{${1}\\right\\}",
@@ -140,23 +189,68 @@
       category: "Matrix",
       icon: "[\\cdot]",
       commands: [
-        { label: "2\\times 2", latex: "\\begin{pmatrix}${1} & ${2} \\\\ ${3} & ${4}\\end{pmatrix}", tooltip: "2×2 matrix" },
-        { label: "3\\times 3", latex: "\\begin{pmatrix}${1} & ${2} & ${3} \\\\ ${4} & ${5} & ${6} \\\\ ${7} & ${8} & ${9}\\end{pmatrix}", tooltip: "3×3 matrix" },
-        { label: "n\\times m", latex: "\\begin{matrix}${1}\\end{matrix}", tooltip: "Custom matrix" },
+        {
+          label: "2\\times 2",
+          latex: "\\begin{pmatrix}${1} & ${2} \\\\ ${3} & ${4}\\end{pmatrix}",
+          tooltip: "2×2 matrix",
+        },
+        {
+          label: "3\\times 3",
+          latex:
+            "\\begin{pmatrix}${1} & ${2} & ${3} \\\\ ${4} & ${5} & ${6} \\\\ ${7} & ${8} & ${9}\\end{pmatrix}",
+          tooltip: "3×3 matrix",
+        },
+        {
+          label: "n\\times m",
+          latex: "\\begin{matrix}${1}\\end{matrix}",
+          tooltip: "Custom matrix",
+        },
       ],
     },
     {
       category: "Colour",
       icon: "\\color{red}{A}",
       commands: [
-        { label: "\\color{red}{x}", latex: "\\color{red}{${1}}", tooltip: "Red" },
-        { label: "\\color{blue}{x}", latex: "\\color{blue}{${1}}", tooltip: "Blue" },
-        { label: "\\color{green}{x}", latex: "\\color{green}{${1}}", tooltip: "Green" },
-        { label: "\\color{orange}{x}", latex: "\\color{orange}{${1}}", tooltip: "Orange" },
-        { label: "\\color{purple}{x}", latex: "\\color{purple}{${1}}", tooltip: "Purple" },
-        { label: "\\color{brown}{x}", latex: "\\color{brown}{${1}}", tooltip: "Brown" },
-        { label: "\\color{gray}{x}", latex: "\\color{gray}{${1}}", tooltip: "Gray" },
-        { label: "\\color{black}{x}", latex: "\\color{black}{${1}}", tooltip: "Black" },
+        {
+          label: "\\color{red}{x}",
+          latex: "\\color{red}{${1}}",
+          tooltip: "Red",
+        },
+        {
+          label: "\\color{blue}{x}",
+          latex: "\\color{blue}{${1}}",
+          tooltip: "Blue",
+        },
+        {
+          label: "\\color{green}{x}",
+          latex: "\\color{green}{${1}}",
+          tooltip: "Green",
+        },
+        {
+          label: "\\color{orange}{x}",
+          latex: "\\color{orange}{${1}}",
+          tooltip: "Orange",
+        },
+        {
+          label: "\\color{purple}{x}",
+          latex: "\\color{purple}{${1}}",
+          tooltip: "Purple",
+        },
+        {
+          label: "\\color{brown}{x}",
+          latex: "\\color{brown}{${1}}",
+          tooltip: "Brown",
+        },
+        {
+          label: "\\color{gray}{x}",
+          latex: "\\color{gray}{${1}}",
+          tooltip: "Gray",
+        },
+        {
+          label: "\\color{black}{x}",
+          latex: "\\color{black}{${1}}",
+          tooltip: "Black",
+        },
       ],
     },
   ];
@@ -164,11 +258,11 @@
   let menuOpen = $state(false);
 
   function insertLatex(latex) {
-    const editor = $editorInstance;
-
-    if (!editor?.view) {
+    if (!editorInstance?.view) {
       return;
     }
+
+    const editor = editorInstance;
 
     const view = editor.view;
     const selection = view.state.selection.main;
@@ -212,7 +306,7 @@
               <Button
                 variant="ghost"
                 size="sm"
-                class="h-9 aspect-square p-0 text-sm font-mono justify-center hover:bg-accent overflow-hidden rounded-md"
+                class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
                 title={cmd.tooltip}
                 onclick={() => insertLatex(cmd.latex)}
               >

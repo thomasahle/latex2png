@@ -37,6 +37,9 @@ For visual/layout issues, ALWAYS take screenshots before and after to verify the
 - Mobile: < 768px (always stacked, compact UI)
 
 ### Testing
-- Dev server: `npm run dev`
-- Build: `npm run build`
+- Always run npm as a background task, so it doesn't hang:
+    npm run dev > /tmp/vite-server.log 2>&1 &
+    echo "Server starting..."
+    sleep 3
+    tail -20 /tmp/vite-server.log
 - Always test visual changes in browser using MCP Chrome DevTools
