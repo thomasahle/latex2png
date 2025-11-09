@@ -2,10 +2,19 @@
   import { zoom } from '../stores/zoom.js';
   import { trackEvent } from '../utils/analytics.js';
   
+  let lastTrackTime = 0;
+  const TRACK_THROTTLE_MS = 3000;
+  
   function handleZoomChange(e) {
     const newZoom = parseFloat(e.target.value);
     zoom.set(newZoom);
-    trackEvent('adjust_zoom', { zoom: newZoom });
+    
+    // Throttle analytics to once per 3 seconds
+    const now = Date.now();
+    if (now - lastTrackTime >= TRACK_THROTTLE_MS) {
+      trackEvent('adjust_zoom', { zoom: newZoom });
+      lastTrackTime = now;
+    }
   }
 </script>
 

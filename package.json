@@ -39,6 +39,7 @@
     "codemirror-lang-latex": "^0.2.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
+    "katex": "^0.16.25",
     "n": "^10.2.0",
     "shadcn-svelte": "^1.0.10",
     "svelte-codemirror-editor": "^2.1.0",

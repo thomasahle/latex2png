@@ -8,9 +8,11 @@
 		class: className,
 		inset,
 		children,
+		showIcon = true,
 		...restProps
 	}: DropdownMenuPrimitive.SubTriggerProps & {
 		inset?: boolean;
+		showIcon?: boolean;
 	} = $props();
 </script>
 
@@ -25,5 +27,7 @@
 	{...restProps}
 >
 	{@render children?.()}
-	<ChevronRightIcon class="ml-auto size-4" />
+	{#if showIcon}
+		<ChevronRightIcon class="ml-auto size-4" />
+	{/if}
 </DropdownMenuPrimitive.SubTrigger>

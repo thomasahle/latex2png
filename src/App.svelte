@@ -9,6 +9,9 @@
   import { layout } from "./lib/stores/layout.js";
   import { fullscreen } from "./lib/stores/fullscreen.js";
   import { trackEvent } from "./lib/utils/analytics.js";
+  import katex from "katex";
+  import MathSymbol from "$lib/components/MathSymbol.svelte";
+  import { Button } from "$lib/components/ui/button";
 
   let editor = $state(null);
 
@@ -18,8 +21,18 @@
     const randomExample =
       latexExamples[Math.floor(Math.random() * latexExamples.length)];
     latexContent.set(randomExample);
-    trackEvent('show_example', { example_index: latexExamples.indexOf(randomExample) });
+    trackEvent("show_example", {
+      example_index: latexExamples.indexOf(randomExample),
+    });
   }
+
+  const latex2 = String.raw`\left\vert\begin{smallmatrix}
+\cdot&\cdot&\cdot\\
+\cdot&\cdot&\cdot\\
+\cdot&\cdot&\cdot
+\end{smallmatrix}\right\vert`;
+  const latex =
+    "\\left\\vert\\begin{smallmatrix}\n\\cdot&\\cdot&\\cdot\\\\\n\\cdot&\\cdot&\\cdot\\\\\n\\cdot&\\cdot&\\cdot\n\\end{smallmatrix}\\right\\vert";
 </script>
 
 <div class="min-h-screen bg-background text-foreground font-serif">
@@ -42,9 +55,12 @@
       <h1 class="hidden md:block text-[1.5rem] font-medium mb-4 font-serif">
         Convert LaTeX math equations to PNG/JPEG/SVG images
       </h1>
-      <p class="mb-1 md:mb-2 text-muted-foreground px-2 md:px-0 text-sm font-serif">
+      <p
+        class="mb-1 md:mb-2 text-muted-foreground px-2 md:px-0 text-sm font-serif"
+      >
         <span class="hidden sm:inline">
-          Simply type in your LaTeX below and watch the preview update in real time.
+          Simply type in your LaTeX below and watch the preview update in real
+          time.
         </span>
         Need inspiration?
         <button class="text-primary hover:underline" onclick={showExample}>

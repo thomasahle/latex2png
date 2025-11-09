@@ -1,4 +1,5 @@
 import './app.css'
+import 'katex/dist/katex.min.css'
 import { mount } from 'svelte'
 import App from './App.svelte'
 import { trackError } from './lib/utils/analytics.js'
