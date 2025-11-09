@@ -98,23 +98,31 @@
     openedViaHover = false;
   }
 
-  // Reset click-tracking whenever the menu fully closes
-  $effect(() => {
-    if (!menuOpen) {
-      hasInteractedInsideToolbar = false;
-      openedViaHover = false;
-    }
-  });
-
-  // Enable hover behavior only for precise pointers
+  // Enable hover behavior only for precise pointers and clean up hover state when needed
   $effect(() => {
     if (typeof window === "undefined" || typeof matchMedia === "undefined") {
       hoverEnabled = false;
+      openedViaHover = false;
+      if (!menuOpen) {
+        hasInteractedInsideToolbar = false;
+      }
       return;
     }
+
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    hoverEnabled = mq.matches;
-    const onChange = (event) => (hoverEnabled = event.matches);
+    const syncHoverState = (matches) => {
+      hoverEnabled = matches;
+      if (!matches || !menuOpen) {
+        openedViaHover = false;
+      }
+      if (!menuOpen) {
+        hasInteractedInsideToolbar = false;
+      }
+    };
+
+    syncHoverState(mq.matches);
+
+    const onChange = (event) => syncHoverState(event.matches);
     if (typeof mq.addEventListener === "function") {
       mq.addEventListener("change", onChange);
       return () => mq.removeEventListener("change", onChange);
@@ -126,7 +134,7 @@
     return () => {};
   });
 
-  // Track pointer and wheel interactions inside the toolbar content
+  // Track interactions, scroll state, and handle scroll restoration from a single effect
   $effect(() => {
     const el = contentEl;
     if (!el) return;
@@ -134,28 +142,32 @@
     const handlePointerDown = () => markToolbarInteraction();
     const handleWheel = () => markToolbarInteraction();
     const handleKeyDown = () => markToolbarInteraction();
+    const handleScroll = () => {
+      savedTop = el.scrollTop;
+      updateActiveSection();
+    };
 
     el.addEventListener("pointerdown", handlePointerDown);
     el.addEventListener("wheel", handleWheel, { passive: true });
     el.addEventListener("keydown", handleKeyDown);
+    el.addEventListener("scroll", handleScroll, { passive: true });
+
+    let cancelled = false;
+    if (menuOpen) {
+      tick().then(() => {
+        if (cancelled || !menuOpen || contentEl !== el) return;
+        restoreScrollUntilSettled();
+        updateActiveSection();
+      });
+    }
 
     return () => {
+      cancelled = true;
       el.removeEventListener("pointerdown", handlePointerDown);
       el.removeEventListener("wheel", handleWheel);
       el.removeEventListener("keydown", handleKeyDown);
+      el.removeEventListener("scroll", handleScroll);
     };
-  });
-
-  // Save scroll while menu is open and track active section
-  $effect(() => {
-    const el = contentEl;
-    if (!el) return;
-    const onScroll = () => {
-      savedTop = el.scrollTop;
-      updateActiveSection();
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
   });
 
   // Update active section based on scroll position
@@ -204,15 +216,6 @@
     };
     requestAnimationFrame(tickFrame);
   }
-
-  // When menu opens, restore scroll and update active section
-  $effect(async () => {
-    if (menuOpen && contentEl) {
-      await tick();
-      restoreScrollUntilSettled();
-      updateActiveSection();
-    }
-  });
 
   // Scroll to a specific section
   function scrollToSection(category) {
