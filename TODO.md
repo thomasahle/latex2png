@@ -1,6 +1,8 @@
-Latex Toolbar like codecogs
-History of previous stuff
-
-Smaller todo features:
- - Add "Share by email"
- - Github star button should be "empty" if the user hasn't already stared the repo
+- [x] Once anything has been clicked inside the latextoolbar, it should no longer auto close when you move the mouse out. Including if you originally opened the menu by clicking the trigger button. This way it won't accidentially close for people.
+- [x] The navigation bar inside the LatexToolbar is position absolute, but should be sticky. However when we make it sticky, a lot of extra space appears around it. Please investigate.
+- [x] The buttons in the LatexToolbar are clipping the latex. We should disable this clipping in MathSymbol css.
+- [x] Think about more commands that can be grouped, like oiint and oiiint
+- [x] For groups like int or oint, when hovering a menu of options appear (good), but if we just click the main button, it should insert the default symbol.
+- [x] clicking in the LatexToolbar navigation bar should trigger smooth scrolling, not a sudden jump
+- [x] Section Navigation Buttons flash when the latex-toolbar opens
+- [x] when hovering the trigger button and slowly moving the mouse down, the menu closes, as there's some empty space between the button and the menu

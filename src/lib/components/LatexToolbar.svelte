@@ -19,6 +19,9 @@
   let recentCommands = $state([]);
   let sectionRefs = $state({});
   let activeSection = $state(null);
+  let lastSubTriggerPointerType = $state(null);
+  let isRestoringScroll = $state(false);
+  const toolbarLayerSelector = "[data-latex-toolbar-layer]";
 
   // Load recent commands from localStorage
   $effect(() => {
@@ -98,6 +101,34 @@
     openedViaHover = false;
   }
 
+  function handleSubTriggerPointerDown(event) {
+    lastSubTriggerPointerType = event.pointerType || "mouse";
+  }
+
+  function handleSubTriggerClick(event, cmd, category) {
+    const pointerType = lastSubTriggerPointerType;
+    const isKeyboardActivation = event?.detail === 0;
+    if (isKeyboardActivation) {
+      lastSubTriggerPointerType = null;
+      return;
+    }
+
+    if (pointerType === "touch" || pointerType === "pen") {
+      lastSubTriggerPointerType = null;
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const defaultCommand = cmd?.latex
+      ? { label: cmd.label, latex: cmd.latex, tooltip: cmd.tooltip }
+      : cmd?.subcommands?.[0];
+    if (!defaultCommand) return;
+    markToolbarInteraction();
+    insertLatex(defaultCommand.latex, category, defaultCommand.label, defaultCommand.tooltip);
+    lastSubTriggerPointerType = null;
+  }
+
   // Enable hover behavior only for precise pointers and clean up hover state when needed
   $effect(() => {
     if (typeof window === "undefined" || typeof matchMedia === "undefined") {
@@ -144,7 +175,9 @@
     const handleKeyDown = () => markToolbarInteraction();
     const handleScroll = () => {
       savedTop = el.scrollTop;
-      updateActiveSection();
+      if (!isRestoringScroll) {
+        updateActiveSection();
+      }
     };
 
     el.addEventListener("pointerdown", handlePointerDown);
@@ -168,6 +201,24 @@
       el.removeEventListener("keydown", handleKeyDown);
       el.removeEventListener("scroll", handleScroll);
     };
+  });
+
+  // Capture pointer interactions across portalled toolbar layers (e.g. submenus)
+  $effect(() => {
+    if (!menuOpen) return;
+    if (typeof document === "undefined" || typeof Node === "undefined") return;
+
+    const handleGlobalPointerDown = (event) => {
+      const target = event?.target;
+      if (!(target instanceof Node)) return;
+      const inToolbar = target.closest(toolbarLayerSelector);
+      if (inToolbar) {
+        markToolbarInteraction();
+      }
+    };
+
+    document.addEventListener("pointerdown", handleGlobalPointerDown, true);
+    return () => document.removeEventListener("pointerdown", handleGlobalPointerDown, true);
   });
 
   // Update active section based on scroll position
@@ -208,12 +259,28 @@
   // Restore scroll and keep asserting until settled
   function restoreScrollUntilSettled() {
     if (!contentEl) return;
+    isRestoringScroll = true;
     let frames = 0;
-    const tickFrame = () => {
-      if (!menuOpen || !contentEl) return;
-      contentEl.scrollTop = savedTop;
-      if (++frames < 8) requestAnimationFrame(tickFrame); // ~8 frames ≈ 130ms @60Hz
+
+    const finish = () => {
+      if (!isRestoringScroll) return;
+      isRestoringScroll = false;
+      updateActiveSection();
     };
+
+    const tickFrame = () => {
+      if (!menuOpen || !contentEl) {
+        finish();
+        return;
+      }
+      contentEl.scrollTop = savedTop;
+      if (++frames < 8) {
+        requestAnimationFrame(tickFrame); // ~8 frames ≈ 130ms @60Hz
+      } else {
+        finish();
+      }
+    };
+
     requestAnimationFrame(tickFrame);
   }
 
@@ -223,8 +290,13 @@
     if (ref && contentEl) {
       const containerTop = contentEl.getBoundingClientRect().top;
       const elementTop = ref.getBoundingClientRect().top;
-      const offset = elementTop - containerTop - 8; // 8px padding
-      contentEl.scrollTop += offset;
+      const targetTop =
+        contentEl.scrollTop + (elementTop - containerTop) - 8; // 8px padding
+      if (typeof contentEl.scrollTo === "function") {
+        contentEl.scrollTo({ top: targetTop, behavior: "smooth" });
+      } else {
+        contentEl.scrollTop = targetTop;
+      }
       activeSection = category;
     }
   }
@@ -282,11 +354,13 @@
     </DropdownMenu.Trigger>
     <DropdownMenu.Content
       forceMount
+      sideOffset={0}
       bind:ref={contentEl}
       class={`w-[420px] max-h-[460px] overflow-y-auto p-3 focus:outline-none relative transition-opacity duration-150 ${
         menuOpen ? '' : 'opacity-0 pointer-events-none'
       }`}
       aria-hidden={!menuOpen}
+      data-latex-toolbar-layer
       preventScroll={false}
       on:mouseleave={handleContentMouseLeave}
       on:openAutoFocus={(e) => {
@@ -331,14 +405,24 @@
               {#if cmd.subcommands}
                 <!-- Nested dropdown for commands with subcommands -->
                 <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger
-                    showIcon={false}
-                    class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent"
+                  <div
+                    class="contents"
+                    on:pointerdown|capture={(event) =>
+                      handleSubTriggerPointerDown(event)}
+                    on:click|capture={(event) =>
+                      handleSubTriggerClick(event, cmd, group.category)}
                   >
-                    <MathSymbol latex={cmd.label} />
-                  </DropdownMenu.SubTrigger>
+                    <DropdownMenu.SubTrigger
+                      showIcon={false}
+                      class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent"
+                      title={cmd.tooltip}
+                    >
+                      <MathSymbol latex={cmd.label} />
+                    </DropdownMenu.SubTrigger>
+                  </div>
                   <DropdownMenu.SubContent
                     class="min-w-0 p-1"
+                    data-latex-toolbar-layer
                     onCloseAutoFocus={(e) => {
                       e.preventDefault();
                     }}
@@ -389,7 +473,7 @@
 
       <!-- Section Navigation Buttons -->
       <div
-        class="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3"
+        class="sticky bottom-0 -mx-3 -mb-3 bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3 z-10"
       >
         <div class="flex items-center gap-1.5 overflow-x-auto">
           <!-- TODO: Fix redundancy here -->
