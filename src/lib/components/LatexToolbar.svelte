@@ -440,9 +440,9 @@
                     >
                       <span
                         aria-hidden="true"
-                        class="absolute inset-0 flex items-center justify-center text-muted-foreground/25 text-lg font-semibold pointer-events-none"
+                        class="absolute top-0.5 right-0.5 text-[11px] font-semibold text-muted-foreground/60 pointer-events-none"
                       >
-                        ✦
+                        ^
                       </span>
                       <span class="relative z-10 flex items-center justify-center">
                         <MathSymbol latex={cmd.label} />
