@@ -9,6 +9,6 @@
 - [x] For groups like int or oint, when hovering a menu of options appear (good), but if we just click the main button, it should insert the default symbol. _and use the pointer cursor_
 - [x] Add a small icon behind the latex symbol on buttons that expand to make them visually distinguished
 - [x] Fix TODOs in the code
-- There's a bug where the latex-toolbar menu might be hidden, but I can still click buttons. Maybe it's just invisible but should be display:none?
-- switching layout mode (horizontal vs vertical) has gotten quite slow (1-2 seconds to switch) which indicates too much stuff is being recomputed
-- Some symbols in the menu, like \Overrightarrow or \utilde seem to require latex packages that we don't currently include in mathjax imports, like the undertilde package. Check all commands to make sure we have all the packages we need.
+- [x] There's a bug where the latex-toolbar menu might be hidden, but I can still click buttons. Maybe it's just invisible but should be display:none?
+- [x] switching layout mode (horizontal vs vertical) has gotten quite slow (1-2 seconds to switch) which indicates too much stuff is being recomputed
+- [x] Some symbols in the menu, like \Overrightarrow or \utilde seem to require latex packages that we don't currently include in mathjax imports, like the undertilde package. Check all commands to make sure we have all the packages we need.

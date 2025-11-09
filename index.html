@@ -40,7 +40,13 @@
         load: ['[tex]/ams', '[tex]/color', '[tex]/cancel', '[tex]/mhchem', '[tex]/physics', '[tex]/braket', '[tex]/boldsymbol']
       },
       tex: {
-        packages: { '[+]': ['ams', 'color', 'cancel', 'mhchem', 'physics', 'braket', 'boldsymbol'] }
+        packages: { '[+]': ['ams', 'color', 'cancel', 'mhchem', 'physics', 'braket', 'boldsymbol'] },
+        macros: {
+          oiint: "\\unicode{x222F}",
+          oiiint: "\\unicode{x2230}",
+          Overrightarrow: ["\\overrightarrow{#1}", 1],
+          utilde: ["\\underset{\\sim}{#1}", 1]
+        }
       }
     };
   </script>

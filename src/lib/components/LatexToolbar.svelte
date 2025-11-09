@@ -381,6 +381,7 @@
         menuOpen ? "" : "opacity-0 pointer-events-none"
       }`}
       aria-hidden={!menuOpen}
+      inert={!menuOpen}
       data-latex-toolbar-layer
       preventScroll={false}
       on:mouseleave={handleContentMouseLeave}
