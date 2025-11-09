@@ -1,278 +1,255 @@
 <script>
+  import { tick } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import MathSymbol from "./MathSymbol.svelte";
   import { snippet } from "@codemirror/autocomplete";
+  import { toolbarCommands } from "$lib/utils/toolbarCommands.js";
+  import { trackEvent } from "$lib/utils/analytics.js";
 
   let { editorInstance } = $props();
 
-  const toolbarCommands = [
-    {
-      category: "Common",
-      icon: "∑",
-      commands: [
-        {
-          label: "\\frac{a}{b}",
-          latex: "\\frac{${1}}{${2}}",
-          tooltip: "Fraction",
-        },
-        { label: "\\sqrt{x}", latex: "\\sqrt{${1}}", tooltip: "Square root" },
-        {
-          label: "\\sqrt[n]{x}",
-          latex: "\\sqrt[${1}]{${2}}",
-          tooltip: "Nth root",
-        },
-        { label: "x^n", latex: "^{${1}}", tooltip: "Superscript" },
-        { label: "x_n", latex: "_{${1}}", tooltip: "Subscript" },
-        { label: "\\int", latex: "\\int_{${1}}^{${2}}", tooltip: "Integral" },
-        { label: "\\sum", latex: "\\sum_{${1}}^{${2}}", tooltip: "Summation" },
-        { label: "\\prod", latex: "\\prod_{${1}}^{${2}}", tooltip: "Product" },
-        {
-          label: "\\lim_{a \\to b}",
-          latex: "\\lim_{${1} \\to ${2}}",
-          tooltip: "Limit",
-        },
-      ],
-    },
-    {
-      category: "Greek",
-      icon: "Ω",
-      commands: [
-        { label: "\\alpha", latex: "\\alpha", tooltip: "alpha" },
-        { label: "\\beta", latex: "\\beta", tooltip: "beta" },
-        { label: "\\gamma", latex: "\\gamma", tooltip: "gamma" },
-        { label: "\\delta", latex: "\\delta", tooltip: "delta" },
-        { label: "\\epsilon", latex: "\\epsilon", tooltip: "epsilon" },
-        { label: "\\theta", latex: "\\theta", tooltip: "theta" },
-        { label: "\\lambda", latex: "\\lambda", tooltip: "lambda" },
-        { label: "\\mu", latex: "\\mu", tooltip: "mu" },
-        { label: "\\pi", latex: "\\pi", tooltip: "pi" },
-        { label: "\\sigma", latex: "\\sigma", tooltip: "sigma" },
-        { label: "\\phi", latex: "\\phi", tooltip: "phi" },
-        { label: "\\omega", latex: "\\omega", tooltip: "omega" },
-        { label: "\\Gamma", latex: "\\Gamma", tooltip: "Gamma" },
-        { label: "\\Delta", latex: "\\Delta", tooltip: "Delta" },
-        { label: "\\Theta", latex: "\\Theta", tooltip: "Theta" },
-        { label: "\\Sigma", latex: "\\Sigma", tooltip: "Sigma" },
-        { label: "\\Omega", latex: "\\Omega", tooltip: "Omega" },
-      ],
-    },
-    {
-      category: "Operators",
-      icon: "≠",
-      commands: [
-        { label: "=", latex: "=", tooltip: "Equal" },
-        { label: "\\neq", latex: "\\neq", tooltip: "Not equal" },
-        { label: "<", latex: "<", tooltip: "Less than" },
-        { label: ">", latex: ">", tooltip: "Greater than" },
-        { label: "\\leq", latex: "\\leq", tooltip: "Less than or equal" },
-        { label: "\\geq", latex: "\\geq", tooltip: "Greater than or equal" },
-        { label: "\\approx", latex: "\\approx", tooltip: "Approximately" },
-        { label: "\\sim", latex: "\\sim", tooltip: "Asymptotically equal" },
-        { label: "\\propto", latex: "\\propto", tooltip: "Proportional to" },
-        { label: "\\pm", latex: "\\pm", tooltip: "Plus minus" },
-        { label: "\\times", latex: "\\times", tooltip: "Times" },
-        { label: "\\div", latex: "\\div", tooltip: "Division" },
-        { label: "\\infty", latex: "\\infty", tooltip: "Infinity" },
-        { label: "\\in", latex: "\\in", tooltip: "Element of" },
-        { label: "\\notin", latex: "\\notin", tooltip: "Not element of" },
-        { label: "\\subset", latex: "\\subset", tooltip: "Subset" },
-        {
-          label: "\\subseteq",
-          latex: "\\subseteq",
-          tooltip: "Subset or equal",
-        },
-        { label: "\\supset", latex: "\\supset", tooltip: "Superset" },
-        {
-          label: "\\supseteq",
-          latex: "\\supseteq",
-          tooltip: "Superset or equal",
-        },
-        { label: "\\cup", latex: "\\cup", tooltip: "Union" },
-        { label: "\\cap", latex: "\\cap", tooltip: "Intersection" },
-        { label: "\\forall", latex: "\\forall", tooltip: "For all" },
-        { label: "\\exists", latex: "\\exists", tooltip: "Exists" },
-        { label: "\\wedge", latex: "\\wedge", tooltip: "Logical AND" },
-        { label: "\\vee", latex: "\\vee", tooltip: "Logical OR" },
-        { label: "\\neg", latex: "\\neg", tooltip: "Logical NOT" },
-        { label: "\\nabla", latex: "\\nabla", tooltip: "Nabla" },
-        { label: "\\partial", latex: "\\partial", tooltip: "Partial" },
-      ],
-    },
-    {
-      category: "Arrows",
-      icon: "→",
-      commands: [
-        { label: "\\to", latex: "\\to", tooltip: "Right arrow" },
-        {
-          label: "\\rightarrow",
-          latex: "\\rightarrow",
-          tooltip: "Right arrow",
-        },
-        { label: "\\Rightarrow", latex: "\\Rightarrow", tooltip: "Implies" },
-        { label: "\\leftarrow", latex: "\\leftarrow", tooltip: "Left arrow" },
-        { label: "\\Leftarrow", latex: "\\Leftarrow", tooltip: "Implied by" },
-        {
-          label: "\\leftrightarrow",
-          latex: "\\leftrightarrow",
-          tooltip: "Left-right arrow",
-        },
-        {
-          label: "\\Leftrightarrow",
-          latex: "\\Leftrightarrow",
-          tooltip: "If and only if",
-        },
-        { label: "\\uparrow", latex: "\\uparrow", tooltip: "Up arrow" },
-        { label: "\\downarrow", latex: "\\downarrow", tooltip: "Down arrow" },
-        {
-          label: "\\updownarrow",
-          latex: "\\updownarrow",
-          tooltip: "Up-down arrow",
-        },
-        { label: "\\mapsto", latex: "\\mapsto", tooltip: "Maps to" },
-        {
-          label: "\\longrightarrow",
-          latex: "\\longrightarrow",
-          tooltip: "Long right arrow",
-        },
-        {
-          label: "\\Longrightarrow",
-          latex: "\\Longrightarrow",
-          tooltip: "Long implies",
-        },
-      ],
-    },
-    {
-      category: "Brackets",
-      icon: "⟨⟩",
-      commands: [
-        {
-          label: "\\left( \\right)",
-          latex: "\\left(${1}\\right)",
-          tooltip: "Parentheses",
-        },
-        {
-          label: "\\left[ \\right]",
-          latex: "\\left[${1}\\right]",
-          tooltip: "Brackets",
-        },
-        {
-          label: "\\left\\{ \\right\\}",
-          latex: "\\left\\{${1}\\right\\}",
-          tooltip: "Braces",
-        },
-        {
-          label: "\\langle \\rangle",
-          latex: "\\langle ${1} \\rangle",
-          tooltip: "Angle brackets",
-        },
-        {
-          label: "\\left| \\right|",
-          latex: "\\left|${1}\\right|",
-          tooltip: "Absolute value",
-        },
-      ],
-    },
-    {
-      category: "Accents",
-      icon: "x̂",
-      commands: [
-        { label: "\\hat{x}", latex: "\\hat{${1}}", tooltip: "Hat" },
-        { label: "\\bar{x}", latex: "\\bar{${1}}", tooltip: "Bar" },
-        { label: "\\dot{x}", latex: "\\dot{${1}}", tooltip: "Dot" },
-        { label: "\\ddot{x}", latex: "\\ddot{${1}}", tooltip: "Double dot" },
-        { label: "\\vec{x}", latex: "\\vec{${1}}", tooltip: "Vector" },
-        { label: "\\tilde{x}", latex: "\\tilde{${1}}", tooltip: "Tilde" },
-      ],
-    },
-    {
-      category: "Matrix",
-      icon: "[\\cdot]",
-      commands: [
-        {
-          label: "2\\times 2",
-          latex: "\\begin{pmatrix}${1} & ${2} \\\\ ${3} & ${4}\\end{pmatrix}",
-          tooltip: "2×2 matrix",
-        },
-        {
-          label: "3\\times 3",
-          latex:
-            "\\begin{pmatrix}${1} & ${2} & ${3} \\\\ ${4} & ${5} & ${6} \\\\ ${7} & ${8} & ${9}\\end{pmatrix}",
-          tooltip: "3×3 matrix",
-        },
-        {
-          label: "n\\times m",
-          latex: "\\begin{matrix}${1}\\end{matrix}",
-          tooltip: "Custom matrix",
-        },
-      ],
-    },
-    {
-      category: "Colour",
-      icon: "\\color{red}{A}",
-      commands: [
-        {
-          label: "\\color{red}{x}",
-          latex: "\\color{red}{${1}}",
-          tooltip: "Red",
-        },
-        {
-          label: "\\color{blue}{x}",
-          latex: "\\color{blue}{${1}}",
-          tooltip: "Blue",
-        },
-        {
-          label: "\\color{green}{x}",
-          latex: "\\color{green}{${1}}",
-          tooltip: "Green",
-        },
-        {
-          label: "\\color{orange}{x}",
-          latex: "\\color{orange}{${1}}",
-          tooltip: "Orange",
-        },
-        {
-          label: "\\color{purple}{x}",
-          latex: "\\color{purple}{${1}}",
-          tooltip: "Purple",
-        },
-        {
-          label: "\\color{brown}{x}",
-          latex: "\\color{brown}{${1}}",
-          tooltip: "Brown",
-        },
-        {
-          label: "\\color{gray}{x}",
-          latex: "\\color{gray}{${1}}",
-          tooltip: "Gray",
-        },
-        {
-          label: "\\color{black}{x}",
-          latex: "\\color{black}{${1}}",
-          tooltip: "Black",
-        },
-      ],
-    },
-  ];
-
   let menuOpen = $state(false);
+  let hasInteractedInsideToolbar = $state(false);
+  let hoverEnabled = $state(false);
+  let openedViaHover = $state(false);
+  let triggerRegionEl = $state(null);
+  let savedTop = $state(0);
+  let contentEl = $state(null);
+  let recentCommands = $state([]);
+  let sectionRefs = $state({});
+  let activeSection = $state(null);
 
-  function insertLatex(latex) {
-    if (!editorInstance?.view) {
+  // Load recent commands from localStorage
+  $effect(() => {
+    const stored = localStorage.getItem("latexRecentCommands");
+    if (stored) {
+      try {
+        recentCommands = JSON.parse(stored);
+      } catch (e) {
+        recentCommands = [];
+      }
+    }
+  });
+
+  function addToRecent(command) {
+    // Remove if already exists
+    const filtered = recentCommands.filter((c) => c.latex !== command.latex);
+    // Add to front
+    const updated = [command, ...filtered].slice(0, 18);
+    recentCommands = updated;
+    localStorage.setItem("latexRecentCommands", JSON.stringify(updated));
+  }
+
+  function markToolbarInteraction() {
+    hasInteractedInsideToolbar = true;
+  }
+
+  function handleTriggerClick(event) {
+    const isKeyboardActivation = event?.detail === 0;
+    if (menuOpen && hoverEnabled && openedViaHover && !isKeyboardActivation) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  function handleTriggerPointerDown(event) {
+    if (
+      menuOpen &&
+      hoverEnabled &&
+      openedViaHover &&
+      event?.pointerType !== "touch"
+    ) {
+      markToolbarInteraction();
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  function handleTriggerMouseEnter() {
+    if (!hoverEnabled) return;
+    openedViaHover = true;
+    menuOpen = true;
+  }
+
+  function handleTriggerMouseLeave(event) {
+    if (!hoverEnabled) return;
+    const nextTarget = event?.relatedTarget;
+    const isNodeTarget =
+      typeof Node !== "undefined" && nextTarget instanceof Node;
+    const movingIntoContent = isNodeTarget && contentEl?.contains(nextTarget);
+    if (movingIntoContent) return;
+    if (!hasInteractedInsideToolbar) {
+      menuOpen = false;
+    }
+    openedViaHover = false;
+  }
+
+  function handleContentMouseLeave(event) {
+    if (!hoverEnabled || !openedViaHover) return;
+    const nextTarget = event?.relatedTarget;
+    const isNodeTarget =
+      typeof Node !== "undefined" && nextTarget instanceof Node;
+    const movingIntoTrigger = isNodeTarget && triggerRegionEl?.contains(nextTarget);
+    if (movingIntoTrigger) return;
+    if (!hasInteractedInsideToolbar) {
+      menuOpen = false;
+    }
+    openedViaHover = false;
+  }
+
+  // Reset click-tracking whenever the menu fully closes
+  $effect(() => {
+    if (!menuOpen) {
+      hasInteractedInsideToolbar = false;
+      openedViaHover = false;
+    }
+  });
+
+  // Enable hover behavior only for precise pointers
+  $effect(() => {
+    if (typeof window === "undefined" || typeof matchMedia === "undefined") {
+      hoverEnabled = false;
       return;
     }
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    hoverEnabled = mq.matches;
+    const onChange = (event) => (hoverEnabled = event.matches);
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    if (typeof mq.addListener === "function") {
+      mq.addListener(onChange);
+      return () => mq.removeListener(onChange);
+    }
+    return () => {};
+  });
 
-    const editor = editorInstance;
+  // Track pointer and wheel interactions inside the toolbar content
+  $effect(() => {
+    const el = contentEl;
+    if (!el) return;
 
-    const view = editor.view;
+    const handlePointerDown = () => markToolbarInteraction();
+    const handleWheel = () => markToolbarInteraction();
+    const handleKeyDown = () => markToolbarInteraction();
+
+    el.addEventListener("pointerdown", handlePointerDown);
+    el.addEventListener("wheel", handleWheel, { passive: true });
+    el.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      el.removeEventListener("pointerdown", handlePointerDown);
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("keydown", handleKeyDown);
+    };
+  });
+
+  // Save scroll while menu is open and track active section
+  $effect(() => {
+    const el = contentEl;
+    if (!el) return;
+    const onScroll = () => {
+      savedTop = el.scrollTop;
+      updateActiveSection();
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  });
+
+  // Update active section based on scroll position
+  function updateActiveSection() {
+    if (!contentEl) return;
+    const containerTop = contentEl.getBoundingClientRect().top;
+    let closestSection = null;
+    let closestDistance = Infinity;
+
+    // Check Recent section first if it exists
+    if (recentCommands.length > 0 && sectionRefs["Recent"]) {
+      const rect = sectionRefs["Recent"].getBoundingClientRect();
+      const distance = Math.abs(rect.top - containerTop);
+      if (distance < closestDistance && rect.top - containerTop <= 100) {
+        closestDistance = distance;
+        closestSection = "Recent";
+      }
+    }
+
+    // Check other sections
+    for (const group of toolbarCommands) {
+      const ref = sectionRefs[group.category];
+      if (ref) {
+        const rect = ref.getBoundingClientRect();
+        const distance = Math.abs(rect.top - containerTop);
+        if (distance < closestDistance && rect.top - containerTop <= 100) {
+          closestDistance = distance;
+          closestSection = group.category;
+        }
+      }
+    }
+
+    if (closestSection) {
+      activeSection = closestSection;
+    }
+  }
+
+  // Restore scroll and keep asserting until settled
+  function restoreScrollUntilSettled() {
+    if (!contentEl) return;
+    let frames = 0;
+    const tickFrame = () => {
+      if (!menuOpen || !contentEl) return;
+      contentEl.scrollTop = savedTop;
+      if (++frames < 8) requestAnimationFrame(tickFrame); // ~8 frames ≈ 130ms @60Hz
+    };
+    requestAnimationFrame(tickFrame);
+  }
+
+  // When menu opens, restore scroll and update active section
+  $effect(async () => {
+    if (menuOpen && contentEl) {
+      await tick();
+      restoreScrollUntilSettled();
+      updateActiveSection();
+    }
+  });
+
+  // Scroll to a specific section
+  function scrollToSection(category) {
+    const ref = sectionRefs[category];
+    if (ref && contentEl) {
+      const containerTop = contentEl.getBoundingClientRect().top;
+      const elementTop = ref.getBoundingClientRect().top;
+      const offset = elementTop - containerTop - 8; // 8px padding
+      contentEl.scrollTop += offset;
+      activeSection = category;
+    }
+  }
+
+  function insertLatex(latex, category, label, tooltip) {
+    if (!editorInstance?.view) return;
+
+    const view = editorInstance.view;
     const selection = view.state.selection.main;
     const from = selection.from;
     const to = selection.to;
 
     menuOpen = false;
 
+    // Add to recent commands
+    addToRecent({ label, latex, tooltip });
+
+    // Track symbol insertion
+    trackEvent("insert_symbol", {
+      category: category,
+      symbol: label || latex.substring(0, 20),
+    });
+
+    // Add final placeholder at end so cursor ends up on the right
+    const latexWithFinalTab = latex + "${}";
+
     // Use CodeMirror's snippet function for proper placeholder handling
-    const snippetFn = snippet(latex);
+    const snippetFn = snippet(latexWithFinalTab);
     snippetFn(
       { state: view.state, dispatch: view.dispatch.bind(view) },
       null,
@@ -287,13 +264,59 @@
 <div class="font-sans">
   <DropdownMenu.Root bind:open={menuOpen}>
     <DropdownMenu.Trigger>
-      <Button variant="secondary" size="icon">
-        <MathSymbol latex="\sum" />
-      </Button>
+      <div
+        data-testid="latex-toolbar-trigger-region"
+        bind:this={triggerRegionEl}
+        on:mouseenter={handleTriggerMouseEnter}
+        on:mouseleave={handleTriggerMouseLeave}
+        on:click|capture={handleTriggerClick}
+        on:pointerdown|capture={handleTriggerPointerDown}
+      >
+        <Button variant="secondary" size="icon">
+          <MathSymbol latex="\Sigma" />
+        </Button>
+      </div>
     </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="w-[420px] max-h-[460px] overflow-y-auto p-3">
+    <DropdownMenu.Content
+      forceMount
+      bind:ref={contentEl}
+      class={`w-[420px] max-h-[460px] overflow-y-auto p-3 focus:outline-none relative transition-opacity duration-150 ${
+        menuOpen ? '' : 'opacity-0 pointer-events-none'
+      }`}
+      aria-hidden={!menuOpen}
+      preventScroll={false}
+      on:mouseleave={handleContentMouseLeave}
+      on:openAutoFocus={(e) => {
+        e.preventDefault();
+        contentEl?.focus?.({ preventScroll: true });
+        restoreScrollUntilSettled();
+      }}
+      on:closeAutoFocus={(e) => e.preventDefault()}
+    >
+      {#if recentCommands.length > 0}
+        <div class="mb-3" bind:this={sectionRefs["Recent"]}>
+          <div class="text-xs font-semibold text-foreground mb-2">Recent</div>
+          <div
+            class="grid gap-1"
+            style="grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));"
+          >
+            {#each recentCommands as cmd}
+              <Button
+                variant="ghost"
+                size="sm"
+                class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                title={cmd.tooltip}
+                onclick={() =>
+                  insertLatex(cmd.latex, "Recent", cmd.label, cmd.tooltip)}
+              >
+                <MathSymbol latex={cmd.label} />
+              </Button>
+            {/each}
+          </div>
+        </div>
+      {/if}
       {#each toolbarCommands as group}
-        <div class="mb-3">
+        <div class="mb-3" bind:this={sectionRefs[group.category]}>
           <div class="text-xs font-semibold text-foreground mb-2">
             {group.category}
           </div>
@@ -301,20 +324,105 @@
             class="grid gap-1"
             style="grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));"
           >
-            {#each group.commands as cmd}
-              <Button
-                variant="ghost"
-                size="sm"
-                class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
-                title={cmd.tooltip}
-                onclick={() => insertLatex(cmd.latex)}
-              >
-                <MathSymbol latex={cmd.label} />
-              </Button>
+            {#each group.commands as cmd, cmdIdx}
+              {#if cmd.subcommands}
+                <!-- Nested dropdown for commands with subcommands -->
+                <DropdownMenu.Sub>
+                  <DropdownMenu.SubTrigger
+                    showIcon={false}
+                    class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent"
+                  >
+                    <MathSymbol latex={cmd.label} />
+                  </DropdownMenu.SubTrigger>
+                  <DropdownMenu.SubContent
+                    class="min-w-0 p-1"
+                    onCloseAutoFocus={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    <div class="flex flex-col gap-1">
+                      {#each cmd.subcommands as subcmd}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          class="h-9 w-full justify-start px-2 text-sm"
+                          title={subcmd.tooltip}
+                          onclick={() =>
+                            insertLatex(
+                              subcmd.latex,
+                              group.category,
+                              subcmd.label,
+                              subcmd.tooltip,
+                            )}
+                        >
+                          <MathSymbol latex={subcmd.label} />
+                        </Button>
+                      {/each}
+                    </div>
+                  </DropdownMenu.SubContent>
+                </DropdownMenu.Sub>
+              {:else}
+                <!-- Regular button for simple commands -->
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                  title={cmd.tooltip}
+                  onclick={() =>
+                    insertLatex(
+                      cmd.latex,
+                      group.category,
+                      cmd.label,
+                      cmd.tooltip,
+                    )}
+                >
+                  <MathSymbol latex={cmd.label} />
+                </Button>
+              {/if}
             {/each}
           </div>
         </div>
       {/each}
+
+      <!-- Section Navigation Buttons -->
+      <div
+        class="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3"
+      >
+        <div class="flex items-center gap-1.5 overflow-x-auto">
+          <!-- TODO: Fix redundancy here -->
+          {#if recentCommands.length > 0}
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full {activeSection ===
+              'Recent'
+                ? 'bg-accent'
+                : ''}"
+              onclick={() => scrollToSection("Recent")}
+              title="Recent"
+            >
+              <span class="text-sm">🕐</span>
+            </Button>
+          {/if}
+          {#each toolbarCommands as group}
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full text-xs {activeSection ===
+              group.category
+                ? 'bg-accent'
+                : ''}"
+              onclick={() => scrollToSection(group.category)}
+              title={group.category}
+            >
+              <MathSymbol latex={group.icon} />
+            </Button>
+          {/each}
+        </div>
+      </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
 </div>
+
+<style>
+</style>
