@@ -5,16 +5,7 @@
   let container = $state(null);
 
   onMount(() => {
-    if (window.MathJax && container) {
-      window.MathJax.typesetPromise([container]).catch((err) =>
-        console.warn("MathJax typeset failed:", err),
-      );
-    }
-  });
-
-  $effect(() => {
-    if (window.MathJax && container && latex) {
-      window.MathJax.typesetClear([container]);
+    if (window.MathJax?.typesetPromise && container) {
       window.MathJax.typesetPromise([container]).catch((err) =>
         console.warn("MathJax typeset failed:", err),
       );

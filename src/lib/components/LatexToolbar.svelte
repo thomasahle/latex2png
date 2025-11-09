@@ -286,11 +286,10 @@
 
 <div class="font-sans">
   <DropdownMenu.Root bind:open={menuOpen}>
-    <DropdownMenu.Trigger
-      class="inline-flex h-9 w-9 items-center justify-center whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 overflow-hidden"
-      title="Insert symbols"
-    >
-      <MathSymbol latex="\sum" />
+    <DropdownMenu.Trigger>
+      <Button variant="secondary" size="icon">
+        <MathSymbol latex="\sum" />
+      </Button>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class="w-[420px] max-h-[460px] overflow-y-auto p-3">
       {#each toolbarCommands as group}

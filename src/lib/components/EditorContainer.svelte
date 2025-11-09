@@ -18,18 +18,15 @@
   const handleBase =
     "border border-border flex items-center justify-center relative bg-slate-50 dark:bg-background " +
     "hover:bg-black/[0.02] dark:hover:bg-white/[0.05] active:bg-black/[0.05] dark:active:bg-white/[0.1] " +
-    "select-none touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
-
-  const handleVertical =
-    "border-x-0 !h-4 cursor-ns-resize before:w-[60px] before:h-[6px]" +
+    "select-none touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 " +
     "before:content-[''] before:absolute before:bg-border before:rounded-sm " +
     "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
 
+  const handleVertical =
+    "border-x-0 !h-4 cursor-ns-resize before:w-[60px] before:h-[6px]";
+
   const handleHorizontal =
-    "border-y-0 !w-4 cursor-ew-resize " +
-    "" +
-    "before:content-[''] before:absolute before:h-[60px] before:w-[6px] before:bg-border before:rounded-sm " +
-    "hover:before:bg-[var(--accent)] active:before:bg-[var(--accent)]";
+    "border-y-0 !w-4 cursor-ew-resize before:h-[60px] before:w-[6px]";
 </script>
 
 <div
