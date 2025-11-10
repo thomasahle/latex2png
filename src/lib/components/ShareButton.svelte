@@ -26,7 +26,7 @@
     {#each items as item (item.label)}
       <DropdownMenu.Item
         onSelect={item.action}
-        class="hover:bg-accent focus:bg-accent cursor-pointer"
+        class="cursor-pointer"
       >
         {item.label}
       </DropdownMenu.Item>

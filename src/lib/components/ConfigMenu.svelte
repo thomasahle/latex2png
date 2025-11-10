@@ -35,7 +35,7 @@
   <DropdownMenu.Content align="end" class="[--radius:0.375rem] w-48">
     <DropdownMenu.Item
       onSelect={toggleTheme}
-      class="hover:bg-accent focus:bg-accent cursor-pointer flex items-center justify-between"
+      class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
         <i class={$theme === "dark" ? "ph ph-sun" : "ph ph-moon-stars"}></i>
@@ -45,7 +45,7 @@
 
     <DropdownMenu.Item
       onSelect={toggleVim}
-      class="hover:bg-accent focus:bg-accent cursor-pointer flex items-center justify-between"
+      class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
         <i class="ph ph-keyboard"></i>
@@ -56,7 +56,7 @@
 
     <DropdownMenu.Item
       onSelect={toggleFullscreen}
-      class="hover:bg-accent focus:bg-accent cursor-pointer flex items-center justify-between"
+      class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
         <i class={$fullscreen ? "ph ph-arrows-in" : "ph ph-arrows-out"}></i>
