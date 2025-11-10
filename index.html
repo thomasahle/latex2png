@@ -45,7 +45,19 @@
           oiint: "\\unicode{x222F}",
           oiiint: "\\unicode{x2230}",
           Overrightarrow: ["\\overrightarrow{#1}", 1],
-          utilde: ["\\underset{\\sim}{#1}", 1]
+          utilde: ["\\underset{\\sim}{#1}", 1],
+          // Custom macros for symbols that don't work in standard MathJax
+          // Double brackets using Unicode characters
+          llbracket: "\\unicode{x27E6}",  // ⟦
+          rrbracket: "\\unicode{x27E7}",  // ⟧
+          // Wide check using inverted hat
+          widecheck: ["\\overset{\\Large\\vee}{#1}", 1],
+          // Group symbols using braces as approximation
+          overgroup: ["\\overbrace{#1}^{\\hspace{-0.5em}}", 1],
+          undergroup: ["\\underbrace{#1}_{\\hspace{-0.5em}}", 1],
+          // Harpoon accents using standard harpoons over content
+          overleftharpoon: ["\\overset{\\leftharpoonup}{#1}", 1],
+          overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1]
         }
       }
     };
@@ -69,8 +81,8 @@
     gtag('js', new Date());
     gtag('config', 'G-40XB6Q54CE');
   </script>
-  <script type="module" crossorigin src="/latex2png/assets/main-BACZ8qAd.js"></script>
-  <link rel="stylesheet" crossorigin href="/latex2png/assets/main-UGeMdgGt.css">
+  <script type="module" crossorigin src="/latex2png/assets/main-B7b_NC-v.js"></script>
+  <link rel="stylesheet" crossorigin href="/latex2png/assets/main-D9fs_r0G.css">
 </head>
 
 <body>
