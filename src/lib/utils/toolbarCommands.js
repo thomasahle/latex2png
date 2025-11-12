@@ -81,9 +81,9 @@ export const toolbarCommands = [
         latex: "\\sqrt[${1}]{${2}}",
         tooltip: "Nth root",
       },
-      { label: "x^n", latex: "^{${1}}", tooltip: "Superscript" },
-      { label: "x_n", latex: "_{${1}}", tooltip: "Subscript" },
-      { label: "x_n^m", latex: "_{${1}}^{${2}}", tooltip: "Sub & superscript" },
+      { label: "x^n", latex: "${1}^{${2}}", tooltip: "Superscript" },
+      { label: "x_n", latex: "${1}_{${2}}", tooltip: "Subscript" },
+      { label: "x_n^m", latex: "${1}_{${2}}^{${3}}", tooltip: "Sub & superscript" },
       { label: "\\sum", latex: "\\sum_{${1}}^{${2}}", tooltip: "Summation ∑" },
       {
         label: "\\prod", latex: "\\prod_{${1}}^{${2}}", tooltip: "Product ∏",
