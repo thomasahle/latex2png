@@ -5,7 +5,7 @@
 
   let {
     items = [],
-    className = "bg-primary text-primary-foreground hover:bg-primary/90",
+    className = "",
     iconClass = "",
   } = $props();
 
@@ -14,7 +14,7 @@
 </script>
 
 <DropdownMenu.Root>
-  <ButtonGroup.Root aria-label={primaryItem?.label} class="[--radius:0.375rem]">
+  <ButtonGroup.Root aria-label={primaryItem?.label}>
     <Button class={className} onclick={primaryItem?.action}>
       {#if iconClass}
         <i class={iconClass}></i>
@@ -37,7 +37,7 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content class="[--radius:0.375rem]">
+    <DropdownMenu.Content>
       {#each dropdownItems as item (item.label || item.separator)}
         {#if item.separator}
           <DropdownMenu.Separator />
