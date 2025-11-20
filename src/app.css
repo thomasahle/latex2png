@@ -61,6 +61,15 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Ensure inline MathJax stays inline */
+  mjx-container:not([display="true"]) {
+    display: inline !important;
+  }
+
+  mjx-container:not([display="true"]) svg {
+    display: inline !important;
+  }
+
   /* Add hover states for dropdown menu items since bits-ui doesn't add data-highlighted on mouse hover */
   [data-slot="dropdown-menu-item"]:hover:not([data-disabled]),
   [data-slot="dropdown-menu-radio-item"]:hover:not([data-disabled]),

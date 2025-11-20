@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { zoom } from '../stores/zoom.js';
 import { toast } from '../components/ui/sonner';
-import { generateImage, downloadImage, downloadPdf } from './image-generation.js';
+import { generateImage, generateSvg, downloadImage } from './image-generation.js';
 import { trackEvent, trackError } from './analytics.js';
 
 function downloadFile(url, filename) {
@@ -9,6 +9,22 @@ function downloadFile(url, filename) {
   link.href = url;
   link.download = filename;
   link.click();
+}
+
+function resolveBackgroundColor(previewElement) {
+  const style = getComputedStyle(previewElement);
+  const bg = style.backgroundColor;
+  // Prefer the actual preview background if set
+  if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return bg;
+
+  // Otherwise use the theme variable
+  const root = getComputedStyle(document.body);
+  const varBg = root.getPropertyValue('--background')?.trim();
+  if (varBg) return `hsl(${varBg})`;
+
+  // Fallback by theme hint
+  if (document.body.dataset.theme === 'dark') return '#222';
+  return '#ffffff';
 }
 
 export async function savePNG() {
@@ -22,6 +38,7 @@ export async function savePNG() {
   try {
     const zoomScale = get(zoom);
     const canvas = await generateImage(previewElement, zoomScale, null);
+
     downloadImage(canvas, 'latex-equation.png');
     trackEvent('save_image', { format: 'png', zoom: zoomScale });
   } catch (error) {
@@ -40,7 +57,8 @@ export async function saveJPEG() {
 
   try {
     const zoomScale = get(zoom);
-    const canvas = await generateImage(previewElement, zoomScale, '#ffffff');
+    const backgroundColor = resolveBackgroundColor(previewElement);
+    const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
     trackEvent('save_image', { format: 'jpeg', zoom: zoomScale });
   } catch (error) {
@@ -55,17 +73,11 @@ export async function saveSVG() {
     trackError(new Error('Preview not found'), { context: 'saveSVG' });
     return;
   }
-  
-  const mjxContainer = previewElement.querySelector('mjx-container svg');
-  if (!mjxContainer) {
-    toast.error('No SVG found to save');
-    trackError(new Error('No SVG found to save'), { context: 'saveSVG' });
-    return;
-  }
-  
+
   try {
-    const svgData = new XMLSerializer().serializeToString(mjxContainer);
-    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const zoomScale = get(zoom) ?? 1;
+    const { svgString } = generateSvg(previewElement, zoomScale, null);
+    const blob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     downloadFile(url, 'latex-equation.svg');
     URL.revokeObjectURL(url);
@@ -84,41 +96,24 @@ export async function savePDF() {
       return;
     }
 
-    // Get the MathJax SVG element
-    const mjxContainer = previewElement.querySelector('mjx-container svg');
-    if (!mjxContainer) {
-      toast.error('No equation to export');
-      return;
-    }
+    const zoomScale = get(zoom) ?? 1;
+    const backgroundColor = resolveBackgroundColor(previewElement);
+    const { svgString, width, height } = generateSvg(previewElement, zoomScale, backgroundColor);
 
-    // Clone the SVG to avoid modifying the original
-    const svg = mjxContainer.cloneNode(true);
-    
-    // Get SVG dimensions with padding to avoid cropping
-    const bbox = mjxContainer.getBBox();
-    const padding = 10; // Add padding around the equation
-    const width = bbox.width + padding * 2;
-    const height = bbox.height + padding * 2;
-    
-    // Set viewBox to the content bounds with padding
-    svg.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${width} ${height}`);
-    svg.setAttribute('width', width);
-    svg.setAttribute('height', height);
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svgEl = svgDoc.documentElement;
 
-    // Import jsPDF and svg2pdf (svg2pdf extends jsPDF)
     const { jsPDF } = await import('jspdf');
-    await import('svg2pdf.js');
-    
-    // Create PDF sized to the SVG
+    await import('svg2pdf.js'); // extends jsPDF with .svg()
+
     const pdf = new jsPDF({
-      orientation: width > height ? 'l' : 'p',
-      unit: 'pt',
+      orientation: width >= height ? 'l' : 'p',
+      unit: 'px',
       format: [width, height]
     });
 
-    // Render SVG to PDF as vector graphics
-    await pdf.svg(svg, { x: 0, y: 0, width, height });
-    
+    await pdf.svg(svgEl, { x: 0, y: 0, width, height });
     pdf.save('latex-equation.pdf');
     trackEvent('save_image', { format: 'pdf' });
   } catch (error) {

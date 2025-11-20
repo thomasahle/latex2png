@@ -3,6 +3,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { theme } from "../stores/theme.js";
   import { vimMode } from "../stores/vimMode.js";
+  import { wrapContent } from "../stores/wrapContent.js";
   import { trackEvent } from "../utils/analytics.js";
 
   import { fullscreen } from "../stores/fullscreen.js";
@@ -15,6 +16,11 @@
   function toggleVim() {
     vimMode.toggle();
     trackEvent("toggle_vim_mode", { enabled: !$vimMode });
+  }
+
+  function toggleWrapContent() {
+    wrapContent.toggle();
+    trackEvent("toggle_wrap_content", { enabled: !$wrapContent });
   }
 
   function toggleFullscreen() {
@@ -51,6 +57,17 @@
         <i class="ph ph-keyboard"></i>
         {$vimMode ? "Disable" : "Enable"}
         Vim Mode
+      </span>
+    </DropdownMenu.Item>
+
+    <DropdownMenu.Item
+      onSelect={toggleWrapContent}
+      class="cursor-pointer flex items-center justify-between"
+    >
+      <span class="flex items-center gap-2">
+        <i class="ph ph-brackets-square"></i>
+        {$wrapContent ? "Disable" : "Enable"}
+        Wrap \[...\]
       </span>
     </DropdownMenu.Item>
 

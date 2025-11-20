@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { latexContent } from "../stores/content.js";
   import { zoom } from "../stores/zoom.js";
+  import { wrapContent } from "../stores/wrapContent.js";
 
   let previewElement = $state(null);
 
@@ -40,7 +41,7 @@
     });
   }
 
-  const renderMath = debounce(async (latex) => {
+  const renderMath = debounce(async (latex, shouldWrap) => {
     if (!previewElement || typeof window === "undefined") return;
 
     const container = previewElement;
@@ -52,10 +53,14 @@
       container.appendChild(blankEl);
     } else {
       const mathEl = document.createElement("div");
-      const hasAlignment = latex.includes("&") || latex.includes("\\\\");
-      mathEl.textContent = hasAlignment
-        ? "\\[\\begin{aligned}" + latex + "\\end{aligned}\\]"
-        : "\\[" + latex + "\\]";
+      if (shouldWrap) {
+        const hasAlignment = latex.includes("&") || latex.includes("\\\\");
+        mathEl.textContent = hasAlignment
+          ? "\\[\\begin{aligned}" + latex + "\\end{aligned}\\]"
+          : "\\[" + latex + "\\]";
+      } else {
+        mathEl.textContent = latex;
+      }
       container.appendChild(mathEl);
     }
 
@@ -71,13 +76,26 @@
     });
   }, 300);
 
-  let unsubscribe;
+  let unsubscribeContent;
+  let unsubscribeWrap;
+  let currentLatex = "";
+  let currentWrap = true;
+
   onMount(() => {
-    unsubscribe = latexContent.subscribe((value) => {
-      renderMath(value);
+    unsubscribeContent = latexContent.subscribe((value) => {
+      currentLatex = value;
+      renderMath(currentLatex, currentWrap);
     });
 
-    return unsubscribe;
+    unsubscribeWrap = wrapContent.subscribe((value) => {
+      currentWrap = value;
+      renderMath(currentLatex, currentWrap);
+    });
+
+    return () => {
+      unsubscribeContent();
+      unsubscribeWrap();
+    };
   });
 </script>
 
