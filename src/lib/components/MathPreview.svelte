@@ -5,8 +5,12 @@
   import { wrapContent } from "../stores/wrapContent.js";
   import { generateImage } from "../utils/image-generation.js";
   import { trackEvent } from "../utils/analytics.js";
+  import { saveMenuItems } from "../utils/saveMenuItems.js";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
   let previewElement = $state(null);
+  let contextMenuOpen = $state(false);
+  let contextMenuPosition = $state({ x: 0, y: 0 });
   let dragPngUrl = $state(null);
   let pngDataUrl = $state(null);
   let dragDownloadDataUrl = $state(null);
@@ -154,6 +158,13 @@
 
   let dragCleanup = null;
 
+  function handleContextMenu(event) {
+    event.preventDefault();
+    contextMenuPosition = { x: event.clientX, y: event.clientY };
+    contextMenuOpen = true;
+    trackEvent("context_menu", { location: "math_preview" });
+  }
+
   function handleDragStart(event) {
     if (!dragImage) return;
     const dt = event.dataTransfer;
@@ -253,6 +264,26 @@
       draggable={!!dragImage}
       on:dragstart={handleDragStart}
       on:dragend={handleDragEnd}
+      on:contextmenu={handleContextMenu}
     ></div>
   </div>
 </div>
+
+<DropdownMenu.Root bind:open={contextMenuOpen}>
+  <DropdownMenu.Trigger class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    {#each saveMenuItems as item (item.label || item.separator)}
+      {#if item.separator}
+        <DropdownMenu.Separator />
+      {:else}
+        <DropdownMenu.Item
+          onSelect={() => item.action()}
+          class="cursor-pointer"
+        >
+          {item.label}
+        </DropdownMenu.Item>
+      {/if}
+    {/each}
+  </DropdownMenu.Content>
+</DropdownMenu.Root>
