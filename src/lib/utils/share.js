@@ -165,6 +165,45 @@ export async function copyImage() {
   }
 }
 
+export async function copyMathML() {
+  const previewElement = document.querySelector("#math-preview");
+  if (!previewElement) {
+    trackError(new Error('Preview not found'), { context: 'copyMathML' });
+    return;
+  }
+
+  try {
+    const MathJax = window.MathJax;
+    if (!MathJax?.startup?.document) {
+      toast.error("MathJax not ready");
+      return;
+    }
+
+    const mathItems = MathJax.startup.document.getMathItemsWithin(previewElement);
+    if (!mathItems || mathItems.length === 0) {
+      toast.error("No math found to copy");
+      return;
+    }
+
+    // Get MathML from the first math item
+    const mathItem = mathItems[0];
+    const mathml = MathJax.startup.toMML(mathItem.root);
+
+    if (IS_SECURE && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(mathml);
+      toast.success("MathML copied to clipboard!");
+    } else {
+      await fallbackCopyText(mathml);
+      toast.success("MathML copied!");
+    }
+    trackEvent('share', { method: 'copy_mathml' });
+  } catch (error) {
+    console.error("Error copying MathML:", error);
+    toast.error("Failed to copy MathML");
+    trackError(error, { context: 'copyMathML' });
+  }
+}
+
 export async function shareImage() {
   const previewElement = document.querySelector("#math-preview");
   if (!previewElement) {

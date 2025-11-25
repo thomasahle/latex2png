@@ -3,6 +3,7 @@ import {
   shareLink,
   shareToTwitter,
   copyImage,
+  copyMathML,
   shareImage,
 } from "./share.js";
 
@@ -14,6 +15,8 @@ export const saveMenuItems = [
   { separator: true },
   { label: "Copy Link", action: shareLink },
   { label: "Copy Image", action: copyImage },
+  { label: "Copy MathML", action: copyMathML },
+  { separator: true },
   { label: "Share to Twitter", action: shareToTwitter },
   { label: "Share Image", action: shareImage },
 ];

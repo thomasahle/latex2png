@@ -53,7 +53,7 @@
   >
     {#if !$fullscreen}
       <h1
-        class="hidden sm:block px-2 md:px-0 text-[1.5rem] font-medium mb-4 font-serif"
+        class="hidden sm:block px-2 md:px-0 text-[1.5rem] font-medium mb-4 katex-font"
       >
         Convert LaTeX math equations to PNG/JPEG/SVG images
       </h1>

@@ -38,7 +38,7 @@
     </DropdownMenu.Trigger>
 
     <DropdownMenu.Content>
-      {#each dropdownItems as item (item.label || item.separator)}
+      {#each dropdownItems as item, i (item.label || `separator-${i}`)}
         {#if item.separator}
           <DropdownMenu.Separator />
         {:else}

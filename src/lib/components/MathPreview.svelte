@@ -274,7 +274,7 @@
   <DropdownMenu.Trigger class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
-    {#each saveMenuItems as item (item.label || item.separator)}
+    {#each saveMenuItems as item, i (item.label || `separator-${i}`)}
       {#if item.separator}
         <DropdownMenu.Separator />
       {:else}

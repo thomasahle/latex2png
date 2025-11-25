@@ -61,6 +61,15 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  .smallcaps {
+    font-variant: small-caps;
+    text-transform: lowercase;
+  }
+
+  .katex-font {
+    font-family: KaTeX_Main, "Times New Roman", serif;
+  }
+
   /* Ensure inline MathJax stays inline */
   mjx-container:not([display="true"]) {
     display: inline !important;

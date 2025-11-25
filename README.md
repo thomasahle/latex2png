@@ -19,7 +19,7 @@ npm run build
 
 ## License
 
-MIT
+GPL-3.0
 
 ---
 
