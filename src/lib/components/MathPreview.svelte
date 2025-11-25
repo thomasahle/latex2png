@@ -133,7 +133,10 @@
       const dragCanvas = await generateImage(previewElement, $zoom ?? 1, null, 1);
       const dragImg = new Image();
       dragImg.src = dragCanvas.toDataURL("image/png");
-      await new Promise((resolve) => { dragImg.onload = resolve; });
+      await new Promise((resolve, reject) => {
+        dragImg.onload = resolve;
+        dragImg.onerror = () => reject(new Error('Failed to load drag image'));
+      });
       dragImage = dragImg;
       // Some OS drag bridges handle application/octet-stream data URLs better than image/png
       dragDownloadDataUrl = pngDataUrl.replace("image/png", "application/octet-stream");

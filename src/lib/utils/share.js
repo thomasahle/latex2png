@@ -40,7 +40,8 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  // Delay revocation to ensure download completes (click is async in some browsers)
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function fallbackCopyText(text) {

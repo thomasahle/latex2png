@@ -53,8 +53,8 @@ f(5,m) &= ?
   // Physics with braket notation
   String.raw`\bra{\psi} \hat{H} \ket{\phi} = E \braket{\psi|\phi}`,
   
-  // Colored equation with cancellation
-  String.raw`\color{blue}{x^2} + \color{red}{\cancel{2xy}} + y^2 = (x+y)^2 - \cancel{2xy}`,
+  // Colored equation with cancellation (braces outside \color for proper scoping)
+  String.raw`{\color{blue}x^2} + {\color{red}\cancel{2xy}} + y^2 = (x+y)^2 - \cancel{2xy}`,
   
   // Bold symbols
   String.raw`\boldsymbol{\nabla} \times \boldsymbol{E} = -\frac{\partial \boldsymbol{B}}{\partial t}`
