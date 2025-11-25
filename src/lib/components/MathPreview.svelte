@@ -247,9 +247,11 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="h-full overflow-auto"
   style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 1rem;"
+  on:contextmenu={handleContextMenu}
 >
   <div
     class="relative inline-block"
@@ -264,7 +266,6 @@
       draggable={!!dragImage}
       on:dragstart={handleDragStart}
       on:dragend={handleDragEnd}
-      on:contextmenu={handleContextMenu}
     ></div>
   </div>
 </div>
