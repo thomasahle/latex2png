@@ -1,13 +1,19 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import legacy from '@vitejs/plugin-legacy';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [svelte({
-    compilerOptions: {
-      runes: true
-    }
-  })],
+  plugins: [
+    svelte({
+      compilerOptions: {
+        runes: true
+      }
+    }),
+    legacy({
+      targets: ['defaults', 'not IE 11']
+    })
+  ],
   resolve: {
     alias: {
       $lib: path.resolve('./src/lib'),
@@ -25,7 +31,7 @@ export default defineConfig({
         main: './index.html'
       }
     },
-    target: 'esnext',
+    target: 'es2015',
     minify: 'esbuild'
   },
   server: {

@@ -14,6 +14,7 @@
     "@internationalized/date": "^3.10.0",
     "@lucide/svelte": "^0.544.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
+    "@vitejs/plugin-legacy": "^6.1.1",
     "autoprefixer": "^10.4.21",
     "bits-ui": "^2.14.2",
     "paneforge": "^1.0.2",
@@ -23,6 +24,7 @@
     "tailwind-variants": "^3.1.1",
     "tailwindcss": "^3.4.18",
     "tailwindcss-animate": "^1.0.7",
+    "terser": "^5.44.1",
     "vite": "^6.4.1"
   },
   "dependencies": {
