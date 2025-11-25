@@ -4,6 +4,7 @@
   import { zoom } from "../stores/zoom.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { generateImage } from "../utils/image-generation.js";
+  import { trackEvent } from "../utils/analytics.js";
 
   let previewElement = $state(null);
   let dragPngUrl = $state(null);
@@ -157,6 +158,9 @@
     if (!dragImage) return;
     const dt = event.dataTransfer;
     if (!dt) return;
+
+    trackEvent("drag_formula", { method: "drag" });
+
     dt.clearData();
     dt.effectAllowed = "copy";
     dt.dropEffect = "copy";
