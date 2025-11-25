@@ -36,6 +36,9 @@
   <!-- MathJax configuration -->
   <script>
     window.MathJax = {
+      options: {
+        enableMenu: false  // Disable MathJax context menu (we have our own)
+      },
       loader: {
         load: ['[tex]/ams', '[tex]/color', '[tex]/cancel', '[tex]/mhchem', '[tex]/physics', '[tex]/braket', '[tex]/boldsymbol']
       },
