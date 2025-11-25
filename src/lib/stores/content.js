@@ -26,13 +26,19 @@ function createContentStore() {
     }, 100);
   }
 
+  // Debounce localStorage writes to avoid blocking during rapid typing
+  let saveTimeout;
+
   return {
     subscribe,
     set: (value) => {
       set(value);
-      // Only save to localStorage after initialization
+      // Only save to localStorage after initialization, debounced
       if (initialized) {
-        localStorage.setItem('latexContent', value);
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+          localStorage.setItem('latexContent', value);
+        }, 1000);
       }
     },
     update

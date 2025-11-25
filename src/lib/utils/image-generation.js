@@ -8,8 +8,11 @@ import html2canvas from 'html2canvas';
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
 export async function generateImage(previewElement, zoomScale, backgroundColor = null, scale = null) {
-  // 1. Ensure MathJax is ready
-  await window.MathJax.typesetPromise([previewElement]);
+  // Only typeset if SVG not already present (avoids redundant work when called after MathPreview render)
+  const existingSvg = previewElement.querySelector('mjx-container svg');
+  if (!existingSvg && window.MathJax?.typesetPromise) {
+    await window.MathJax.typesetPromise([previewElement]);
+  }
 
   const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor);
 

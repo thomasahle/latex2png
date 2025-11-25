@@ -97,7 +97,12 @@
     MathJax.typesetPromise([container])
       .then(() => {
         measureDisplay();
-        ensureDragPng();
+        // Defer canvas generation to idle time to avoid blocking paint
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => ensureDragPng(), { timeout: 2000 });
+        } else {
+          setTimeout(() => ensureDragPng(), 100);
+        }
       })
       .catch((err) => {
         console.error("MathJax error:", err);
@@ -239,11 +244,22 @@
     invalidateDragPng();
   });
 
+  // Debounce timer for zoom-triggered canvas regeneration
+  let zoomDebounceTimer;
+
   $effect(() => {
     const z = $zoom;
     if (!previewElement) return;
-    measureDisplay();
-    ensureDragPng();
+    measureDisplay();  // Keep immediate (fast DOM read)
+    // Debounce expensive canvas generation on zoom changes
+    clearTimeout(zoomDebounceTimer);
+    zoomDebounceTimer = setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => ensureDragPng(), { timeout: 2000 });
+      } else {
+        ensureDragPng();
+      }
+    }, 300);
   });
 </script>
 
