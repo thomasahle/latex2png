@@ -1,10 +1,28 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { latexContent } from "../stores/content.js";
   import { zoom } from "../stores/zoom.js";
   import { wrapContent } from "../stores/wrapContent.js";
+  import { generateImage } from "../utils/image-generation.js";
 
   let previewElement = $state(null);
+  let dragPngUrl = $state(null);
+  let pngDataUrl = $state(null);
+  let dragDownloadDataUrl = $state(null);
+  let displaySize = $state({ width: 0, height: 0 });
+  const dragFileName = "latex-equation.png";
+  let dragPngGenerationPromise = null;
+
+  function measureDisplay() {
+    if (!previewElement) return;
+    const rect = previewElement.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      displaySize = {
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      };
+    }
+  }
 
   function debounce(func, wait) {
     let timeout;
@@ -70,16 +88,73 @@
       return;
     }
 
-    MathJax.typesetPromise([container]).catch((err) => {
-      console.error("MathJax error:", err);
-      container.innerHTML = '<p class="text-red-500">Error rendering LaTeX</p>';
-    });
+    MathJax.typesetPromise([container])
+      .then(() => {
+        measureDisplay();
+        ensureDragPng();
+      })
+      .catch((err) => {
+        console.error("MathJax error:", err);
+        container.innerHTML = '<p class="text-red-500">Error rendering LaTeX</p>';
+      });
   }, 300);
 
   let unsubscribeContent;
   let unsubscribeWrap;
   let currentLatex = "";
   let currentWrap = true;
+
+  function invalidateDragPng() {
+    if (dragPngUrl) {
+      URL.revokeObjectURL(dragPngUrl);
+      dragPngUrl = null;
+    }
+  }
+
+  async function ensureDragPng() {
+    if (!previewElement) return null;
+    if (dragPngGenerationPromise) return dragPngGenerationPromise;
+    dragPngGenerationPromise = (async () => {
+      const canvas = await generateImage(previewElement, $zoom ?? 1, null);
+      if (!canvas) return null;
+      const rect = previewElement.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        displaySize = {
+          width: Math.max(1, Math.round(rect.width)),
+          height: Math.max(1, Math.round(rect.height)),
+        };
+      }
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) return null;
+      pngDataUrl = canvas.toDataURL("image/png");
+      // Some OS drag bridges handle application/octet-stream data URLs better than image/png
+      dragDownloadDataUrl = pngDataUrl.replace("image/png", "application/octet-stream");
+      if (dragPngUrl) URL.revokeObjectURL(dragPngUrl);
+      dragPngUrl = URL.createObjectURL(blob);
+      return dragPngUrl;
+    })();
+    try {
+      return await dragPngGenerationPromise;
+    } finally {
+      dragPngGenerationPromise = null;
+    }
+  }
+
+  function handleDragStart(event) {
+    if (!pngDataUrl) return;
+    const dt = event.dataTransfer;
+    if (!dt) return;
+    dt.clearData();
+    dt.effectAllowed = "copy";
+    dt.dropEffect = "copy";
+
+    const downloadSource = dragDownloadDataUrl || pngDataUrl;
+    const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
+    dt.setData("DownloadURL", downloadPayload);
+    dt.setData("text/uri-list", pngDataUrl);
+    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${dragFileName}" />`);
+    dt.setData("text/plain", pngDataUrl);
+  }
 
   onMount(() => {
     unsubscribeContent = latexContent.subscribe((value) => {
@@ -97,6 +172,17 @@
       unsubscribeWrap();
     };
   });
+
+  onDestroy(() => {
+    invalidateDragPng();
+  });
+
+  $effect(() => {
+    const z = $zoom;
+    if (!previewElement) return;
+    measureDisplay();
+    ensureDragPng();
+  });
 </script>
 
 <div
@@ -104,8 +190,17 @@
   style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 1rem;"
 >
   <div
-    id="math-preview"
-    style="zoom: {$zoom};"
-    bind:this={previewElement}
-  ></div>
+    class="relative inline-block"
+    style={`min-width: 1px; min-height: 1px; width: ${Math.max(1, displaySize.width)}px; height: ${Math.max(1, displaySize.height)}px;`}
+  >
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      id="math-preview"
+      style={`zoom: ${$zoom};`}
+      bind:this={previewElement}
+      class="inline-block cursor-grab"
+      draggable={!!pngDataUrl}
+      on:dragstart={handleDragStart}
+    ></div>
+  </div>
 </div>
