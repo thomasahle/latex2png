@@ -4,9 +4,10 @@ import html2canvas from 'html2canvas';
  * @param {HTMLElement} previewElement - The preview element to capture
  * @param {number} zoomScale - The current zoom scale (e.g., 1.0, 1.5, 2.0)
  * @param {string|null} backgroundColor - Background color for the image (null for transparent)
+ * @param {number|null} scale - Output scale factor (null = use devicePixelRatio, 1 = 1:1 with display)
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
-export async function generateImage(previewElement, zoomScale, backgroundColor = null) {
+export async function generateImage(previewElement, zoomScale, backgroundColor = null, scale = null) {
   // 1. Ensure MathJax is ready
   await window.MathJax.typesetPromise([previewElement]);
 
@@ -16,13 +17,13 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
   const mjxSvg = previewElement.querySelector('mjx-container svg');
   if (mjxSvg) {
     try {
-      return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor);
+      return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, scale);
     } catch (err) {
       console.warn('MathJax SVG render failed, falling back to html2canvas', err);
     }
   }
 
-  return await renderWithHtml2Canvas(previewElement, zoomScale, fgColor, bgColor);
+  return await renderWithHtml2Canvas(previewElement, zoomScale, fgColor, bgColor, scale);
 }
 
 export function resolveThemeColors(previewElement, backgroundOverride) {
@@ -96,9 +97,9 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
   return { svgString, width: exportWidth, height: exportHeight, backgroundColor: bgColor };
 }
 
-async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor) {
+async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor, scale = null) {
   const rect = svgEl.getBoundingClientRect();
-  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const dpr = scale !== null ? scale : Math.max(1, Math.ceil(window.devicePixelRatio || 1));
 
   // Respect how large the preview is currently shown (includes zoom), then scale for DPI.
   const outputWidth = Math.max(1, Math.round(rect.width * dpr));
@@ -150,7 +151,7 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   return canvas;
 }
 
-async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, defaultBg) {
+async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, defaultBg, scale = null) {
   const clone = previewElement.cloneNode(true);
   const trash = clone.querySelectorAll('.absolute, .hide-zoom-controls, mjx-assistive-mml');
   trash.forEach(el => el.remove());
@@ -191,8 +192,9 @@ async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, de
   document.body.appendChild(wrapper);
 
   try {
+    const outputScale = scale !== null ? scale : Math.max(1, Math.ceil(window.devicePixelRatio || 1));
     return await html2canvas(wrapper, {
-      scale: 2,
+      scale: outputScale,
       useCORS: true,
       backgroundColor: null,
       logging: false,

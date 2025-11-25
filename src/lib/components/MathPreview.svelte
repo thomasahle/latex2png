@@ -10,6 +10,7 @@
   let pngDataUrl = $state(null);
   let dragDownloadDataUrl = $state(null);
   let displaySize = $state({ width: 0, height: 0 });
+  let dragImage = $state(null); // Pre-loaded image for drag preview
   const dragFileName = "latex-equation.png";
   let dragPngGenerationPromise = null;
 
@@ -127,6 +128,13 @@
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) return null;
       pngDataUrl = canvas.toDataURL("image/png");
+
+      // Generate 1x scale image for drag preview
+      const dragCanvas = await generateImage(previewElement, $zoom ?? 1, null, 1);
+      const dragImg = new Image();
+      dragImg.src = dragCanvas.toDataURL("image/png");
+      await new Promise((resolve) => { dragImg.onload = resolve; });
+      dragImage = dragImg;
       // Some OS drag bridges handle application/octet-stream data URLs better than image/png
       dragDownloadDataUrl = pngDataUrl.replace("image/png", "application/octet-stream");
       if (dragPngUrl) URL.revokeObjectURL(dragPngUrl);
@@ -140,13 +148,24 @@
     }
   }
 
+  let dragCleanup = null;
+
   function handleDragStart(event) {
-    if (!pngDataUrl) return;
+    if (!dragImage) return;
     const dt = event.dataTransfer;
     if (!dt) return;
     dt.clearData();
     dt.effectAllowed = "copy";
     dt.dropEffect = "copy";
+
+    // Set grabbing cursor during drag
+    previewElement.style.cursor = "grabbing";
+
+    // Set custom drag image (1x scale), preserving cursor position
+    const rect = previewElement.getBoundingClientRect();
+    const relativeX = event.clientX - rect.left;
+    const relativeY = event.clientY - rect.top;
+    dt.setDragImage(dragImage, relativeX, relativeY);
 
     const downloadSource = dragDownloadDataUrl || pngDataUrl;
     const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
@@ -154,6 +173,31 @@
     dt.setData("text/uri-list", pngDataUrl);
     dt.setData("text/html", `<img src="${pngDataUrl}" alt="${dragFileName}" />`);
     dt.setData("text/plain", pngDataUrl);
+
+    // Make document a drop target so drop fires immediately (no fly-back delay)
+    const handleDocDragOver = (e) => e.preventDefault();
+    const handleDocDrop = (e) => {
+      e.preventDefault();
+      resetCursor();
+    };
+    const resetCursor = () => {
+      if (previewElement) previewElement.style.cursor = "";
+      document.removeEventListener("dragover", handleDocDragOver);
+      document.removeEventListener("drop", handleDocDrop);
+      dragCleanup = null;
+    };
+
+    document.addEventListener("dragover", handleDocDragOver);
+    document.addEventListener("drop", handleDocDrop);
+    dragCleanup = resetCursor;
+  }
+
+  function handleDragEnd() {
+    if (dragCleanup) {
+      dragCleanup();
+    } else if (previewElement) {
+      previewElement.style.cursor = "";
+    }
   }
 
   onMount(() => {
@@ -199,8 +243,9 @@
       style={`zoom: ${$zoom};`}
       bind:this={previewElement}
       class="inline-block cursor-grab"
-      draggable={!!pngDataUrl}
+      draggable={!!dragImage}
       on:dragstart={handleDragStart}
+      on:dragend={handleDragEnd}
     ></div>
   </div>
 </div>
