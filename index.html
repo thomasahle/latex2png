@@ -124,7 +124,37 @@
 </head>
 
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <noscript>
+      <div style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui, sans-serif; text-align: center;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">LaTeX to Image Converter</h1>
+        <p style="color: #666; margin-bottom: 24px;">
+          Convert LaTeX math equations to high-quality PNG, JPEG, SVG, or PDF images.
+        </p>
+        <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <p style="margin: 0; color: #333;">
+            <strong>JavaScript is required</strong> to use this application.
+          </p>
+          <p style="margin: 12px 0 0 0; color: #666; font-size: 14px;">
+            Please enable JavaScript in your browser settings to access the LaTeX editor,
+            live preview, and export features.
+          </p>
+        </div>
+        <div style="font-size: 14px; color: #888;">
+          <p>Features include:</p>
+          <ul style="text-align: left; display: inline-block; margin: 12px 0;">
+            <li>Real-time preview with autocomplete and syntax highlighting</li>
+            <li>Export to PNG, JPEG, SVG, or PDF with DPI control</li>
+            <li>Drag and drop equations into other apps</li>
+            <li>Transparent or colored backgrounds</li>
+            <li>Multiple font families and adjustable zoom</li>
+            <li>Greek letters, operators, and chemistry symbols toolbar</li>
+            <li>Dark mode and Vim keybindings</li>
+          </ul>
+        </div>
+      </div>
+    </noscript>
+  </div>
   <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/latex2png/assets/polyfills-legacy-BSAgTUl9.js"></script>
   <script nomodule crossorigin id="vite-legacy-entry" data-src="/latex2png/assets/main-legacy-BHoHktfE.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
