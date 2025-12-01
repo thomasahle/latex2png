@@ -2,6 +2,7 @@
   import ConfigMenu from "./ConfigMenu.svelte";
   import GitHubButton from "./GitHubButton.svelte";
   import ShareButton from "./ShareButton.svelte";
+  import HistoryButton from "./HistoryButton.svelte";
   import MathSymbol from "./MathSymbol.svelte";
 </script>
 
@@ -14,6 +15,7 @@
     </div>
 
     <div class="flex items-center gap-2">
+      <HistoryButton />
       <ConfigMenu />
       <ShareButton />
       <GitHubButton />

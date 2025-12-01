@@ -1,8 +1,17 @@
 import { get } from 'svelte/store';
 import { zoom } from '../stores/zoom.js';
+import { latexContent } from '../stores/content.js';
+import { history } from '../stores/history.js';
 import { toast } from '../components/ui/sonner';
 import { generateImage, generateSvg, downloadImage } from './image-generation.js';
 import { trackEvent, trackError } from './analytics.js';
+
+function addToHistory() {
+  const latex = get(latexContent);
+  if (latex) {
+    history.add(latex);
+  }
+}
 
 function downloadFile(url, filename) {
   const link = document.createElement("a");
@@ -40,6 +49,7 @@ export async function savePNG() {
     const canvas = await generateImage(previewElement, zoomScale, null);
 
     downloadImage(canvas, 'latex-equation.png');
+    addToHistory();
     trackEvent('save_image', { format: 'png', zoom: zoomScale });
   } catch (error) {
     trackError(error, { context: 'savePNG' });
@@ -60,6 +70,7 @@ export async function saveJPEG() {
     const backgroundColor = resolveBackgroundColor(previewElement);
     const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
+    addToHistory();
     trackEvent('save_image', { format: 'jpeg', zoom: zoomScale });
   } catch (error) {
     trackError(error, { context: 'saveJPEG' });
@@ -81,6 +92,7 @@ export async function saveSVG() {
     const url = URL.createObjectURL(blob);
     downloadFile(url, 'latex-equation.svg');
     URL.revokeObjectURL(url);
+    addToHistory();
     trackEvent('save_image', { format: 'svg' });
   } catch (error) {
     trackError(error, { context: 'saveSVG' });
@@ -115,6 +127,7 @@ export async function savePDF() {
 
     await pdf.svg(svgEl, { x: 0, y: 0, width, height });
     pdf.save('latex-equation.pdf');
+    addToHistory();
     trackEvent('save_image', { format: 'pdf' });
   } catch (error) {
     console.error('Error in savePDF:', error);
