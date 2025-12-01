@@ -47,25 +47,28 @@
     return `\\(${latex}\\)`;
   }
 
-  // Typeset MathJax when menu opens
+  // Track and typeset MathJax when menu opens
   $effect(() => {
-    if (menuOpen && typeof window !== "undefined" && window.MathJax?.typesetPromise) {
-      setTimeout(() => {
-        const container = document.querySelector('.history-dropdown-content');
-        if (container) {
-          window.MathJax.typesetPromise([container]).then(() => {
-            // Scale SVGs to fit 4em, but don't go below 50%
-            const maxPx = 4 * 17.6;
-            container.querySelectorAll('.history-preview svg').forEach(svg => {
-              svg.classList.add('size-auto');
-              const h = parseFloat(svg.getAttribute('height')) * 9.35; // ex to px
-              const w = parseFloat(svg.getAttribute('width')) * 9.35;
-              const scale = h > maxPx ? Math.max(0.5, maxPx / h) : 1;
-              svg.style.cssText = `height:${h*scale}px!important;width:${w*scale}px!important`;
-            });
-          }).catch(console.error);
-        }
-      }, 10);
+    if (menuOpen && typeof window !== "undefined") {
+      trackEvent("history_open", { count: $history.length });
+      if (window.MathJax?.typesetPromise) {
+        setTimeout(() => {
+          const container = document.querySelector('.history-dropdown-content');
+          if (container) {
+            window.MathJax.typesetPromise([container]).then(() => {
+              // Scale SVGs to fit 4em, but don't go below 50%
+              const maxPx = 4 * 17.6;
+              container.querySelectorAll('.history-preview svg').forEach(svg => {
+                svg.classList.add('size-auto');
+                const h = parseFloat(svg.getAttribute('height')) * 9.35; // ex to px
+                const w = parseFloat(svg.getAttribute('width')) * 9.35;
+                const scale = h > maxPx ? Math.max(0.5, maxPx / h) : 1;
+                svg.style.cssText = `height:${h*scale}px!important;width:${w*scale}px!important`;
+              });
+            }).catch(console.error);
+          }
+        }, 10);
+      }
     }
   });
 </script>
@@ -79,7 +82,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content align="end" class="history-dropdown-content [--radius:0.375rem] w-80 max-h-[400px] overflow-y-auto">
+  <DropdownMenu.Content class="history-dropdown-content w-80 max-h-[400px] overflow-y-auto">
     <div class="px-2 py-1.5 text-sm font-semibold">History</div>
     {#if $history.length === 0}
       <div class="px-3 py-6 text-center text-muted-foreground text-sm">

@@ -7,6 +7,15 @@
     copyImage,
     shareImage,
   } from "../utils/share.js";
+  import { trackEvent } from "../utils/analytics.js";
+
+  let menuOpen = $state(false);
+
+  $effect(() => {
+    if (menuOpen) {
+      trackEvent("share_open");
+    }
+  });
 
   const items = [
     { label: "Copy Link", action: shareLink },
@@ -16,7 +25,7 @@
   ];
 </script>
 
-<DropdownMenu.Root>
+<DropdownMenu.Root bind:open={menuOpen}>
   <DropdownMenu.Trigger>
     <Button variant="outline" size="icon" aria-label="Share">
       <i class="ph ph-share-network"></i>

@@ -5,8 +5,15 @@
   import { vimMode } from "../stores/vimMode.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { trackEvent } from "../utils/analytics.js";
-
   import { fullscreen } from "../stores/fullscreen.js";
+
+  let menuOpen = $state(false);
+
+  $effect(() => {
+    if (menuOpen) {
+      trackEvent("settings_open");
+    }
+  });
 
   function toggleTheme() {
     theme.toggle();
@@ -29,7 +36,7 @@
   }
 </script>
 
-<DropdownMenu.Root>
+<DropdownMenu.Root bind:open={menuOpen}>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
       <Button {...props} variant="outline" size="icon" aria-label="Settings">
@@ -38,7 +45,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content align="end" class="[--radius:0.375rem] w-48">
+  <DropdownMenu.Content>
     <DropdownMenu.Item
       onSelect={toggleTheme}
       class="cursor-pointer flex items-center justify-between"
