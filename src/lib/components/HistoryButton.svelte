@@ -83,7 +83,7 @@
   </DropdownMenu.Trigger>
 
   <DropdownMenu.Content class="history-dropdown-content w-80 max-h-[400px] overflow-y-auto">
-    <div class="px-2 py-1.5 text-sm font-semibold">History</div>
+    <div class="px-2 py-1.5 text-xs font-semibold">History</div>
     {#if $history.length === 0}
       <div class="px-3 py-6 text-center text-muted-foreground text-sm">
         No history yet

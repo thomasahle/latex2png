@@ -8,8 +8,23 @@
   import LayoutToggle from "./LayoutToggle.svelte";
   import * as Resizable from "$lib/components/ui/resizable";
   import SaveButton from "./SaveButton.svelte";
+  import { trackEvent } from "../utils/analytics.js";
 
   let { editorInstance = $bindable(null) } = $props();
+
+  let resizeTimeout;
+  let lastSizes = null;
+  function onLayoutChange(sizes) {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      const editor = Math.round(sizes[0]);
+      const preview = Math.round(sizes[1]);
+      if (lastSizes && (lastSizes[0] !== editor || lastSizes[1] !== preview)) {
+        trackEvent("resize_panes", { editor, preview });
+      }
+      lastSizes = [editor, preview];
+    }, 500);
+  }
   let direction = $derived(
     $layout === "side-by-side" ? "horizontal" : "vertical",
   );
@@ -37,7 +52,7 @@
   class:mb-0={true}
   class:h-[500px]={!$fullscreen}
 >
-  <Resizable.PaneGroup {direction}>
+  <Resizable.PaneGroup {direction} {onLayoutChange}>
     <Resizable.Pane defaultSize={50} minSize={30} id="editor-pane">
       <div class="relative h-full">
         <div class="absolute top-2.5 right-2.5 z-10">
