@@ -139,8 +139,8 @@
       if (!blob) return null;
       pngDataUrl = canvas.toDataURL("image/png");
 
-      // Generate 1x scale image for drag preview
-      const dragCanvas = await generateImage(previewElement, $zoom ?? 1, null, 1);
+      // Generate image for drag preview
+      const dragCanvas = await generateImage(previewElement, $zoom ?? 1, null);
       const dragImg = new Image();
       dragImg.src = dragCanvas.toDataURL("image/png");
       await new Promise((resolve, reject) => {

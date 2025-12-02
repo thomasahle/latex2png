@@ -1,13 +1,15 @@
 import html2canvas from 'html2canvas';
+
+const BASE_PADDING_EM = 16; // 1em in pixels
+
 /**
  * Generate a canvas image from a preview element containing MathJax content
  * @param {HTMLElement} previewElement - The preview element to capture
  * @param {number} zoomScale - The current zoom scale (e.g., 1.0, 1.5, 2.0)
  * @param {string|null} backgroundColor - Background color for the image (null for transparent)
- * @param {number|null} scale - Output scale factor (null = use devicePixelRatio, 1 = 1:1 with display)
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
-export async function generateImage(previewElement, zoomScale, backgroundColor = null, scale = null) {
+export async function generateImage(previewElement, zoomScale, backgroundColor = null) {
   // Only typeset if SVG not already present (avoids redundant work when called after MathPreview render)
   const existingSvg = previewElement.querySelector('mjx-container svg');
   if (!existingSvg && window.MathJax?.typesetPromise) {
@@ -20,13 +22,13 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
   const mjxSvg = previewElement.querySelector('mjx-container svg');
   if (mjxSvg) {
     try {
-      return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, scale);
+      return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, zoomScale);
     } catch (err) {
       console.warn('MathJax SVG render failed, falling back to html2canvas', err);
     }
   }
 
-  return await renderWithHtml2Canvas(previewElement, zoomScale, fgColor, bgColor, scale);
+  return await renderWithHtml2Canvas(previewElement, zoomScale, fgColor, bgColor);
 }
 
 export function resolveThemeColors(previewElement, backgroundOverride) {
@@ -69,50 +71,63 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
   const svg = mjxSvg.cloneNode(true);
   bakeSvgColors(svg, fgColor);
 
-  // Normalize coordinates so the viewBox starts at (0,0)
+  const rect = mjxSvg.getBoundingClientRect();
+  const baseExportWidth = Math.max(1, rect.width || bbox.width * zoomScale);
+  const baseExportHeight = Math.max(1, rect.height || bbox.height * zoomScale);
+
+  // Calculate padding: 1em * zoom in pixels, then convert to viewBox units
+  const pixelPadding = BASE_PADDING_EM * zoomScale;
+  const scaleX = bbox.width / baseExportWidth;
+  const scaleY = bbox.height / baseExportHeight;
+  const viewBoxPaddingX = pixelPadding * scaleX;
+  const viewBoxPaddingY = pixelPadding * scaleY;
+
+  // Normalize coordinates so the viewBox starts at (0,0) with padding offset
   const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   while (svg.firstChild) {
     wrapper.appendChild(svg.firstChild);
   }
-  wrapper.setAttribute('transform', `translate(${-bbox.x}, ${-bbox.y})`);
+  wrapper.setAttribute('transform', `translate(${-bbox.x + viewBoxPaddingX}, ${-bbox.y + viewBoxPaddingY})`);
   svg.appendChild(wrapper);
 
-  const rect = mjxSvg.getBoundingClientRect();
-  const viewBox = `0 0 ${bbox.width} ${bbox.height}`;
-  const exportWidth = Math.max(1, rect.width || bbox.width * zoomScale);
-  const exportHeight = Math.max(1, rect.height || bbox.height * zoomScale);
+  const viewBoxWidth = bbox.width + viewBoxPaddingX * 2;
+  const viewBoxHeight = bbox.height + viewBoxPaddingY * 2;
+  const viewBox = `0 0 ${viewBoxWidth} ${viewBoxHeight}`;
+  const exportWidth = baseExportWidth + pixelPadding * 2;
+  const exportHeight = baseExportHeight + pixelPadding * 2;
 
   svg.setAttribute('viewBox', viewBox);
   svg.setAttribute('width', exportWidth);
   svg.setAttribute('height', exportHeight);
 
   if (bgColor !== 'transparent') {
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('x', '0');
-    rect.setAttribute('y', '0');
-    rect.setAttribute('width', bbox.width.toString());
-    rect.setAttribute('height', bbox.height.toString());
-    rect.setAttribute('fill', bgColor);
-    svg.insertBefore(rect, svg.firstChild);
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bgRect.setAttribute('x', '0');
+    bgRect.setAttribute('y', '0');
+    bgRect.setAttribute('width', viewBoxWidth.toString());
+    bgRect.setAttribute('height', viewBoxHeight.toString());
+    bgRect.setAttribute('fill', bgColor);
+    svg.insertBefore(bgRect, svg.firstChild);
   }
 
   const svgString = new XMLSerializer().serializeToString(svg);
   return { svgString, width: exportWidth, height: exportHeight, backgroundColor: bgColor };
 }
 
-async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor, scale = null) {
+async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor, zoomScale = 1) {
   const rect = svgEl.getBoundingClientRect();
-  const dpr = scale !== null ? scale : Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const padding = Math.round(BASE_PADDING_EM * zoomScale * dpr);
 
   // Respect how large the preview is currently shown (includes zoom), then scale for DPI.
-  const outputWidth = Math.max(1, Math.round(rect.width * dpr));
-  const outputHeight = Math.max(1, Math.round(rect.height * dpr));
+  const contentWidth = Math.max(1, Math.round(rect.width * dpr));
+  const contentHeight = Math.max(1, Math.round(rect.height * dpr));
+  const outputWidth = contentWidth + padding * 2;
+  const outputHeight = contentHeight + padding * 2;
 
   const canvas = document.createElement('canvas');
   canvas.width = outputWidth;
   canvas.height = outputHeight;
-  canvas.style.width = `${Math.max(1, Math.round(rect.width))}px`;
-  canvas.style.height = `${Math.max(1, Math.round(rect.height))}px`;
 
   const ctx = canvas.getContext('2d');
   if (backgroundColor) {
@@ -127,8 +142,8 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
     if (!clonedSvg.hasAttribute('fill')) clonedSvg.setAttribute('fill', 'currentColor');
     if (!clonedSvg.hasAttribute('stroke')) clonedSvg.setAttribute('stroke', 'currentColor');
   }
-  clonedSvg.setAttribute('width', outputWidth);
-  clonedSvg.setAttribute('height', outputHeight);
+  clonedSvg.setAttribute('width', contentWidth);
+  clonedSvg.setAttribute('height', contentHeight);
 
   const svgString = new XMLSerializer().serializeToString(clonedSvg);
   const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -138,7 +153,7 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
     const img = new Image();
     img.onload = () => {
       try {
-        ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+        ctx.drawImage(img, padding, padding, contentWidth, contentHeight);
         resolve();
       } finally {
         URL.revokeObjectURL(url);
@@ -154,7 +169,7 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   return canvas;
 }
 
-async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, defaultBg, scale = null) {
+async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, defaultBg) {
   const clone = previewElement.cloneNode(true);
   const trash = clone.querySelectorAll('.absolute, .hide-zoom-controls, mjx-assistive-mml');
   trash.forEach(el => el.remove());
@@ -180,6 +195,7 @@ async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, de
     }
   });
 
+  const padding = Math.round(BASE_PADDING_EM * zoomScale);
   const wrapper = document.createElement('div');
   Object.assign(wrapper.style, {
     position: 'fixed',
@@ -188,6 +204,7 @@ async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, de
     display: 'inline-block',
     visibility: 'visible',
     backgroundColor: defaultBg,
+    padding: `${padding}px`,
     zIndex: '-1'
   });
 
@@ -195,9 +212,8 @@ async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, de
   document.body.appendChild(wrapper);
 
   try {
-    const outputScale = scale !== null ? scale : Math.max(1, Math.ceil(window.devicePixelRatio || 1));
     return await html2canvas(wrapper, {
-      scale: outputScale,
+      scale: Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
       useCORS: true,
       backgroundColor: null,
       logging: false,
