@@ -1,126 +1,74 @@
-// MathJax 4 service - dynamically loaded ESM modules for rendering LaTeX to SVG
-// Uses dynamic imports to code-split MathJax into a separate chunk
+// MathJax 4 service - uses Web Worker for off-main-thread rendering
+// This improves INP (Interaction to Next Paint) by not blocking the main thread
 
-let mathjaxModule = null;
-let mhchemFontExtension = null;
-let adaptor = null;
-let tex = null;
-let svg = null;
-let html = null;
-let initPromise = null;
-
-// Lazy load MathJax modules
-async function loadMathJax() {
-  if (mathjaxModule) return;
-
-  const [
-    { mathjax },
-    { TeX },
-    { SVG },
-    { browserAdaptor },
-    { RegisterHTMLHandler },
-    { MathJaxMhchemFontExtension }
-  ] = await Promise.all([
-    import('@mathjax/src/js/mathjax.js'),
-    import('@mathjax/src/js/input/tex.js'),
-    import('@mathjax/src/js/output/svg.js'),
-    import('@mathjax/src/js/adaptors/browserAdaptor.js'),
-    import('@mathjax/src/js/handlers/html.js'),
-    import('@mathjax/mathjax-mhchem-font-extension/mjs/svg.js')
-  ]);
-
-  // Import TeX package configurations
-  await Promise.all([
-    import('@mathjax/src/js/input/tex/base/BaseConfiguration.js'),
-    import('@mathjax/src/js/input/tex/ams/AmsConfiguration.js'),
-    import('@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js'),
-    import('@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js'),
-    import('@mathjax/src/js/input/tex/color/ColorConfiguration.js'),
-    import('@mathjax/src/js/input/tex/boldsymbol/BoldsymbolConfiguration.js'),
-    import('@mathjax/src/js/input/tex/mhchem/MhchemConfiguration.js'),
-    import('@mathjax/src/js/input/tex/physics/PhysicsConfiguration.js'),
-    import('@mathjax/src/js/input/tex/cancel/CancelConfiguration.js'),
-    import('@mathjax/src/js/input/tex/unicode/UnicodeConfiguration.js'),
-    import('@mathjax/src/js/input/tex/configmacros/ConfigmacrosConfiguration.js')
-  ]);
-
-  mathjaxModule = { mathjax, TeX, SVG, browserAdaptor, RegisterHTMLHandler };
-  mhchemFontExtension = MathJaxMhchemFontExtension;
-}
+let worker = null;
+let messageId = 0;
+const pending = new Map();
+let readyPromise = null;
+let readyResolve = null;
 
 export function initWorker() {
   if (typeof window === 'undefined') return;
+  if (worker) return;
 
-  // Start loading MathJax in background
-  if (!initPromise) {
-    initPromise = loadMathJax().then(() => {
-      const { mathjax, TeX, SVG, browserAdaptor, RegisterHTMLHandler } = mathjaxModule;
+  // Create promise that resolves when worker signals ready
+  readyPromise = new Promise((resolve) => {
+    readyResolve = resolve;
+  });
 
-      // Create browser adaptor
-      adaptor = browserAdaptor();
-      RegisterHTMLHandler(adaptor);
+  worker = new Worker(
+    new URL('../workers/mathjax-worker.js', import.meta.url),
+    { type: 'module' }
+  );
 
-      // Create TeX input with packages (configmacros enables the macros option)
-      tex = new TeX({
-        packages: [
-          'base', 'ams', 'newcommand', 'noundefined',
-          'color', 'boldsymbol', 'mhchem', 'physics', 'cancel', 'unicode',
-          'configmacros'
-        ],
-        macros: {
-          oiint: "\\unicode{x222F}",
-          oiiint: "\\unicode{x2230}",
-          Overrightarrow: ["\\overrightarrow{#1}", 1],
-          utilde: ["\\underset{\\sim}{#1}", 1],
-          llbracket: "\\unicode{x27E6}",
-          rrbracket: "\\unicode{x27E7}",
-          widecheck: ["\\overset{\\Large\\vee}{#1}", 1],
-          overgroup: ["\\overbrace{#1}^{\\hspace{-0.5em}}", 1],
-          undergroup: ["\\underbrace{#1}_{\\hspace{-0.5em}}", 1],
-          overleftharpoon: ["\\overset{\\leftharpoonup}{#1}", 1],
-          overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1]
-        }
-      });
+  worker.onmessage = (e) => {
+    const { type, id, success, svg, error } = e.data;
 
-      // Create SVG output - use 'local' fontCache so each SVG is self-contained with its own <defs>
-      svg = new SVG({
-        fontCache: 'local'
-      });
+    // Handle ready signal
+    if (type === 'ready') {
+      readyResolve();
+      return;
+    }
 
-      // Add mhchem font extension for chemistry arrow glyphs
-      svg.addExtension(mhchemFontExtension);
+    // Handle render response
+    const resolver = pending.get(id);
+    if (resolver) {
+      pending.delete(id);
+      if (success) {
+        resolver.resolve(svg);
+      } else {
+        resolver.reject(new Error(error));
+      }
+    }
+  };
 
-      // Create a document for conversion
-      html = mathjax.document('', {
-        InputJax: tex,
-        OutputJax: svg
-      });
-    });
-  }
+  worker.onerror = (error) => {
+    console.error('MathJax worker error:', error);
+  };
 }
 
 export async function renderLatexToSvg(latex, display = true) {
-  // Ensure MathJax is loaded
-  if (!initPromise) {
+  // Ensure worker is initialized
+  if (!worker) {
     initWorker();
   }
-  await initPromise;
 
-  // Convert TeX to SVG
-  const node = html.convert(latex, { display });
+  // Wait for worker to be ready
+  await readyPromise;
 
-  // Get the outer HTML
-  const svgHtml = adaptor.outerHTML(node);
-
-  // Clear the document for next conversion
-  html.clear();
-
-  return svgHtml;
+  const id = ++messageId;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    worker.postMessage({ id, latex, display });
+  });
 }
 
 export function terminateWorker() {
-  // Clean up if needed
-  if (svg) {
-    svg.clearFontCache();
+  if (worker) {
+    worker.terminate();
+    worker = null;
+    pending.clear();
+    readyPromise = null;
+    readyResolve = null;
   }
 }
