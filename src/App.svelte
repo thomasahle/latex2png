@@ -38,7 +38,7 @@
 <div class="min-h-screen bg-background text-foreground font-serif">
   <Navbar />
 
-  <div
+  <main
     class="mx-auto flex flex-1 flex-col my-0 bg-card text-card-foreground shadow-[0_0_50px_0_rgb(0_0_0_/_0.03)]"
     class:max-w-full={true}
     class:md:max-w-[900px]={!$fullscreen}
@@ -72,7 +72,7 @@
     {/if}
 
     <EditorContainer bind:editorInstance={editor} />
-  </div>
+  </main>
 </div>
 
 <Toaster />

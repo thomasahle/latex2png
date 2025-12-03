@@ -368,7 +368,7 @@
         onclickcapture={handleTriggerClick}
         onpointerdowncapture={handleTriggerPointerDown}
       >
-        <Button variant="secondary" size="icon">
+        <Button variant="secondary" size="icon" aria-label="Insert math symbol">
           <MathSymbol latex="\Sigma" />
         </Button>
       </div>
