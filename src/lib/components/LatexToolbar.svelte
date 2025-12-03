@@ -363,10 +363,10 @@
       <div
         data-testid="latex-toolbar-trigger-region"
         bind:this={triggerRegionEl}
-        on:mouseenter={handleTriggerMouseEnter}
-        on:mouseleave={handleTriggerMouseLeave}
-        on:click|capture={handleTriggerClick}
-        on:pointerdown|capture={handleTriggerPointerDown}
+        onmouseenter={handleTriggerMouseEnter}
+        onmouseleave={handleTriggerMouseLeave}
+        onclickcapture={handleTriggerClick}
+        onpointerdowncapture={handleTriggerPointerDown}
       >
         <Button variant="secondary" size="icon">
           <MathSymbol latex="\Sigma" />
@@ -384,7 +384,7 @@
       inert={!menuOpen}
       data-latex-toolbar-layer
       preventScroll={false}
-      on:mouseleave={handleContentMouseLeave}
+      onmouseleave={handleContentMouseLeave}
       on:openAutoFocus={(e) => {
         e.preventDefault();
         contentEl?.focus?.({ preventScroll: true });
@@ -429,9 +429,9 @@
                 <DropdownMenu.Sub>
                   <div
                     class="contents"
-                    on:pointerdown|capture={(event) =>
+                    onpointerdowncapture={(event) =>
                       handleSubTriggerPointerDown(event)}
-                    on:click|capture={(event) =>
+                    onclickcapture={(event) =>
                       handleSubTriggerClick(event, cmd, group.category)}
                   >
                     <DropdownMenu.SubTrigger

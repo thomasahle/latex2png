@@ -232,7 +232,7 @@
 <div
   class="h-full overflow-auto"
   style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 1rem;"
-  on:contextmenu={handleContextMenu}
+  oncontextmenu={handleContextMenu}
 >
   <div
     class="relative inline-block"
@@ -245,8 +245,8 @@
       bind:this={previewElement}
       class="inline-block cursor-grab"
       draggable={!!dragImage}
-      on:dragstart={handleDragStart}
-      on:dragend={handleDragEnd}
+      ondragstart={handleDragStart}
+      ondragend={handleDragEnd}
     ></div>
   </div>
 </div>
