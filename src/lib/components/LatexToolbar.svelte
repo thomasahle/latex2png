@@ -361,6 +361,7 @@
   <DropdownMenu.Root bind:open={menuOpen}>
     <DropdownMenu.Trigger>
       <div
+        role="presentation"
         data-testid="latex-toolbar-trigger-region"
         bind:this={triggerRegionEl}
         onmouseenter={handleTriggerMouseEnter}
