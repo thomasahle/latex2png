@@ -1,6 +1,8 @@
 // MathJax 4 service - uses Web Worker for off-main-thread rendering
 // This improves INP (Interaction to Next Paint) by not blocking the main thread
 
+import { trackError } from '../utils/analytics.js';
+
 let worker = null;
 let messageId = 0;
 const pending = new Map();
@@ -42,8 +44,18 @@ export function initWorker() {
     }
   };
 
-  worker.onerror = (error) => {
-    console.error('MathJax worker error:', error);
+  worker.onerror = (event) => {
+    console.error('MathJax worker error:', event);
+    const error = new Error(event.message || 'MathJax worker error');
+    error.filename = event.filename;
+    error.lineno = event.lineno;
+    error.colno = event.colno;
+    trackError(error, {
+      context: 'mathjax_worker',
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno
+    });
   };
 }
 

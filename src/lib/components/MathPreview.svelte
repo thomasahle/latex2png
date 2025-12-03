@@ -4,7 +4,7 @@
   import { zoom } from "../stores/zoom.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { generateImage } from "../utils/image-generation.js";
-  import { trackEvent } from "../utils/analytics.js";
+  import { trackEvent, trackError } from "../utils/analytics.js";
   import { saveMenuItems } from "../utils/saveMenuItems.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { initWorker, renderLatexToSvg } from "../services/mathjax-service.js";
@@ -69,7 +69,8 @@
       }
     } catch (err) {
       console.error("MathJax error:", err);
-      container.innerHTML = '<p class="text-red-500">Error rendering LaTeX</p>';
+      trackError(err, { context: 'renderMath', latex: texToRender?.substring(0, 200) });
+      container.innerHTML = `<p class="text-red-500">Error: ${err.message || 'Failed to render LaTeX'}</p>`;
     }
   }, 300);
 

@@ -20,16 +20,18 @@ import '@mathjax/src/js/input/tex/physics/PhysicsConfiguration.js';
 import '@mathjax/src/js/input/tex/braket/BraketConfiguration.js';
 import '@mathjax/src/js/input/tex/cancel/CancelConfiguration.js';
 import '@mathjax/src/js/input/tex/unicode/UnicodeConfiguration.js';
+import '@mathjax/src/js/input/tex/configmacros/ConfigMacrosConfiguration.js';
 
 // Create lite adaptor (works without browser DOM)
 const adaptor = liteAdaptor();
 RegisterHTMLHandler(adaptor);
 
-// Create TeX input with packages
+// Create TeX input with packages and custom macros
 const tex = new TeX({
   packages: [
     'base', 'ams', 'newcommand', 'noundefined',
-    'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode'
+    'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode',
+    'configmacros'
   ],
   macros: {
     oiint: "\\unicode{x222F}",

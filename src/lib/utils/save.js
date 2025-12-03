@@ -105,6 +105,7 @@ export async function savePDF() {
     const previewElement = document.querySelector('#math-preview');
     if (!previewElement) {
       toast.error('Preview not found');
+      trackError(new Error('Preview not found'), { context: 'savePDF' });
       return;
     }
 

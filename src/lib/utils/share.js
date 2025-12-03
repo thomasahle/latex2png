@@ -18,7 +18,9 @@ async function nextFrame() {
 async function ensureFontsReady() {
   try {
     if (document.fonts?.ready) await document.fonts.ready;
-  } catch { }
+  } catch (error) {
+    trackError(error, { context: 'ensureFontsReady' });
+  }
 }
 
 async function canvasToBlob(canvas, type = "image/png", quality) {
@@ -77,7 +79,8 @@ async function getZoomScale() {
     const { get } = await import("svelte/store");
     const { zoom } = await import("../stores/zoom.js");
     return get(zoom) ?? 1;
-  } catch {
+  } catch (error) {
+    trackError(error, { context: 'getZoomScale' });
     return 1;
   }
 }
@@ -90,7 +93,8 @@ async function renderCanvas(previewElement, scaleOverride) {
   try {
     const { generateImage } = await import("./image-generation.js");
     return await generateImage(previewElement, scaleOverride ?? 1, null);
-  } catch {
+  } catch (error) {
+    trackError(error, { context: 'renderCanvas_fallback', fallback: 'html2canvas' });
     return await html2canvas(previewElement, {
       scale: scaleOverride ?? Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
       useCORS: true,
@@ -152,6 +156,7 @@ export async function copyImage() {
         return;
       } catch (e) {
         console.error("Clipboard write failed, falling back to download:", e);
+        trackError(e, { context: 'copyImage_clipboard', fallback: 'download' });
       }
     }
 
@@ -238,7 +243,9 @@ export async function shareImage() {
         toast.info("Image copied to clipboard (sharing not supported).");
         trackEvent('share', { method: 'share_fallback_clipboard' });
         return;
-      } catch { }
+      } catch (e) {
+        trackError(e, { context: 'shareImage_clipboard', fallback: 'download' });
+      }
     }
 
     downloadBlob(blob, "latex-image.png");
