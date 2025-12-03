@@ -8,3 +8,4 @@ dist/
 
 # Environment files
 .env
+snapshots/*.actual

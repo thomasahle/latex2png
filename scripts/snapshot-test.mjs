@@ -2,6 +2,9 @@
 /**
  * Snapshot test for latex2png exports (PNG, JPEG, SVG, PDF) in light and dark themes.
  *
+ * Uses Playwright to trigger actual save actions through the UI context menu,
+ * intercepting downloads to capture and verify exports.
+ *
  * Requires: `playwright` available (e.g. npm install --save-dev playwright).
  *
  * Usage:
@@ -26,6 +29,15 @@ const BASE_URL = process.env.SNAP_BASE_URL || 'http://localhost:5173/latex2png/'
 const START_SERVER = !!process.env.SNAP_START_SERVER;
 const PORT = Number(new URL(BASE_URL).port) || 4173;
 const LATEX = 'X: {\\color{orange}455} {\\color{blue}blue}';
+
+// Format configs: menu label, file extension, and whether to hash-compare
+// PDF has non-deterministic metadata (timestamps) so we only verify it generates
+const FORMATS = [
+  { label: 'Save PNG', ext: 'png', hashCompare: true },
+  { label: 'Save JPEG', ext: 'jpeg', hashCompare: true },
+  { label: 'Save SVG', ext: 'svg', hashCompare: true },
+  { label: 'Save PDF', ext: 'pdf', hashCompare: false }
+];
 
 ensureDirs();
 
@@ -85,10 +97,10 @@ function startDevServer() {
 }
 
 async function captureTheme(browser, theme) {
-  const context = await browser.newContext();
+  const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
 
-  // Seed theme and latex before navigation.
+  // Seed theme and latex before navigation
   await page.addInitScript((t) => {
     try { localStorage.setItem('theme', t); } catch {}
   }, theme);
@@ -97,40 +109,48 @@ async function captureTheme(browser, theme) {
   }, LATEX);
 
   await page.goto(`${BASE_URL}?latex=${encodeURIComponent(LATEX)}`);
-
   await page.waitForSelector('#math-preview mjx-container svg');
 
-  const artifact = await page.evaluate(async () => {
-    const { generateImage, generateSvg } = await import('/src/lib/utils/image-generation.js');
-    const { jsPDF } = await import('jspdf');
-    await import('svg2pdf.js');
+  // Give MathJax a moment to fully render
+  await page.waitForTimeout(500);
 
-    const preview = document.querySelector('#math-preview');
-    const range = document.querySelector('input[type="range"]');
-    const zoomScale = range ? parseFloat(range.value) : 1;
+  const artifacts = {};
 
-    const pngCanvas = await generateImage(preview, zoomScale, null);
-    const jpegCanvas = await generateImage(preview, zoomScale, '#ffffff');
-    const { svgString, width, height } = generateSvg(preview, zoomScale, null);
+  for (const format of FORMATS) {
+    // Right-click to open context menu
+    await page.click('#math-preview', { button: 'right' });
 
-    const parser = new DOMParser();
-    const svgEl = parser.parseFromString(svgString, 'image/svg+xml').documentElement;
-    const pdf = new jsPDF({ orientation: width >= height ? 'l' : 'p', unit: 'px', format: [width, height] });
-    pdf.setProperties({ title: '', author: '', subject: '', creator: '', producer: '', creationDate: new Date('1970-01-01T00:00:00Z') });
-    pdf.setCreationDate(new Date('1970-01-01T00:00:00Z'));
-    await pdf.svg(svgEl, { x: 0, y: 0, width, height });
+    // Wait for context menu to appear (must be open state, not the force-mounted toolbar)
+    await page.waitForSelector('[role="menu"][data-state="open"]', { state: 'visible' });
 
-    const pdfData = pdf.output('datauristring').split(',')[1];
-    return {
-      png: pngCanvas.toDataURL('image/png').split(',')[1],
-      jpeg: jpegCanvas.toDataURL('image/jpeg', 0.92).split(',')[1],
-      svg: btoa(unescape(encodeURIComponent(svgString))),
-      pdf: pdfData
-    };
-  });
+    // Set up download listener before clicking
+    const downloadPromise = page.waitForEvent('download');
+
+    // Click the save option
+    await page.click(`[role="menuitem"]:has-text("${format.label}")`);
+
+    // Wait for download and get content
+    const download = await downloadPromise;
+    const buffer = await streamToBuffer(await download.createReadStream());
+
+    // Store base64 content
+    artifacts[format.ext] = buffer.toString('base64');
+
+    // Close context menu if still open (shouldn't be, but just in case)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+  }
 
   await context.close();
-  return artifact;
+  return artifacts;
+}
+
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 
 function hashBase64(b64) {
@@ -165,8 +185,22 @@ function verify(results) {
   const baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
   let failed = false;
 
+  // Build a map of which formats should be hash-compared
+  const hashCompareFormats = new Set(FORMATS.filter(f => f.hashCompare).map(f => f.ext));
+
   for (const [theme, data] of Object.entries(results)) {
     for (const [format, b64] of Object.entries(data)) {
+      // For non-hash-compare formats (like PDF), just verify content exists
+      if (!hashCompareFormats.has(format)) {
+        if (!b64 || b64.length < 100) {
+          console.error(`${theme} ${format}: Empty or too small`);
+          failed = true;
+        } else {
+          console.log(`${theme} ${format}: Generated (${Math.round(b64.length / 1024)}KB, not hash-compared)`);
+        }
+        continue;
+      }
+
       const actual = hashBase64(b64);
       const expected = baseline.themes?.[theme]?.[format];
       if (!expected) {
