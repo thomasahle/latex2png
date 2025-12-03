@@ -17,6 +17,7 @@ import '@mathjax/src/js/input/tex/color/ColorConfiguration.js';
 import '@mathjax/src/js/input/tex/boldsymbol/BoldsymbolConfiguration.js';
 import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration.js';
 import '@mathjax/src/js/input/tex/physics/PhysicsConfiguration.js';
+import '@mathjax/src/js/input/tex/braket/BraketConfiguration.js';
 import '@mathjax/src/js/input/tex/cancel/CancelConfiguration.js';
 import '@mathjax/src/js/input/tex/unicode/UnicodeConfiguration.js';
 
@@ -28,7 +29,7 @@ RegisterHTMLHandler(adaptor);
 const tex = new TeX({
   packages: [
     'base', 'ams', 'newcommand', 'noundefined',
-    'color', 'boldsymbol', 'mhchem', 'physics', 'cancel', 'unicode'
+    'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode'
   ],
   macros: {
     oiint: "\\unicode{x222F}",

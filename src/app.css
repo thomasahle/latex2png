@@ -79,6 +79,11 @@
     display: inline !important;
   }
 
+  /* Make MathJax error messages visible by removing opaque background */
+  mjx-container [data-mml-node="merror"] rect[data-background="true"] {
+    fill: transparent;
+  }
+
   /* Add hover states for dropdown menu items since bits-ui doesn't add data-highlighted on mouse hover */
   [data-slot="dropdown-menu-item"]:hover:not([data-disabled]),
   [data-slot="dropdown-menu-radio-item"]:hover:not([data-disabled]),

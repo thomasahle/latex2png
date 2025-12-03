@@ -60,6 +60,7 @@
       const svg = await renderLatexToSvg(texToRender, true);
       container.innerHTML = svg;
       measureDisplay();
+      invalidateDragPng(); // Clear stale drag image when content changes
       // Defer canvas generation to idle time to avoid blocking paint
       if ('requestIdleCallback' in window) {
         requestIdleCallback(() => ensureDragPng(), { timeout: 2000 });
@@ -82,10 +83,14 @@
       URL.revokeObjectURL(dragPngUrl);
       dragPngUrl = null;
     }
+    dragImage = null;
+    pngDataUrl = null;
+    dragDownloadDataUrl = null;
   }
 
   async function ensureDragPng() {
     if (!previewElement) return null;
+    if (!previewElement.querySelector('mjx-container svg')) return null;
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
     dragPngGenerationPromise = (async () => {
       const canvas = await generateImage(previewElement, $zoom ?? 1, null);
@@ -130,6 +135,11 @@
     contextMenuPosition = { x: event.clientX, y: event.clientY };
     contextMenuOpen = true;
     trackEvent("context_menu", { location: "math_preview" });
+  }
+
+  function handleMouseDown() {
+    // Start generating drag image on mousedown to have it ready by dragstart
+    ensureDragPng();
   }
 
   function handleDragStart(event) {
@@ -215,8 +225,9 @@
   $effect(() => {
     const z = $zoom;
     if (!previewElement) return;
-    measureDisplay();  // Keep immediate (fast DOM read)
-    // Debounce expensive canvas generation on zoom changes
+    measureDisplay();
+    // Note: Don't invalidateDragPng here - just regenerate at new zoom level
+    // Invalidation happens in renderMath when content actually changes
     clearTimeout(zoomDebounceTimer);
     zoomDebounceTimer = setTimeout(() => {
       if ('requestIdleCallback' in window) {
@@ -244,7 +255,8 @@
       style={`zoom: ${$zoom};`}
       bind:this={previewElement}
       class="inline-block cursor-grab"
-      draggable={!!dragImage}
+      draggable="true"
+      onmousedown={handleMouseDown}
       ondragstart={handleDragStart}
       ondragend={handleDragEnd}
     ></div>
