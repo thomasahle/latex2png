@@ -6,6 +6,13 @@
   import { wrapContent } from "../stores/wrapContent.js";
   import { trackEvent } from "../utils/analytics.js";
   import { fullscreen } from "../stores/fullscreen.js";
+  import SettingsIcon from "@lucide/svelte/icons/settings";
+  import SunIcon from "@lucide/svelte/icons/sun";
+  import MoonIcon from "@lucide/svelte/icons/moon";
+  import KeyboardIcon from "@lucide/svelte/icons/keyboard";
+  import BracketsIcon from "@lucide/svelte/icons/brackets";
+  import Minimize2Icon from "@lucide/svelte/icons/minimize-2";
+  import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
 
   let menuOpen = $state(false);
 
@@ -40,7 +47,7 @@
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
       <Button {...props} variant="outline" size="icon" aria-label="Settings">
-        <i class="ph ph-gear"></i>
+        <SettingsIcon />
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
@@ -51,7 +58,7 @@
       class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
-        <i class={$theme === "dark" ? "ph ph-sun" : "ph ph-moon-stars"}></i>
+        {#if $theme === "dark"}<SunIcon />{:else}<MoonIcon />{/if}
         {$theme === "dark" ? "Light" : "Dark"} Mode
       </span>
     </DropdownMenu.Item>
@@ -61,7 +68,7 @@
       class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
-        <i class="ph ph-keyboard"></i>
+        <KeyboardIcon />
         {$vimMode ? "Disable" : "Enable"}
         Vim Mode
       </span>
@@ -72,7 +79,7 @@
       class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
-        <i class="ph ph-brackets-square"></i>
+        <BracketsIcon />
         {$wrapContent ? "Disable" : "Enable"}
         Wrap \[...\]
       </span>
@@ -83,7 +90,7 @@
       class="cursor-pointer flex items-center justify-between"
     >
       <span class="flex items-center gap-2">
-        <i class={$fullscreen ? "ph ph-arrows-in" : "ph ph-arrows-out"}></i>
+        {#if $fullscreen}<Minimize2Icon />{:else}<Maximize2Icon />{/if}
         {$fullscreen ? "Exit" : "Enter"} Fullscreen
       </span>
     </DropdownMenu.Item>

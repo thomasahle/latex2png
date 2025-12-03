@@ -2,6 +2,8 @@
   import { fullscreen } from "../stores/fullscreen.js";
   import { Button } from "$lib/components/ui/button";
   import { trackEvent } from "../utils/analytics.js";
+  import Minimize2Icon from "@lucide/svelte/icons/minimize-2";
+  import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
 
   function toggleFullscreen() {
     fullscreen.toggle();
@@ -16,8 +18,8 @@
   onclick={toggleFullscreen}
 >
   {#if $fullscreen}
-    <i class="ph ph-arrows-in text-xl"></i>
+    <Minimize2Icon size={20} />
   {:else}
-    <i class="ph ph-arrows-out text-xl"></i>
+    <Maximize2Icon size={20} />
   {/if}
 </Button>

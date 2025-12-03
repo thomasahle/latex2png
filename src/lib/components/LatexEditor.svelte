@@ -81,13 +81,19 @@
 
   onMount(() => {
     editor = createLatexEditor(editorElement, (text) => {
+      console.log('[LatexEditor] Editor onChange, setting store to:', text);
+      console.log('[LatexEditor] onChange chars:', [...text].map(c => c.charCodeAt(0)));
       latexContent.set(text);
     });
     editorInstance = editor;
 
     // Sync store to editor
     const unsubscribeContent = latexContent.subscribe((value) => {
+      console.log('[LatexEditor] Store subscription fired, value:', value);
+      console.log('[LatexEditor] Value chars:', [...value].map(c => c.charCodeAt(0)));
+      console.log('[LatexEditor] Editor value:', editor?.getValue());
       if (editor && value !== editor.getValue()) {
+        console.log('[LatexEditor] Setting editor value');
         editor.setValue(value);
       }
     });

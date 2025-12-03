@@ -2,6 +2,8 @@
   import { layout } from "../stores/layout.js";
   import { Button } from "$lib/components/ui/button";
   import { trackEvent } from "../utils/analytics.js";
+  import Columns2Icon from "@lucide/svelte/icons/columns-2";
+  import Rows2Icon from "@lucide/svelte/icons/rows-2";
 
   function toggleLayout() {
     layout.toggle();
@@ -16,8 +18,8 @@
   onclick={toggleLayout}
 >
   {#if $layout === "stacked"}
-    <i class="ph ph-square-split-horizontal"></i>
+    <Columns2Icon />
   {:else}
-    <i class="ph ph-square-split-vertical"></i>
+    <Rows2Icon />
   {/if}
 </Button>

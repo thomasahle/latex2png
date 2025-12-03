@@ -4,8 +4,12 @@
   import { history } from "../stores/history.js";
   import { latexContent } from "../stores/content.js";
   import { trackEvent } from "../utils/analytics.js";
+  import { renderLatexToSvg } from "../services/mathjax-service.js";
+  import HistoryIcon from "@lucide/svelte/icons/history";
+  import XIcon from "@lucide/svelte/icons/x";
 
   let menuOpen = $state(false);
+  let renderedPreviews = $state({});
 
   function loadEquation(latex) {
     latexContent.set(latex);
@@ -38,37 +42,38 @@
     return new Date(timestamp).toLocaleDateString();
   }
 
-  // Wrap latex for MathJax rendering, handling alignment characters
-  function wrapLatex(latex) {
+  // Prepare latex for rendering, handling alignment characters
+  function prepareLatex(latex) {
     const hasAlignment = latex.includes("&") || latex.includes("\\\\");
     if (hasAlignment) {
-      return `\\(\\begin{aligned}${latex}\\end{aligned}\\)`;
+      return `\\begin{aligned}${latex}\\end{aligned}`;
     }
-    return `\\(${latex}\\)`;
+    return latex;
   }
 
-  // Track and typeset MathJax when menu opens
+  // Render history previews when menu opens
+  async function renderHistoryPreviews() {
+    const entries = $history;
+    for (const entry of entries) {
+      if (renderedPreviews[entry.timestamp]) continue;
+      try {
+        const latex = prepareLatex(entry.latex);
+        const svg = await renderLatexToSvg(latex, false); // inline math
+        renderedPreviews[entry.timestamp] = svg;
+        renderedPreviews = { ...renderedPreviews }; // trigger reactivity
+      } catch (err) {
+        console.error("Failed to render history preview:", err);
+        renderedPreviews[entry.timestamp] = `<span class="text-red-500 text-xs">Error</span>`;
+        renderedPreviews = { ...renderedPreviews };
+      }
+    }
+  }
+
+  // Track and render when menu opens
   $effect(() => {
     if (menuOpen && typeof window !== "undefined") {
       trackEvent("history_open", { count: $history.length });
-      if (window.MathJax?.typesetPromise) {
-        setTimeout(() => {
-          const container = document.querySelector('.history-dropdown-content');
-          if (container) {
-            window.MathJax.typesetPromise([container]).then(() => {
-              // Scale SVGs to fit 4em, but don't go below 50%
-              const maxPx = 4 * 17.6;
-              container.querySelectorAll('.history-preview svg').forEach(svg => {
-                svg.classList.add('size-auto');
-                const h = parseFloat(svg.getAttribute('height')) * 9.35; // ex to px
-                const w = parseFloat(svg.getAttribute('width')) * 9.35;
-                const scale = h > maxPx ? Math.max(0.5, maxPx / h) : 1;
-                svg.style.cssText = `height:${h*scale}px!important;width:${w*scale}px!important`;
-              });
-            }).catch(console.error);
-          }
-        }, 10);
-      }
+      renderHistoryPreviews();
     }
   });
 </script>
@@ -77,7 +82,7 @@
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
       <Button {...props} variant="outline" size="icon" aria-label="History">
-        <i class="ph ph-clock-counter-clockwise"></i>
+        <HistoryIcon />
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
@@ -96,7 +101,11 @@
         >
           <div class="flex-1 min-w-0 overflow-hidden">
             <div class="history-preview overflow-x-auto overflow-y-hidden">
-              {wrapLatex(entry.latex)}
+              {#if renderedPreviews[entry.timestamp]}
+                {@html renderedPreviews[entry.timestamp]}
+              {:else}
+                <span class="text-muted-foreground text-xs">Loading...</span>
+              {/if}
             </div>
             <div class="text-xs text-muted-foreground">
               {formatTime(entry.timestamp)}
@@ -107,7 +116,7 @@
             class="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-opacity flex-shrink-0"
             aria-label="Remove from history"
           >
-            <i class="ph ph-x text-sm"></i>
+            <XIcon size={14} />
           </button>
         </DropdownMenu.Item>
       {/each}
@@ -123,14 +132,13 @@
     max-height: 4em;
     overflow: hidden;
   }
-  .history-preview :global(mjx-container) {
-    margin: 0 !important;
-    padding: 0 !important;
-    color: inherit !important;
-    display: block !important;
-  }
-  /* Override dropdown menu's svg size-4 rule (JS sets size via size-auto class) */
+  /* Style SVG output from MathJax worker */
+  .history-preview :global(mjx-container),
   .history-preview :global(svg) {
+    max-height: 4em;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100%;
     color: inherit !important;
     vertical-align: top !important;
   }

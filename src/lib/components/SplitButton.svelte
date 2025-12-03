@@ -2,6 +2,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as ButtonGroup from "$lib/components/ui/button-group";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
 
   let {
     items = [],
@@ -32,7 +33,7 @@
           aria-label="More {primaryItem?.label} options"
           class={className}
         >
-          <i class="ph ph-caret-down"></i>
+          <ChevronDownIcon />
         </Button>
       {/snippet}
     </DropdownMenu.Trigger>

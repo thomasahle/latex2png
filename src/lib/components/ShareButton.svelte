@@ -8,6 +8,7 @@
     shareImage,
   } from "../utils/share.js";
   import { trackEvent } from "../utils/analytics.js";
+  import Share2Icon from "@lucide/svelte/icons/share-2";
 
   let menuOpen = $state(false);
 
@@ -28,7 +29,7 @@
 <DropdownMenu.Root bind:open={menuOpen}>
   <DropdownMenu.Trigger>
     <Button variant="outline" size="icon" aria-label="Share">
-      <i class="ph ph-share-network"></i>
+      <Share2Icon />
     </Button>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
