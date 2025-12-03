@@ -36,5 +36,8 @@ export default defineConfig({
   },
   server: {
     open: true
+  },
+  worker: {
+    format: 'es'  // ESM format supports code-splitting for dynamic imports in workers
   }
 });

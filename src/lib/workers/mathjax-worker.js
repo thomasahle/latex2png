@@ -7,6 +7,19 @@ import { SVG } from '@mathjax/src/js/output/svg.js';
 import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js';
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js';
 import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/mjs/svg.js';
+import { MathJaxNewcmFont } from '@mathjax/mathjax-newcm-font/mjs/svg.js';
+
+// Dynamic font loaders - auto-generated, see scripts/generate-font-loaders.mjs
+// All fonts are loaded on-demand via mathjax.asyncLoad
+import { fontLoaders } from './mathjax-font-loaders.generated.js';
+
+mathjax.asyncLoad = (name) => {
+  const fontName = name.match(/dynamic\/([^.]+)\.js/)?.[1];
+  if (fontName && fontLoaders[fontName]) {
+    return fontLoaders[fontName]();
+  }
+  return Promise.reject(new Error(`Font not found: ${name}`));
+};
 
 // Import TeX package configurations
 import '@mathjax/src/js/input/tex/base/BaseConfiguration.js';
@@ -48,9 +61,11 @@ const tex = new TeX({
   }
 });
 
-// Create SVG output - use 'local' fontCache so each SVG is self-contained
+// Create SVG output
+// Use 'local' fontCache so each SVG is self-contained
 const svg = new SVG({
-  fontCache: 'local'
+  fontCache: 'local',
+  font: new MathJaxNewcmFont()
 });
 
 // Add mhchem font extension for chemistry arrow glyphs
@@ -66,12 +81,16 @@ const html = mathjax.document('', {
 self.postMessage({ type: 'ready' });
 
 // Handle messages from main thread
-self.onmessage = function(e) {
+// Use async handler with handleRetriesFor to support MathJax operations that require async work
+// (e.g., loading fonts for \mathbb, \mathcal, etc.)
+self.onmessage = async function(e) {
   const { id, latex, display } = e.data;
 
   try {
-    // Convert TeX to SVG
-    const node = html.convert(latex, { display: display ?? true });
+    // Convert TeX to SVG, handling any async retries MathJax may need
+    const node = await mathjax.handleRetriesFor(() =>
+      html.convert(latex, { display: display ?? true })
+    );
 
     // Get the outer HTML
     const svgString = adaptor.outerHTML(node);
