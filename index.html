@@ -2,11 +2,9 @@
 <html lang="en">
 
 <head>
-  <!-- Performance optimizations: Preconnect to CDN domains -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <!-- Performance optimizations: DNS prefetch and preconnect for external scripts -->
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-  <link rel="dns-prefetch" href="https://buttons.github.io">
+  <link rel="preconnect" href="https://api.github.com" crossorigin>
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,51 +70,6 @@
   }
   </script>
 
-  <!-- MathJax configuration -->
-  <script>
-    window.MathJax = {
-      options: {
-        enableMenu: false  // Disable MathJax context menu (we have our own)
-      },
-      loader: {
-        load: ['[tex]/ams', '[tex]/color', '[tex]/cancel', '[tex]/mhchem', '[tex]/physics', '[tex]/braket', '[tex]/boldsymbol']
-      },
-      tex: {
-        packages: { '[+]': ['ams', 'color', 'cancel', 'mhchem', 'physics', 'braket', 'boldsymbol'] },
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        macros: {
-          oiint: "\\unicode{x222F}",
-          oiiint: "\\unicode{x2230}",
-          Overrightarrow: ["\\overrightarrow{#1}", 1],
-          utilde: ["\\underset{\\sim}{#1}", 1],
-          // Custom macros for symbols that don't work in standard MathJax
-          // Double brackets using Unicode characters
-          llbracket: "\\unicode{x27E6}",  // ⟦
-          rrbracket: "\\unicode{x27E7}",  // ⟧
-          // Wide check using inverted hat
-          widecheck: ["\\overset{\\Large\\vee}{#1}", 1],
-          // Group symbols using braces as approximation
-          overgroup: ["\\overbrace{#1}^{\\hspace{-0.5em}}", 1],
-          undergroup: ["\\underbrace{#1}_{\\hspace{-0.5em}}", 1],
-          // Harpoon accents using standard harpoons over content
-          overleftharpoon: ["\\overset{\\leftharpoonup}{#1}", 1],
-          overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1]
-        }
-      }
-    };
-  </script>
-
-  <!-- Defer non-critical scripts -->
-  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script async src="https://unpkg.com/@phosphor-icons/web"></script>
-
-  <!-- MathJax -->
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
-
-  <!-- GitHub buttons custom element -->
-  <script async defer src="https://buttons.github.io/buttons.js"></script>
-
   <!-- Analytics (load last) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
   <script>
@@ -125,8 +78,8 @@
     gtag('js', new Date());
     gtag('config', 'G-40XB6Q54CE');
   </script>
-  <script type="module" crossorigin src="/latex2png/assets/main-Dv4JBNdy.js"></script>
-  <link rel="stylesheet" crossorigin href="/latex2png/assets/main-BLqojzaF.css">
+  <script type="module" crossorigin src="/latex2png/assets/main-CQEmczof.js"></script>
+  <link rel="stylesheet" crossorigin href="/latex2png/assets/main-oxTa0RM-.css">
   <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
   <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
 </head>
@@ -168,7 +121,7 @@
   </div>
   <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/latex2png/assets/polyfills-legacy-BSAgTUl9.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/latex2png/assets/main-legacy-YzZ1Ph9I.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/latex2png/assets/main-legacy-DUH8pfL6.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
 </body>
 
 </html>
