@@ -1,5 +1,3 @@
-import html2canvas from 'html2canvas';
-
 const BASE_PADDING_EM = 16; // 1em in pixels
 
 /**
@@ -10,25 +8,14 @@ const BASE_PADDING_EM = 16; // 1em in pixels
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
 export async function generateImage(previewElement, zoomScale, backgroundColor = null) {
-  // Only typeset if SVG not already present (avoids redundant work when called after MathPreview render)
-  const existingSvg = previewElement.querySelector('mjx-container svg');
-  if (!existingSvg && window.MathJax?.typesetPromise) {
-    await window.MathJax.typesetPromise([previewElement]);
-  }
-
   const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor);
 
-  // Prefer direct SVG -> canvas to preserve colors; fall back to html2canvas if anything fails.
   const mjxSvg = previewElement.querySelector('mjx-container svg');
-  if (mjxSvg) {
-    try {
-      return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, zoomScale);
-    } catch (err) {
-      console.warn('MathJax SVG render failed, falling back to html2canvas', err);
-    }
+  if (!mjxSvg) {
+    throw new Error('No SVG found in preview element');
   }
 
-  return await renderWithHtml2Canvas(previewElement, zoomScale, fgColor, bgColor);
+  return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, zoomScale);
 }
 
 export function resolveThemeColors(previewElement, backgroundOverride) {
@@ -169,61 +156,6 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   return canvas;
 }
 
-async function renderWithHtml2Canvas(previewElement, zoomScale, defaultColor, defaultBg) {
-  const clone = previewElement.cloneNode(true);
-  const trash = clone.querySelectorAll('.absolute, .hide-zoom-controls, mjx-assistive-mml');
-  trash.forEach(el => el.remove());
-
-  clone.style.color = defaultColor;
-  const mjxContainer = clone.querySelector('mjx-container');
-  if (mjxContainer) {
-    mjxContainer.style.color = defaultColor;
-    mjxContainer.style.fontSize = `${zoomScale * 100}%`;
-    mjxContainer.style.display = 'inline-block';
-    mjxContainer.style.visibility = 'visible';
-  }
-
-  const coloredElements = clone.querySelectorAll('[fill], [stroke]');
-  coloredElements.forEach(el => {
-    const fill = el.getAttribute('fill');
-    const stroke = el.getAttribute('stroke');
-    if (fill && fill !== 'currentColor' && fill !== 'none') {
-      el.style.fill = fill;
-    }
-    if (stroke && stroke !== 'currentColor' && stroke !== 'none') {
-      el.style.stroke = stroke;
-    }
-  });
-
-  const padding = Math.round(BASE_PADDING_EM * zoomScale);
-  const wrapper = document.createElement('div');
-  Object.assign(wrapper.style, {
-    position: 'fixed',
-    left: '-9999px',
-    top: '0',
-    display: 'inline-block',
-    visibility: 'visible',
-    backgroundColor: defaultBg,
-    padding: `${padding}px`,
-    zIndex: '-1'
-  });
-
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
-
-  try {
-    return await html2canvas(wrapper, {
-      scale: Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
-      useCORS: true,
-      backgroundColor: null,
-      logging: false,
-    });
-  } finally {
-    if (document.body.contains(wrapper)) {
-      document.body.removeChild(wrapper);
-    }
-  }
-}
 function bakeSvgColors(svg, fgColor) {
   svg.style.color = fgColor;
   svg.setAttribute('color', fgColor);
