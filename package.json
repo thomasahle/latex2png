@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:snap": "node scripts/snapshot-test.mjs"
+    "test:snap": "node scripts/snapshot-test.mjs",
+    "test:symbols": "node scripts/symbols-test.mjs"
   },
   "devDependencies": {
     "@internationalized/date": "^3.10.0",

@@ -7,7 +7,6 @@ import { SVG } from '@mathjax/src/js/output/svg.js';
 import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js';
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js';
 import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/mjs/svg.js';
-import { MathJaxNewcmFont } from '@mathjax/mathjax-newcm-font/mjs/svg.js';
 
 // Dynamic font loaders - auto-generated, see scripts/generate-font-loaders.mjs
 // All fonts are loaded on-demand via mathjax.asyncLoad
@@ -34,6 +33,8 @@ import '@mathjax/src/js/input/tex/braket/BraketConfiguration.js';
 import '@mathjax/src/js/input/tex/cancel/CancelConfiguration.js';
 import '@mathjax/src/js/input/tex/unicode/UnicodeConfiguration.js';
 import '@mathjax/src/js/input/tex/configmacros/ConfigMacrosConfiguration.js';
+import '@mathjax/src/js/input/tex/gensymb/GensymbConfiguration.js';
+import '@mathjax/src/js/input/tex/textcomp/TextcompConfiguration.js';
 
 // Create lite adaptor (works without browser DOM)
 const adaptor = liteAdaptor();
@@ -44,7 +45,7 @@ const tex = new TeX({
   packages: [
     'base', 'ams', 'newcommand', 'noundefined',
     'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode',
-    'configmacros'
+    'configmacros', 'gensymb', 'textcomp'
   ],
   macros: {
     oiint: "\\unicode{x222F}",
@@ -61,11 +62,9 @@ const tex = new TeX({
   }
 });
 
-// Create SVG output
-// Use 'local' fontCache so each SVG is self-contained
+// Create SVG output - use 'local' fontCache so each SVG is self-contained
 const svg = new SVG({
-  fontCache: 'local',
-  font: new MathJaxNewcmFont()
+  fontCache: 'local'
 });
 
 // Add mhchem font extension for chemistry arrow glyphs
