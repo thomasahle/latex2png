@@ -32,6 +32,21 @@ export function initWorker() {
       return;
     }
 
+    // Handle initialization error from within the worker
+    if (type === 'init_error') {
+      console.error('MathJax worker init error:', error);
+      const err = new Error(error?.message || 'MathJax worker initialization failed');
+      err.name = 'WorkerInitError';
+      trackError(err, {
+        context: 'mathjax_worker_init',
+        source: error?.source,
+        lineno: error?.lineno,
+        colno: error?.colno,
+        worker_stack: error?.stack
+      });
+      return;
+    }
+
     // Handle render response
     const resolver = pending.get(id);
     if (resolver) {

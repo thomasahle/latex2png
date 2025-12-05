@@ -1,6 +1,22 @@
 // MathJax Web Worker - uses liteAdaptor (no browser DOM needed)
 // This allows MathJax rendering to happen off the main thread
 
+// Catch any errors during worker initialization (import failures, syntax errors, etc.)
+// This must be at the very top before any imports that might fail
+self.onerror = (message, source, lineno, colno, error) => {
+  self.postMessage({
+    type: 'init_error',
+    error: {
+      message: String(message),
+      source,
+      lineno,
+      colno,
+      stack: error?.stack
+    }
+  });
+  return true; // Prevent default error handling
+};
+
 import { mathjax } from '@mathjax/src/js/mathjax.js';
 import { TeX } from '@mathjax/src/js/input/tex.js';
 import { SVG } from '@mathjax/src/js/output/svg.js';
