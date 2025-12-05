@@ -79,10 +79,14 @@
     display: inline !important;
   }
 
-  /* Make MathJax error messages visible by removing opaque background */
-  mjx-container [data-mml-node="merror"] rect[data-background="true"] {
-    fill: transparent;
-  }
+  /* MathJax SVG styles - from official docs */
+  mjx-container svg a{fill:blue;stroke:blue}
+  mjx-container [data-mml-node="merror"]>g{fill:red;stroke:red}
+  mjx-container [data-mml-node="merror"]>rect[data-background]{fill:yellow;stroke:none}
+  mjx-container [data-frame],mjx-container [data-line]{stroke-width:70px;fill:none}
+  mjx-container .mjx-dashed{stroke-dasharray:140}
+  mjx-container .mjx-dotted{stroke-linecap:round;stroke-dasharray:0,140}
+  mjx-container use[data-c]{stroke-width:3px}
 
   /* Add hover states for dropdown menu items since bits-ui doesn't add data-highlighted on mouse hover */
   [data-slot="dropdown-menu-item"]:hover:not([data-disabled]),

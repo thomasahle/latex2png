@@ -2,50 +2,64 @@
 function matrixGrid(rows, cols) {
   const cells = Array(rows)
     .fill()
-    // .map(() => Array(cols).fill("\\cdot").join(" & "))
     .map(() => Array(cols).fill("\\cdot").join("\\!&\\!"))
     .join("\\\\");
   return cells;
 }
 
-// Generate matrix commands for different sizes and delimiter types
+// Generate grouped matrix/table commands (each type has 1x1, 2x2, 3x3 as subcommands)
 function generateMatrixCommands() {
   const matrixTypes = [
-    { env: 'pmatrix', left: '\\left(', right: '\\right)', desc: 'parentheses ( )' },
-    { env: 'bmatrix', left: '\\left[', right: '\\right]', desc: 'brackets [ ]' },
-    { env: 'Bmatrix', left: '\\left\\{', right: '\\right\\}', desc: 'braces { }' },
-    { env: 'vmatrix', left: '\\left\\vert\\begin{smallmatrix}', right: '\\end{smallmatrix}\\right\\vert', desc: '| |', isDeterminant: true },
-    { env: 'Vmatrix', left: '\\left\\Vert\\,', right: '\\,\\right\\Vert', desc: 'double bars || ||' },
-    { env: 'matrix', left: '', right: '', desc: 'without delimiters' },
+    { env: 'pmatrix', label1x1: '\\left(\\cdot\\right)', left: '\\left(', right: '\\right)', desc: 'parentheses ( )' },
+    { env: 'bmatrix', label1x1: '\\left[\\cdot\\right]', left: '\\left[', right: '\\right]', desc: 'brackets [ ]' },
+    { env: 'Bmatrix', label1x1: '\\left\\{\\cdot\\right\\}', left: '\\left\\{', right: '\\right\\}', desc: 'braces { }' },
+    { env: 'vmatrix', label1x1: '\\left|\\cdot\\right|', left: '\\left\\vert', right: '\\right\\vert', desc: '| |', isDeterminant: true },
+    { env: 'Vmatrix', label1x1: '\\left\\|\\cdot\\right\\|', left: '\\left\\Vert', right: '\\right\\Vert', desc: 'double bars ‖ ‖' },
+    { env: 'matrix', label1x1: '\\cdot', left: '', right: '', desc: 'no delimiters' },
   ];
 
   const sizes = [
+    { size: 1, placeholders: '${1}' },
     { size: 2, placeholders: '${1} & ${2} \\\\\n  ${3} & ${4}' },
     { size: 3, placeholders: '${1} & ${2} & ${3} \\\\\n  ${4} & ${5} & ${6} \\\\\n  ${7} & ${8} & ${9}' },
   ];
 
   const commands = [];
 
-  for (const { size, placeholders } of sizes) {
-    for (const type of matrixTypes) {
-      // Generate matrix command for each type
-      const matrixWord = type.isDeterminant ? 'determinant' : 'matrix';
-      const tooltip = `${size}×${size} ${matrixWord} ${type.desc}`;
+  // Generate grouped commands for each matrix type
+  for (const type of matrixTypes) {
+    const matrixWord = type.isDeterminant ? 'determinant' : 'matrix';
+    const subcommands = sizes.map(({ size, placeholders }) => ({
+      label: size === 1
+        ? type.label1x1
+        : `${type.left}\\begin{smallmatrix}${matrixGrid(size, size)}\\end{smallmatrix}${type.right}`,
+      latex: `\\begin{${type.env}}\n  ${placeholders}\n\\end{${type.env}}`,
+      tooltip: `${size}×${size} ${matrixWord} ${type.desc}`,
+    }));
 
-      commands.push({
-        label: `${type.left}\\begin{smallmatrix}${matrixGrid(size, size)}\\end{smallmatrix}${type.right}`,
-        latex: `\\begin{${type.env}}\n  ${placeholders}\n\\end{${type.env}}`,
-        tooltip,
-      });
-    }
-
-    // Add angle matrix
     commands.push({
-      label: `\\left\\langle\\begin{smallmatrix}${matrixGrid(size, size)}\\end{smallmatrix}\\right\\rangle`,
-      latex: `\\left\\langle\\begin{matrix}${placeholders}\\end{matrix}\\right\\rangle`,
-      tooltip: `${size}×${size} angle brackets ⟨ ⟩`,
+      label: subcommands[0].label,
+      latex: subcommands[0].latex,
+      tooltip: `Matrix ${type.desc}`,
+      subcommands,
     });
   }
+
+  // Add angle matrix group
+  const angleSubcommands = sizes.map(({ size, placeholders }) => ({
+    label: size === 1
+      ? '\\langle\\cdot\\rangle'
+      : `\\left\\langle\\begin{smallmatrix}${matrixGrid(size, size)}\\end{smallmatrix}\\right\\rangle`,
+    latex: `\\left\\langle\\begin{matrix}${placeholders}\\end{matrix}\\right\\rangle`,
+    tooltip: `${size}×${size} angle brackets ⟨ ⟩`,
+  }));
+
+  commands.push({
+    label: angleSubcommands[0].label,
+    latex: angleSubcommands[0].latex,
+    tooltip: 'Matrix angle brackets ⟨ ⟩',
+    subcommands: angleSubcommands,
+  });
 
   return commands;
 }
@@ -117,52 +131,38 @@ export const toolbarCommands = [
         latex: "\\lim_{${1} \\to ${2}}",
         tooltip: "Limit",
       },
-      {
-        label: "\\binom{n}{k}",
-        latex: "\\binom{${1}}{${2}}",
-        tooltip: "Binomial coefficient",
-      },
-      {
-        label: "\\begin{cases}\\scriptsize\\text{if}\\\\[-.5em]\\scriptsize\\text{else}\\end{cases}",
-        latex: "\\begin{cases}\n  ${1} & \\text{if } ${2} \\\\\n  ${3} & \\text{otherwise}\n\\end{cases}",
-        tooltip: "Cases (piecewise)",
-      },
     ],
   },
   {
     category: "Braces and Matrices",
     icon: "[\\cdot]",
     commands: [
+      // Matrices (grouped by delimiter type)
+      ...generateMatrixCommands(),
+      // Tables using array environment (grouped)
       {
-        label: "\\left(\\cdot \\right)",
-        latex: "\\left(${1}\\right)",
-        tooltip: "Parentheses",
+        label: "\\boxed{\\cdot}",
+        latex: "\\begin{array}{|c|}\n\\hline\n  ${1} \\\\\n\\hline\n\\end{array}",
+        tooltip: "Table with borders",
+        subcommands: [
+          {
+            label: "\\boxed{\\cdot}",
+            latex: "\\begin{array}{|c|}\n\\hline\n  ${1} \\\\\n\\hline\n\\end{array}",
+            tooltip: "1×1 table with borders",
+          },
+          {
+            label: "{\\scriptstyle\\begin{array}{|c|c|}\\hline\\cdot&\\cdot\\\\\\hline\\cdot&\\cdot\\\\\\hline\\end{array}}",
+            latex: "\\begin{array}{|c|c|}\n\\hline\n  ${1} & ${2} \\\\\n\\hline\n  ${3} & ${4} \\\\\n\\hline\n\\end{array}",
+            tooltip: "2×2 table with borders",
+          },
+          {
+            label: "{\\scriptscriptstyle\\begin{array}{|c|c|c|}\\hline\\cdot&\\cdot&\\cdot\\\\\\hline\\cdot&\\cdot&\\cdot\\\\\\hline\\cdot&\\cdot&\\cdot\\\\\\hline\\end{array}}",
+            latex: "\\begin{array}{|c|c|c|}\n\\hline\n  ${1} & ${2} & ${3} \\\\\n\\hline\n  ${4} & ${5} & ${6} \\\\\n\\hline\n  ${7} & ${8} & ${9} \\\\\n\\hline\n\\end{array}",
+            tooltip: "3×3 table with borders",
+          },
+        ],
       },
-      {
-        label: "\\left[\\cdot \\right]",
-        latex: "\\left[${1}\\right]",
-        tooltip: "Brackets",
-      },
-      {
-        label: "\\left\\{\\cdot \\right\\}",
-        latex: "\\left\\{${1}\\right\\}",
-        tooltip: "Braces",
-      },
-      {
-        label: "\\left|\\cdot \\right|",
-        latex: "\\left|${1}\\right|",
-        tooltip: "Absolute value",
-      },
-      {
-        label: "\\left\\|\\cdot \\right\\|",
-        latex: "\\left\\|${1}\\right\\|",
-        tooltip: "Norm",
-      },
-      {
-        label: "\\langle\\cdot \\rangle",
-        latex: "\\left\\langle ${1} \\right\\rangle",
-        tooltip: "Angle brackets",
-      },
+      // Other delimiters
       {
         label: "\\lceil\\cdot \\rceil",
         latex: "\\left\\lceil ${1} \\right\\rceil",
@@ -172,16 +172,6 @@ export const toolbarCommands = [
         label: "\\lfloor\\cdot \\rfloor",
         latex: "\\left\\lfloor ${1} \\right\\rfloor",
         tooltip: "Floor brackets ⌊ ⌋",
-      },
-      {
-        label: "\\lvert\\cdot \\rvert",
-        latex: "\\left\\lvert ${1} \\right\\rvert",
-        tooltip: "Left/right vert |",
-      },
-      {
-        label: "\\lVert\\cdot \\rVert",
-        latex: "\\left\\lVert ${1} \\right\\rVert",
-        tooltip: "Left/right double vert ‖",
       },
       {
         label: "\\lgroup\\cdot \\rgroup",
@@ -208,7 +198,18 @@ export const toolbarCommands = [
         latex: "\\left|${1}\\right.",
         tooltip: "Invisible right delimiter",
       },
-      ...generateMatrixCommands(),
+      // Binomial coefficient
+      {
+        label: "\\binom{n}{k}",
+        latex: "\\binom{${1}}{${2}}",
+        tooltip: "Binomial coefficient",
+      },
+      // Cases (piecewise)
+      {
+        label: "\\begin{cases}\\scriptsize\\text{if}\\\\[-.5em]\\scriptsize\\text{else}\\end{cases}",
+        latex: "\\begin{cases}\n  ${1} & \\text{if } ${2} \\\\\n  ${3} & \\text{otherwise}\n\\end{cases}",
+        tooltip: "Cases (piecewise)",
+      },
     ],
   },
   {
