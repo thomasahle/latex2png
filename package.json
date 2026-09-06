@@ -9,10 +9,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:snap": "node scripts/snapshot-test.mjs",
-    "test:symbols": "node scripts/symbols-test.mjs"
+    "test:symbols": "node scripts/symbols-test.mjs",
+    "generate:symbols": "node scripts/generate-symbol-svgs.mjs"
   },
   "devDependencies": {
     "@internationalized/date": "^3.10.0",
+    "katex": "^0.16.25",
     "@lucide/svelte": "^0.544.0",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "@vitejs/plugin-legacy": "^6.1.1",
@@ -46,7 +48,6 @@
     "codemirror": "^6.0.1",
     "codemirror-lang-latex": "^0.2.0",
     "jspdf": "^3.0.3",
-    "katex": "^0.16.25",
     "shadcn-svelte": "^1.0.10",
     "svelte-codemirror-editor": "^2.1.0",
     "svelte-sonner": "^1.0.5",

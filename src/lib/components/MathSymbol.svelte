@@ -1,24 +1,12 @@
 <script>
-  import katex from "katex";
+  import { symbolSvgs, symbolSvgsInline } from "$lib/utils/symbol-svgs.generated.js";
 
   let { latex, inline = false } = $props();
-  let container;
-
-  function renderSymbol() {
-    if (!container) return;
-    katex.render(latex, container, {
-      displayMode: !inline,
-      throwOnError: false,
-    });
-  }
-
-  $effect(() => {
-    renderSymbol();
-  });
+  let svg = $derived(inline ? symbolSvgsInline[latex] : symbolSvgs[latex]);
 </script>
 
 <span>
-  <span bind:this={container} class="math-symbol"></span>
+  <span class="math-symbol">{@html svg ?? latex}</span>
 </span>
 
 <style>
@@ -30,13 +18,9 @@
   :global(a:has(.math-symbol)) {
     overflow: visible;
   }
-  /* Don’t let parent icon rules resize KaTeX’s SVGs */
+  /* Don't let parent icon rules resize MathJax's SVGs */
   .math-symbol :global(svg) {
     width: auto !important;
     height: auto !important;
-  }
-  /* Optional: remove display-mode margins when used in tight containers */
-  .math-symbol :global(.katex-display) {
-    margin: 0;
   }
 </style>

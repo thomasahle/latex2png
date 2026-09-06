@@ -9,9 +9,6 @@
   import { layout } from "./lib/stores/layout.js";
   import { fullscreen } from "./lib/stores/fullscreen.js";
   import { trackEvent } from "./lib/utils/analytics.js";
-  import katex from "katex";
-  import MathSymbol from "$lib/components/MathSymbol.svelte";
-  import { Button } from "$lib/components/ui/button";
 
   let editor = $state(null);
 
@@ -26,13 +23,6 @@
     });
   }
 
-  const latex2 = String.raw`\left\vert\begin{smallmatrix}
-\cdot&\cdot&\cdot\\
-\cdot&\cdot&\cdot\\
-\cdot&\cdot&\cdot
-\end{smallmatrix}\right\vert`;
-  const latex =
-    "\\left\\vert\\begin{smallmatrix}\n\\cdot&\\cdot&\\cdot\\\\\n\\cdot&\\cdot&\\cdot\\\\\n\\cdot&\\cdot&\\cdot\n\\end{smallmatrix}\\right\\vert";
 </script>
 
 <div class="min-h-screen bg-background text-foreground font-serif">
