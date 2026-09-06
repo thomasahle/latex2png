@@ -29,12 +29,12 @@ For visual/layout issues, ALWAYS take screenshots before and after to verify the
 ### Tech Stack
 - Vite for build/dev
 - CodeMirror 6 for editor
-- Vanilla JavaScript (no framework)
+- Svelte 5 (runes) with bits-ui / shadcn-svelte components
 - MathJax for LaTeX rendering
 
 ### Responsive Breakpoints
-- Desktop: >= 768px (can toggle stacked/side-by-side)
-- Mobile: < 768px (always stacked, compact UI)
+- Desktop: >= 640px (can toggle stacked/side-by-side)
+- Mobile: < 640px (always stacked, compact UI) — see `src/lib/stores/layout.js`
 
 ### Testing
 - Always run npm as a background task, so it doesn't hang:
