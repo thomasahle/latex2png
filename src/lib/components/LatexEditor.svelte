@@ -36,6 +36,7 @@
         vimCompartment.of([]),
         activeLineCompartment.of([]),
         placeholder(String.raw`e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}`),
+        EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChange(update.state.doc.toString());

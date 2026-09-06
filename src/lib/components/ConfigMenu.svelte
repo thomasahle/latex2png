@@ -81,7 +81,7 @@
       <span class="flex items-center gap-2">
         <BracketsIcon />
         {$wrapContent ? "Disable" : "Enable"}
-        Wrap \[...\]
+        Auto {"\\begin{aligned}"}
       </span>
     </DropdownMenu.Item>
 
