@@ -91,7 +91,8 @@ export async function saveSVG() {
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     downloadFile(url, 'latex-equation.svg');
-    URL.revokeObjectURL(url);
+    // Delay revocation to ensure download completes (click is async in some browsers)
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     addToHistory();
     trackEvent('save_image', { format: 'svg', latex: get(latexContent) });
   } catch (error) {
