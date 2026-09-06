@@ -378,7 +378,7 @@
       forceMount
       sideOffset={0}
       bind:ref={contentEl}
-      class={`w-[420px] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
+      class={`w-[min(420px,calc(100vw-1rem))] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
         menuOpen ? "" : "!hidden"
       }`}
       aria-hidden={!menuOpen}
