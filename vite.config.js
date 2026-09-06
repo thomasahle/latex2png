@@ -26,13 +26,13 @@ export default defineConfig({
   base: '/latex2png/',
   build: {
     outDir: 'dist',
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: './index.html'
       }
     },
     target: 'es2015',
-    minify: 'esbuild'
+    minify: 'oxc'
   },
   server: {
     open: true

@@ -15,21 +15,21 @@
   "devDependencies": {
     "@lucide/svelte": "^1.41.0",
     "@sveltejs/mcp": "^0.1.11",
-    "@sveltejs/vite-plugin-svelte": "^5.1.1",
-    "@vitejs/plugin-legacy": "^6.1.1",
-    "autoprefixer": "^10.4.21",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@vitejs/plugin-legacy": "^8.2.3",
+    "autoprefixer": "^10.5.5",
     "bits-ui": "^2.19.0",
     "katex": "^0.16.25",
     "paneforge": "^1.0.2",
     "playwright": "^1.56.1",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.28",
     "shadcn-svelte": "^1.0.10",
     "svelte": "^5.57.0",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^3.4.18",
     "tailwindcss-animate": "^1.0.7",
-    "terser": "^5.44.1",
-    "vite": "^6.4.1"
+    "terser": "^5.51.2",
+    "vite": "^8.2.2"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.19.1",
