@@ -52,7 +52,9 @@
             overflow: "auto",
           },
           ".cm-content": {
-            padding: "10px",
+            // Extra right padding keeps wrapped text clear of the symbol
+            // toolbar button overlaid in the pane's top-right corner.
+            padding: "10px 48px 10px 10px",
             minHeight: "200px",
           },
         }),
