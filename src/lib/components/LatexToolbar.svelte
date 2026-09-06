@@ -563,4 +563,12 @@
 </div>
 
 <style>
+  /* bits-ui >= 2.15.8 copies the content's z-index onto its floating wrapper
+     only when the content node mounts. With forceMount that happens while
+     the menu is closed, so the wrapper never gets one and the preview pane's
+     z-10 controls (zoom slider, Save button) paint over the open menu. Give
+     the wrapper the same z-50 the content has. */
+  :global([data-bits-floating-content-wrapper]:has([data-latex-toolbar-layer])) {
+    z-index: 50;
+  }
 </style>
