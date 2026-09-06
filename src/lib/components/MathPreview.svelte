@@ -43,8 +43,9 @@
   const renderMath = debounce(async (latex, shouldWrap) => {
     if (!previewElement || typeof window === "undefined") return;
 
+    // Keep the previous render visible until the new one arrives; the
+    // container is only replaced on success (or with an error message).
     const container = previewElement;
-    container.innerHTML = "";
 
     // Prepare LaTeX for rendering
     let texToRender = latex;
