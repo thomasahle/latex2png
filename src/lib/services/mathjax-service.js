@@ -3,20 +3,51 @@
 
 import { trackError } from '../utils/analytics.js';
 
+// How long to wait for the worker's 'ready' signal before giving up
+const READY_TIMEOUT_MS = 20000;
+
 let worker = null;
 let messageId = 0;
 const pending = new Map();
 let readyPromise = null;
 let readyResolve = null;
+let readyReject = null;
+let readyTimer = null;
+let isReady = false;
+
+// Fail worker startup (or a crashed worker): reject the ready promise so
+// callers waiting on it get a clear error instead of hanging forever, and
+// fail any requests already in flight for the same reason.
+function failWorker(error) {
+  clearTimeout(readyTimer);
+  readyTimer = null;
+  readyReject?.(error);
+  for (const { reject } of pending.values()) {
+    reject(error);
+  }
+  pending.clear();
+}
 
 export function initWorker() {
   if (typeof window === 'undefined') return;
   if (worker) return;
 
-  // Create promise that resolves when worker signals ready
-  readyPromise = new Promise((resolve) => {
+  // Create promise that resolves when worker signals ready (or rejects if it never does)
+  isReady = false;
+  readyPromise = new Promise((resolve, reject) => {
     readyResolve = resolve;
+    readyReject = reject;
   });
+  // The rejection is surfaced through renderLatexToSvg(); avoid an
+  // "unhandled rejection" when nobody happens to be awaiting it yet.
+  readyPromise.catch(() => {});
+
+  readyTimer = setTimeout(() => {
+    failWorker(new Error(
+      `MathJax did not start within ${READY_TIMEOUT_MS / 1000} seconds. ` +
+      'Check that scripts are not blocked and that your browser supports module web workers.'
+    ));
+  }, READY_TIMEOUT_MS);
 
   worker = new Worker(
     new URL('../workers/mathjax-worker.js', import.meta.url),
@@ -28,6 +59,9 @@ export function initWorker() {
 
     // Handle ready signal
     if (type === 'ready') {
+      isReady = true;
+      clearTimeout(readyTimer);
+      readyTimer = null;
       readyResolve();
       return;
     }
@@ -44,6 +78,7 @@ export function initWorker() {
         colno: error?.colno,
         worker_stack: error?.stack
       });
+      failWorker(err);
       return;
     }
 
@@ -59,9 +94,14 @@ export function initWorker() {
     }
   };
 
+  // Note: a failed import inside a module worker never reaches the worker's
+  // own self.onerror (the module body never runs); it only shows up here.
   worker.onerror = (event) => {
     console.error('MathJax worker error:', event);
-    const error = new Error(event.message || 'MathJax worker error');
+    const detail = event.message || 'the worker script failed to load';
+    const error = new Error(isReady
+      ? `MathJax worker error: ${detail}`
+      : `MathJax failed to start: ${detail}`);
     error.filename = event.filename;
     error.lineno = event.lineno;
     error.colno = event.colno;
@@ -71,6 +111,7 @@ export function initWorker() {
       lineno: event.lineno,
       colno: event.colno
     });
+    failWorker(error);
   };
 }
 
@@ -94,8 +135,12 @@ export function terminateWorker() {
   if (worker) {
     worker.terminate();
     worker = null;
+    clearTimeout(readyTimer);
+    readyTimer = null;
     pending.clear();
     readyPromise = null;
     readyResolve = null;
+    readyReject = null;
+    isReady = false;
   }
 }
