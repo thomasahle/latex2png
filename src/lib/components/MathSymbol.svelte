@@ -6,7 +6,7 @@
 </script>
 
 <span>
-  <span class="math-symbol">{@html svg ?? latex}</span>
+  <span class="math-symbol">{#if svg}{@html svg}{:else}{latex}{/if}</span>
 </span>
 
 <style>
