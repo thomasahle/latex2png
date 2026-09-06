@@ -180,10 +180,11 @@
     const handleWheel = () => markToolbarInteraction();
     const handleKeyDown = () => markToolbarInteraction();
     const handleScroll = () => {
+      // While restoring, ignore scroll events (e.g. from bits-ui focusing the
+      // first item) so they don't overwrite the position being restored.
+      if (isRestoringScroll) return;
       savedTop = el.scrollTop;
-      if (!isRestoringScroll) {
-        updateActiveSection();
-      }
+      updateActiveSection();
     };
 
     el.addEventListener("pointerdown", handlePointerDown);
@@ -393,12 +394,12 @@
       data-latex-toolbar-layer
       preventScroll={false}
       onmouseleave={handleContentMouseLeave}
-      on:openAutoFocus={(e) => {
+      onOpenAutoFocus={(e) => {
         e.preventDefault();
         contentEl?.focus?.({ preventScroll: true });
         restoreScrollUntilSettled();
       }}
-      on:closeAutoFocus={(e) => e.preventDefault()}
+      onCloseAutoFocus={(e) => e.preventDefault()}
     >
       {#if recentCommands.length > 0}
         <div class="mb-3" bind:this={sectionRefs["Recent"]}>
