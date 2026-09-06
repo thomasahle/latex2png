@@ -57,7 +57,7 @@ export function initWorker() {
   );
 
   worker.onmessage = (e) => {
-    const { type, id, success, svg, error } = e.data;
+    const { type, id, success, result, error } = e.data;
 
     // Handle ready signal
     if (type === 'ready') {
@@ -89,7 +89,7 @@ export function initWorker() {
     if (resolver) {
       pending.delete(id);
       if (success) {
-        resolver.resolve(svg);
+        resolver.resolve(result);
       } else {
         resolver.reject(new Error(error));
       }
@@ -157,6 +157,14 @@ async function sendRequest(message, key) {
  */
 export async function renderLatexToSvg(latex, display = true, { key = display ? 'display' : 'inline' } = {}) {
   return sendRequest({ type: 'render', latex, display }, key);
+}
+
+/**
+ * Convert TeX to a MathML string, using the same packages and macros as
+ * rendering. These requests are never superseded.
+ */
+export async function renderLatexToMathML(latex, display = true) {
+  return sendRequest({ type: 'mathml', latex, display }, null);
 }
 
 export function terminateWorker() {
