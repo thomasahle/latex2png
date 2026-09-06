@@ -180,10 +180,11 @@
     const handleWheel = () => markToolbarInteraction();
     const handleKeyDown = () => markToolbarInteraction();
     const handleScroll = () => {
+      // While restoring, ignore scroll events (e.g. from bits-ui focusing the
+      // first item) so they don't overwrite the position being restored.
+      if (isRestoringScroll) return;
       savedTop = el.scrollTop;
-      if (!isRestoringScroll) {
-        updateActiveSection();
-      }
+      updateActiveSection();
     };
 
     el.addEventListener("pointerdown", handlePointerDown);
@@ -360,25 +361,32 @@
 <div class="font-sans">
   <DropdownMenu.Root bind:open={menuOpen}>
     <DropdownMenu.Trigger>
-      <div
-        role="presentation"
-        data-testid="latex-toolbar-trigger-region"
-        bind:this={triggerRegionEl}
-        onmouseenter={handleTriggerMouseEnter}
-        onmouseleave={handleTriggerMouseLeave}
-        onclickcapture={handleTriggerClick}
-        onpointerdowncapture={handleTriggerPointerDown}
-      >
-        <Button variant="secondary" size="icon" aria-label="Insert math symbol">
-          <MathSymbol latex="\Sigma" />
-        </Button>
-      </div>
+      {#snippet child({ props })}
+        <div
+          role="presentation"
+          data-testid="latex-toolbar-trigger-region"
+          bind:this={triggerRegionEl}
+          onmouseenter={handleTriggerMouseEnter}
+          onmouseleave={handleTriggerMouseLeave}
+          onclickcapture={handleTriggerClick}
+          onpointerdowncapture={handleTriggerPointerDown}
+        >
+          <Button
+            {...props}
+            variant="secondary"
+            size="icon"
+            aria-label="Insert math symbol"
+          >
+            <MathSymbol latex="\Sigma" />
+          </Button>
+        </div>
+      {/snippet}
     </DropdownMenu.Trigger>
     <DropdownMenu.Content
       forceMount
       sideOffset={0}
       bind:ref={contentEl}
-      class={`w-[420px] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
+      class={`w-[min(420px,calc(100vw-1rem))] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
         menuOpen ? "" : "!hidden"
       }`}
       aria-hidden={!menuOpen}
@@ -386,12 +394,12 @@
       data-latex-toolbar-layer
       preventScroll={false}
       onmouseleave={handleContentMouseLeave}
-      on:openAutoFocus={(e) => {
+      onOpenAutoFocus={(e) => {
         e.preventDefault();
         contentEl?.focus?.({ preventScroll: true });
         restoreScrollUntilSettled();
       }}
-      on:closeAutoFocus={(e) => e.preventDefault()}
+      onCloseAutoFocus={(e) => e.preventDefault()}
     >
       {#if recentCommands.length > 0}
         <div class="mb-3" bind:this={sectionRefs["Recent"]}>
