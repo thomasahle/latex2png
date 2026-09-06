@@ -76,7 +76,10 @@ const tex = new TeX({
     overgroup: ["\\overbrace{#1}^{\\hspace{-0.5em}}", 1],
     undergroup: ["\\underbrace{#1}_{\\hspace{-0.5em}}", 1],
     overleftharpoon: ["\\overset{\\leftharpoonup}{#1}", 1],
-    overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1]
+    overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1],
+    // LaTeX math-mode symbols that MathJax does not define
+    P: "\\unicode{x00B6}",
+    copyright: "\\unicode{x00A9}"
   }
 });
 
