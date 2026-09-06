@@ -50,7 +50,7 @@ export async function savePNG() {
 
     downloadImage(canvas, 'latex-equation.png');
     addToHistory();
-    trackEvent('save_image', { format: 'png', zoom: zoomScale, latex: get(latexContent) });
+    trackEvent('save_image', { format: 'png', zoom: zoomScale, latex_length: get(latexContent).length });
   } catch (error) {
     trackError(error, { context: 'savePNG' });
     throw error;
@@ -71,7 +71,7 @@ export async function saveJPEG() {
     const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
     addToHistory();
-    trackEvent('save_image', { format: 'jpeg', zoom: zoomScale, latex: get(latexContent) });
+    trackEvent('save_image', { format: 'jpeg', zoom: zoomScale, latex_length: get(latexContent).length });
   } catch (error) {
     trackError(error, { context: 'saveJPEG' });
     throw error;
@@ -94,7 +94,7 @@ export async function saveSVG() {
     // Delay revocation to ensure download completes (click is async in some browsers)
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     addToHistory();
-    trackEvent('save_image', { format: 'svg', latex: get(latexContent) });
+    trackEvent('save_image', { format: 'svg', latex_length: get(latexContent).length });
   } catch (error) {
     trackError(error, { context: 'saveSVG' });
     throw error;
@@ -130,7 +130,7 @@ export async function savePDF() {
     await pdf.svg(svgEl, { x: 0, y: 0, width, height });
     pdf.save('latex-equation.pdf');
     addToHistory();
-    trackEvent('save_image', { format: 'pdf', latex: get(latexContent) });
+    trackEvent('save_image', { format: 'pdf', latex_length: get(latexContent).length });
   } catch (error) {
     console.error('Error in savePDF:', error);
     toast.error(`Failed to generate PDF: ${error.message}`);

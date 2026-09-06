@@ -71,7 +71,7 @@
       }
     } catch (err) {
       console.error("MathJax error:", err);
-      trackError(err, { context: 'renderMath', latex: texToRender?.substring(0, 200) });
+      trackError(err, { context: 'renderMath', latex_length: texToRender?.length });
       container.innerHTML = `<p class="text-red-500">Error: ${err.message || 'Failed to render LaTeX'}</p>`;
     }
   }, 300);

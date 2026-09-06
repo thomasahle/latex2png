@@ -79,7 +79,10 @@ const tex = new TeX({
     overrightharpoon: ["\\overset{\\rightharpoonup}{#1}", 1],
     // LaTeX math-mode symbols that MathJax does not define
     P: "\\unicode{x00B6}",
-    copyright: "\\unicode{x00A9}"
+    copyright: "\\unicode{x00A9}",
+    // The physics package redefines \div as divergence (nabla-dot); restore the
+    // LaTeX division sign. Divergence stays available as \divergence (issue #7).
+    div: "\\divisionsymbol"
   }
 });
 

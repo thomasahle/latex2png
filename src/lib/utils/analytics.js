@@ -16,8 +16,7 @@ export function trackError(error, context = {}) {
       fatal: false,
       error_stack: stack,
       error_name: error?.name || 'Error',
-      page_url: window.location.href,
-      user_agent: navigator.userAgent,
+      // No page URL or user agent: the URL carries the user's LaTeX (?latex=...).
       timestamp: new Date().toISOString(),
       ...context
     });
