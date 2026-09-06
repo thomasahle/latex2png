@@ -21,6 +21,7 @@
   let activeSection = $state(null);
   let lastSubTriggerPointerType = $state(null);
   let isRestoringScroll = $state(false);
+  let skipTriggerRefocus = false;
   const toolbarLayerSelector = "[data-latex-toolbar-layer]";
 
   // Load recent commands from localStorage
@@ -100,6 +101,17 @@
       menuOpen = false;
     }
     openedViaHover = false;
+  }
+
+  function handleInteractOutside(event) {
+    // bits-ui closes the menu on the click that follows a pointerdown
+    // outside it; by then the click target (e.g. the editor) already has
+    // focus, so don't move it back to the trigger.
+    const target = event?.target;
+    const isNodeTarget =
+      typeof Node !== "undefined" && target instanceof Node;
+    if (isNodeTarget && target.closest?.(toolbarLayerSelector)) return;
+    skipTriggerRefocus = true;
   }
 
   function handleSubTriggerPointerDown(event) {
@@ -320,6 +332,7 @@
     const from = selection.from;
     const to = selection.to;
 
+    skipTriggerRefocus = true;
     menuOpen = false;
 
     // Add to recent commands
@@ -396,10 +409,21 @@
       onmouseleave={handleContentMouseLeave}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
+        skipTriggerRefocus = false;
         contentEl?.focus?.({ preventScroll: true });
         restoreScrollUntilSettled();
       }}
-      onCloseAutoFocus={(e) => e.preventDefault()}
+      onCloseAutoFocus={(e) => {
+        // After an insertion the editor takes focus (see insertLatex), and
+        // after a click outside the menu focus stays where that click put
+        // it; otherwise (e.g. Escape) let bits-ui return focus to the
+        // trigger button.
+        if (skipTriggerRefocus) {
+          skipTriggerRefocus = false;
+          e.preventDefault();
+        }
+      }}
+      onInteractOutside={handleInteractOutside}
     >
       {#if recentCommands.length > 0}
         <div class="mb-3" bind:this={sectionRefs["Recent"]}>
