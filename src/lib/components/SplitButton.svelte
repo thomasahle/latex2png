@@ -3,6 +3,7 @@
   import * as ButtonGroup from "$lib/components/ui/button-group";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+  import { toast } from "$lib/components/ui/sonner";
 
   let {
     items = [],
@@ -12,11 +13,23 @@
 
   const primaryItem = items[0];
   const dropdownItems = items.slice(1);
+
+  // Actions may reject (e.g. nothing to export); surface that as a toast
+  // instead of an unhandled rejection.
+  async function runAction(item) {
+    if (!item) return;
+    try {
+      await item.action();
+    } catch (error) {
+      console.error(`Error in ${item.label}:`, error);
+      toast.error(`${item.label} failed: ${error.message}`);
+    }
+  }
 </script>
 
 <DropdownMenu.Root>
   <ButtonGroup.Root aria-label={primaryItem?.label}>
-    <Button class={className} onclick={primaryItem?.action}>
+    <Button class={className} onclick={() => runAction(primaryItem)}>
       {#if iconClass}
         <i class={iconClass}></i>
       {/if}
@@ -44,7 +57,7 @@
           <DropdownMenu.Separator />
         {:else}
           <DropdownMenu.Item
-            onSelect={() => item.action()}
+            onSelect={() => runAction(item)}
             class="cursor-pointer"
           >
             {item.label}

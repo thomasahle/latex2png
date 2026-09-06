@@ -7,6 +7,7 @@
   import { trackEvent, trackError } from "../utils/analytics.js";
   import { saveMenuItems } from "../utils/saveMenuItems.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { toast } from "$lib/components/ui/sonner";
   import { initWorker, renderLatexToSvg } from "../services/mathjax-service.js";
 
   let previewElement = $state(null);
@@ -136,6 +137,17 @@
     contextMenuPosition = { x: event.clientX, y: event.clientY };
     contextMenuOpen = true;
     trackEvent("context_menu", { location: "math_preview" });
+  }
+
+  // Actions may reject (e.g. nothing to export); surface that as a toast
+  // instead of an unhandled rejection.
+  async function runMenuAction(item) {
+    try {
+      await item.action();
+    } catch (error) {
+      console.error(`Error in ${item.label}:`, error);
+      toast.error(`${item.label} failed: ${error.message}`);
+    }
   }
 
   function handleMouseDown() {
@@ -273,7 +285,7 @@
         <DropdownMenu.Separator />
       {:else}
         <DropdownMenu.Item
-          onSelect={() => item.action()}
+          onSelect={() => runMenuAction(item)}
           class="cursor-pointer"
         >
           {item.label}
