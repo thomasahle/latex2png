@@ -73,13 +73,19 @@
   }
   </script>
 
-  <!-- Analytics (load last) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE"></script>
+  <!-- Analytics (load last). Only on the production host, so dev servers and
+       previews never report; without window.gtag, trackEvent/trackError are no-ops. -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-40XB6Q54CE');
+    if (location.hostname === 'thomasahle.com') {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { dataLayer.push(arguments); };
+      gtag('js', new Date());
+      gtag('config', 'G-40XB6Q54CE');
+      var gtagScript = document.createElement('script');
+      gtagScript.async = true;
+      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE';
+      document.head.appendChild(gtagScript);
+    }
   </script>
 </head>
 
