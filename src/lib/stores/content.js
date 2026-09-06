@@ -10,17 +10,11 @@ function createContentStore() {
       const urlParams = new URLSearchParams(window.location.search);
       const latexParam = urlParams.get('latex');
 
-      console.log('[content.js] URL param raw:', latexParam);
-      console.log('[content.js] URL param chars:', latexParam ? [...latexParam].map(c => c.charCodeAt(0)) : null);
-      console.log('[content.js] localStorage:', localStorage.getItem('latexContent'));
-
       if (latexParam) {
-        console.log('[content.js] Setting from URL:', latexParam);
         set(latexParam);
       } else {
         const savedContent = localStorage.getItem('latexContent');
         if (savedContent) {
-          console.log('[content.js] Setting from localStorage:', savedContent);
           set(savedContent);
         }
       }
@@ -28,7 +22,6 @@ function createContentStore() {
       // Enable localStorage saving after initialization
       setTimeout(() => {
         initialized = true;
-        console.log('[content.js] Initialized, localStorage saving enabled');
       }, 500);
     }, 100);
   }
