@@ -399,8 +399,8 @@
       forceMount
       sideOffset={0}
       bind:ref={contentEl}
-      class={`w-[min(420px,calc(100vw-1rem))] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-none relative transition-opacity duration-150 ${
-        menuOpen ? "" : "!hidden"
+      class={`w-[min(420px,calc(100vw-1rem))] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-hidden relative transition-opacity duration-150 ${
+        menuOpen ? "" : "hidden!"
       }`}
       aria-hidden={!menuOpen}
       inert={!menuOpen}
@@ -474,7 +474,7 @@
                     >
                       <span
                         aria-hidden="true"
-                        class="absolute top-0.5 right-0.5 text-[11px] font-semibold text-muted-foreground/60 pointer-events-none"
+                        class="absolute top-0.5 right-0.5 text-[11px] leading-5 font-semibold text-muted-foreground/60 pointer-events-none"
                       >
                         ^
                       </span>
@@ -536,14 +536,14 @@
 
       <!-- Section Navigation Buttons -->
       <div
-        class="fixed bottom-0 left-0 w-full bg-background/95 backdrop-blur-sm border-t border-border py-1 px-3 z-10"
+        class="fixed bottom-0 left-0 w-full bg-background/95 backdrop-blur-xs border-t border-border py-1 px-3 z-10"
       >
         <div class="flex items-center gap-1.5 overflow-x-auto">
           {#each getNavSections() as section (section.key)}
             <Button
               variant="ghost"
               size="sm"
-              class={`h-7 w-7 min-w-7 p-0 flex-shrink-0 rounded-full text-xs ${
+              class={`h-7 w-7 min-w-7 p-0 shrink-0 rounded-full text-xs ${
                 activeSection === section.key ? "bg-accent" : ""
               }`}
               onclick={() => scrollToSection(section.key)}

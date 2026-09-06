@@ -113,7 +113,7 @@
           </div>
           <button
             onclick={(e) => removeEntry(index, e)}
-            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-opacity flex-shrink-0"
+            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-opacity shrink-0"
             aria-label="Remove from history"
           >
             <XIcon size={14} />

@@ -9,7 +9,7 @@
 <nav class="border-b border-border bg-card font-sans flex-none">
   <div class="mx-auto py-3 px-3 md:px-8 flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <span class="mr-2 text-lg inline-flex items-baseline whitespace-nowrap">
+      <span class="mr-2 text-lg leading-7 inline-flex items-baseline whitespace-nowrap">
         <span class="text-xl leading-none"><MathSymbol latex="\LaTeX" inline /></span><span class="katex-font text-[1.4em] hidden sm:inline"> → I<span class="smallcaps">mage</span></span>
       </span>
     </div>
