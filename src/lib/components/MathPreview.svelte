@@ -7,6 +7,7 @@
   import { trackEvent, trackError } from "../utils/analytics.js";
   import { saveMenuItems } from "../utils/saveMenuItems.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { toast } from "$lib/components/ui/sonner";
   import { initWorker, renderLatexToSvg } from "../services/mathjax-service.js";
 
   let previewElement = $state(null);
@@ -42,8 +43,9 @@
   const renderMath = debounce(async (latex, shouldWrap) => {
     if (!previewElement || typeof window === "undefined") return;
 
+    // Keep the previous render visible until the new one arrives; the
+    // container is only replaced on success (or with an error message).
     const container = previewElement;
-    container.innerHTML = "";
 
     // Prepare LaTeX for rendering
     let texToRender = latex;
@@ -131,11 +133,30 @@
 
   let dragCleanup = null;
 
+  function escapeAttr(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function handleContextMenu(event) {
     event.preventDefault();
     contextMenuPosition = { x: event.clientX, y: event.clientY };
     contextMenuOpen = true;
     trackEvent("context_menu", { location: "math_preview" });
+  }
+
+  // Actions may reject (e.g. nothing to export); surface that as a toast
+  // instead of an unhandled rejection.
+  async function runMenuAction(item) {
+    try {
+      await item.action();
+    } catch (error) {
+      console.error(`Error in ${item.label}:`, error);
+      toast.error(`${item.label} failed: ${error.message}`);
+    }
   }
 
   function handleMouseDown() {
@@ -167,8 +188,10 @@
     const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
     dt.setData("DownloadURL", downloadPayload);
     dt.setData("text/uri-list", pngDataUrl);
-    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${dragFileName}" />`);
-    dt.setData("text/plain", pngDataUrl);
+    // Image for rich targets; the LaTeX source for plain-text targets so a
+    // drop into a text field doesn't paste a huge data URL.
+    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${escapeAttr(currentLatex) || dragFileName}" />`);
+    dt.setData("text/plain", currentLatex);
 
     // Make document a drop target so drop fires immediately (no fly-back delay)
     const handleDocDragOver = (e) => e.preventDefault();
@@ -265,7 +288,7 @@
 </div>
 
 <DropdownMenu.Root bind:open={contextMenuOpen}>
-  <DropdownMenu.Trigger class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
+  <DropdownMenu.Trigger tabindex={-1} aria-hidden="true" class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     {#each saveMenuItems as item, i (item.label || `separator-${i}`)}
@@ -273,7 +296,7 @@
         <DropdownMenu.Separator />
       {:else}
         <DropdownMenu.Item
-          onSelect={() => item.action()}
+          onSelect={() => runMenuAction(item)}
           class="cursor-pointer"
         >
           {item.label}
