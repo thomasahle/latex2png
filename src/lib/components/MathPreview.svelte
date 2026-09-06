@@ -287,7 +287,7 @@
 </div>
 
 <DropdownMenu.Root bind:open={contextMenuOpen}>
-  <DropdownMenu.Trigger class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
+  <DropdownMenu.Trigger tabindex={-1} aria-hidden="true" class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
     {#each saveMenuItems as item, i (item.label || `separator-${i}`)}
