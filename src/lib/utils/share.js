@@ -127,11 +127,15 @@ export async function shareToTwitter() {
   const text = "Check out my LaTeX equation!";
   const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
 
-  const win = window.open(intent, "_blank", "noopener,noreferrer,width=550,height=420");
+  // Note: with "noopener" in the features string window.open() always returns
+  // null, so it cannot be used to detect a blocked popup. Open without it and
+  // sever the opener link ourselves instead (the window is still about:blank here).
+  const win = window.open(intent, "_blank", "width=550,height=420");
   if (!win) {
     toast.error("Popup blocked by the browser");
     trackError(new Error('Twitter popup blocked'), { context: 'shareToTwitter' });
   } else {
+    win.opener = null;
     trackEvent('share', { method: 'twitter' });
   }
 }
