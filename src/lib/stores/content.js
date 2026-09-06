@@ -4,23 +4,35 @@ function createContentStore() {
   const { subscribe, set, update } = writable('');
   let initialized = false;
 
+  // Read the shared LaTeX from the URL. Share links use either
+  // ?latex=<plain> or ?z=<lz-string compressed>&v=1 (see utils/share.js).
+  async function getLatexFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const latexParam = urlParams.get('latex');
+    if (latexParam) return latexParam;
+
+    const zParam = urlParams.get('z');
+    if (zParam) {
+      try {
+        const { decompressFromEncodedURIComponent } = await import('lz-string');
+        return decompressFromEncodedURIComponent(zParam) || '';
+      } catch (error) {
+        console.error('Failed to decode shared link:', error);
+      }
+    }
+    return '';
+  }
+
   // Initialize content from URL or localStorage with delay to avoid race condition
   if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const latexParam = urlParams.get('latex');
-
-      console.log('[content.js] URL param raw:', latexParam);
-      console.log('[content.js] URL param chars:', latexParam ? [...latexParam].map(c => c.charCodeAt(0)) : null);
-      console.log('[content.js] localStorage:', localStorage.getItem('latexContent'));
+    setTimeout(async () => {
+      const latexParam = await getLatexFromUrl();
 
       if (latexParam) {
-        console.log('[content.js] Setting from URL:', latexParam);
         set(latexParam);
       } else {
         const savedContent = localStorage.getItem('latexContent');
         if (savedContent) {
-          console.log('[content.js] Setting from localStorage:', savedContent);
           set(savedContent);
         }
       }
@@ -28,7 +40,6 @@ function createContentStore() {
       // Enable localStorage saving after initialization
       setTimeout(() => {
         initialized = true;
-        console.log('[content.js] Initialized, localStorage saving enabled');
       }, 500);
     }, 100);
   }

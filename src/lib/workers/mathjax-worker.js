@@ -22,6 +22,8 @@ import { TeX } from '@mathjax/src/js/input/tex.js';
 import { SVG } from '@mathjax/src/js/output/svg.js';
 import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js';
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js';
+import { STATE } from '@mathjax/src/js/core/MathItem.js';
+import { SerializedMmlVisitor } from '@mathjax/src/js/core/MmlTree/SerializedMmlVisitor.js';
 import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/mjs/svg.js';
 
 // Dynamic font loaders - auto-generated, see scripts/generate-font-loaders.mjs
@@ -92,29 +94,71 @@ const html = mathjax.document('', {
   OutputJax: svg
 });
 
+// Serializes MathJax's internal MathML tree to a MathML string (for 'mathml' requests)
+const mmlVisitor = new SerializedMmlVisitor();
+
 // Signal that worker is ready
 self.postMessage({ type: 'ready' });
 
-// Handle messages from main thread
+// Handle messages from main thread.
+// Request types: 'render' (TeX -> SVG string, the default) and 'mathml'
+// (TeX -> MathML string, using the same packages and macros).
+// Requests are processed strictly one at a time: html.convert()/html.clear()
+// share a single MathDocument, and a render that has to wait for a font to
+// load must neither be interleaved with, nor finish after, a later one.
+// A { type: 'cancel', id } message drops a request that is still queued.
+const queue = [];
+let processing = false;
+
+self.onmessage = function(e) {
+  const message = e.data;
+  if (message.type === 'cancel') {
+    const index = queue.findIndex((m) => m.id === message.id);
+    if (index !== -1) queue.splice(index, 1);
+    return;
+  }
+  queue.push(message);
+  processQueue();
+};
+
+async function processQueue() {
+  if (processing) return;
+  processing = true;
+  try {
+    while (queue.length > 0) {
+      await handleRequest(queue.shift());
+    }
+  } finally {
+    processing = false;
+  }
+}
+
 // Use async handler with handleRetriesFor to support MathJax operations that require async work
 // (e.g., loading fonts for \mathbb, \mathcal, etc.)
-self.onmessage = async function(e) {
-  const { id, latex, display } = e.data;
-
+async function handleRequest({ id, type = 'render', latex, display }) {
   try {
-    // Convert TeX to SVG, handling any async retries MathJax may need
-    const node = await mathjax.handleRetriesFor(() =>
-      html.convert(latex, { display: display ?? true })
-    );
+    let result;
+    if (type === 'mathml') {
+      // Stop after the TeX -> internal MathML step and serialize that tree
+      const node = await mathjax.handleRetriesFor(() =>
+        html.convert(latex, { display: display ?? true, end: STATE.CONVERT })
+      );
+      result = mmlVisitor.visitTree(node);
+    } else {
+      // Convert TeX to SVG, handling any async retries MathJax may need
+      const node = await mathjax.handleRetriesFor(() =>
+        html.convert(latex, { display: display ?? true })
+      );
 
-    // Get the outer HTML
-    const svgString = adaptor.outerHTML(node);
+      // Get the outer HTML
+      result = adaptor.outerHTML(node);
+    }
 
     // Clear the document for next conversion
     html.clear();
 
-    self.postMessage({ id, success: true, svg: svgString });
+    self.postMessage({ id, success: true, result });
   } catch (error) {
     self.postMessage({ id, success: false, error: error.message });
   }
-};
+}

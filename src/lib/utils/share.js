@@ -2,6 +2,8 @@ import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
+import { wrapContent } from "../stores/wrapContent.js";
+import { renderLatexToMathML } from "../services/mathjax-service.js";
 import { trackEvent, trackError } from "./analytics.js";
 
 const IS_SECURE = window.isSecureContext;
@@ -9,6 +11,16 @@ const IS_SECURE = window.isSecureContext;
 // ---------- helpers ----------
 function getLatexCode() {
   return get(latexContent);
+}
+
+// The LaTeX as the preview renders it: with "wrap content" on, input that
+// uses alignment (& or \\) is wrapped in an aligned environment.
+function getDisplayedLatex() {
+  const latex = getLatexCode();
+  if (get(wrapContent) && (latex.includes("&") || latex.includes("\\\\"))) {
+    return `\\begin{aligned}${latex}\\end{aligned}`;
+  }
+  return latex;
 }
 
 async function nextFrame() {
@@ -127,11 +139,15 @@ export async function shareToTwitter() {
   const text = "Check out my LaTeX equation!";
   const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
 
-  const win = window.open(intent, "_blank", "noopener,noreferrer,width=550,height=420");
+  // Note: with "noopener" in the features string window.open() always returns
+  // null, so it cannot be used to detect a blocked popup. Open without it and
+  // sever the opener link ourselves instead (the window is still about:blank here).
+  const win = window.open(intent, "_blank", "width=550,height=420");
   if (!win) {
     toast.error("Popup blocked by the browser");
     trackError(new Error('Twitter popup blocked'), { context: 'shareToTwitter' });
   } else {
+    win.opener = null;
     trackEvent('share', { method: 'twitter' });
   }
 }
@@ -171,28 +187,15 @@ export async function copyImage() {
 }
 
 export async function copyMathML() {
-  const previewElement = document.querySelector("#math-preview");
-  if (!previewElement) {
-    trackError(new Error('Preview not found'), { context: 'copyMathML' });
+  const latex = getDisplayedLatex();
+  if (!latex.trim()) {
+    toast.error("No math found to copy");
     return;
   }
 
   try {
-    const MathJax = window.MathJax;
-    if (!MathJax?.startup?.document) {
-      toast.error("MathJax not ready");
-      return;
-    }
-
-    const mathItems = MathJax.startup.document.getMathItemsWithin(previewElement);
-    if (!mathItems || mathItems.length === 0) {
-      toast.error("No math found to copy");
-      return;
-    }
-
-    // Get MathML from the first math item
-    const mathItem = mathItems[0];
-    const mathml = MathJax.startup.toMML(mathItem.root);
+    // MathJax lives in the worker; ask it for the MathML directly
+    const mathml = await renderLatexToMathML(latex, true);
 
     if (IS_SECURE && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(mathml);
