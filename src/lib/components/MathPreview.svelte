@@ -132,6 +132,14 @@
 
   let dragCleanup = null;
 
+  function escapeAttr(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function handleContextMenu(event) {
     event.preventDefault();
     contextMenuPosition = { x: event.clientX, y: event.clientY };
@@ -179,8 +187,10 @@
     const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
     dt.setData("DownloadURL", downloadPayload);
     dt.setData("text/uri-list", pngDataUrl);
-    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${dragFileName}" />`);
-    dt.setData("text/plain", pngDataUrl);
+    // Image for rich targets; the LaTeX source for plain-text targets so a
+    // drop into a text field doesn't paste a huge data URL.
+    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${escapeAttr(currentLatex) || dragFileName}" />`);
+    dt.setData("text/plain", currentLatex);
 
     // Make document a drop target so drop fires immediately (no fly-back delay)
     const handleDocDragOver = (e) => e.preventDefault();
