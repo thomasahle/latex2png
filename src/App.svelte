@@ -25,14 +25,19 @@
 
 </script>
 
-<div class="min-h-screen bg-background text-foreground font-serif">
+<div
+  class="bg-background text-foreground font-serif"
+  class:min-h-screen={!$fullscreen}
+  class:fullscreen-app={$fullscreen}
+>
   <Navbar />
 
   <main
     class="mx-auto flex flex-1 flex-col my-0 bg-card text-card-foreground shadow-[0_0_50px_0_rgb(0_0_0_/_0.03)]"
     class:max-w-full={true}
     class:md:max-w-[900px]={!$fullscreen}
-    class:h-[calc(100vh-62px)]={$fullscreen}
+    class:min-h-0={$fullscreen}
+    class:w-full={$fullscreen}
     class:h-auto={!$fullscreen}
     class:md:my-8={!$fullscreen}
     class:md:rounded-lg={!$fullscreen}
@@ -66,3 +71,15 @@
 </div>
 
 <Toaster />
+
+<style>
+  /* Fill exactly the visible viewport and let <main> take the space left
+     below the navbar. 100dvh follows the mobile browser chrome; 100vh is the
+     fallback for browsers without dvh support. */
+  .fullscreen-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+</style>
