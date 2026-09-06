@@ -11,8 +11,8 @@
     iconClass = "",
   } = $props();
 
-  const primaryItem = items[0];
-  const dropdownItems = items.slice(1);
+  const primaryItem = $derived(items[0]);
+  const dropdownItems = $derived(items.slice(1));
 
   // Actions may reject (e.g. nothing to export); surface that as a toast
   // instead of an unhandled rejection.
