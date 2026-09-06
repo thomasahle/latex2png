@@ -80,7 +80,12 @@
       window.dataLayer = window.dataLayer || [];
       window.gtag = function () { dataLayer.push(arguments); };
       gtag('js', new Date());
-      gtag('config', 'G-40XB6Q54CE');
+      // Report the page without its query string: share links carry the
+      // user's LaTeX in ?latex=/?z=, and gtag would otherwise attach the
+      // full URL (page_location) to every event.
+      gtag('config', 'G-40XB6Q54CE', {
+        page_location: location.origin + location.pathname
+      });
       var gtagScript = document.createElement('script');
       gtagScript.async = true;
       gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE';
