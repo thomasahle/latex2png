@@ -21,7 +21,7 @@
     "bits-ui": "^2.19.0",
     "katex": "^0.16.25",
     "paneforge": "^1.0.2",
-    "playwright": "^1.56.1",
+    "playwright": "^1.63.0",
     "postcss": "^8.5.28",
     "shadcn-svelte": "^1.0.10",
     "svelte": "^5.57.0",
