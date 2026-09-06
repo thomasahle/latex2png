@@ -7,8 +7,10 @@ import { trackError } from '../utils/analytics.js';
 const READY_TIMEOUT_MS = 20000;
 
 let worker = null;
-let messageId = 0;
+let messageId = 0; // monotonically increasing request id
 const pending = new Map();
+// Newest request id per supersede key (see renderLatexToSvg)
+const latestByKey = new Map();
 let readyPromise = null;
 let readyResolve = null;
 let readyReject = null;
@@ -115,7 +117,7 @@ export function initWorker() {
   };
 }
 
-export async function renderLatexToSvg(latex, display = true) {
+async function sendRequest(message, key) {
   // Ensure worker is initialized
   if (!worker) {
     initWorker();
@@ -125,10 +127,36 @@ export async function renderLatexToSvg(latex, display = true) {
   await readyPromise;
 
   const id = ++messageId;
+  if (key != null) {
+    // Supersede the previous request with this key: cancel it if it is
+    // still queued in the worker, and drop its response if it is in flight.
+    const previous = latestByKey.get(key);
+    if (previous !== undefined && pending.has(previous)) {
+      pending.delete(previous);
+      worker.postMessage({ type: 'cancel', id: previous });
+    }
+    latestByKey.set(key, id);
+  }
+
   return new Promise((resolve, reject) => {
     pending.set(id, { resolve, reject });
-    worker.postMessage({ id, latex, display });
+    worker.postMessage({ id, ...message });
   });
+}
+
+/**
+ * Render TeX to an SVG string.
+ *
+ * Requests that share a `key` supersede each other: only the newest one is
+ * rendered and settled, older in-flight ones with that key never settle.
+ * This keeps a slow render (e.g. one waiting for a font to load) from
+ * overwriting a newer one. By default the key is the display mode, so the
+ * preview (display math) and the history thumbnails (inline math, rendered
+ * one at a time) don't interfere with each other. Pass `{ key: null }` to
+ * opt out of superseding.
+ */
+export async function renderLatexToSvg(latex, display = true, { key = display ? 'display' : 'inline' } = {}) {
+  return sendRequest({ type: 'render', latex, display }, key);
 }
 
 export function terminateWorker() {
@@ -138,6 +166,7 @@ export function terminateWorker() {
     clearTimeout(readyTimer);
     readyTimer = null;
     pending.clear();
+    latestByKey.clear();
     readyPromise = null;
     readyResolve = null;
     readyReject = null;

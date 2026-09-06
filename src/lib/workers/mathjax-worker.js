@@ -95,12 +95,40 @@ const html = mathjax.document('', {
 // Signal that worker is ready
 self.postMessage({ type: 'ready' });
 
-// Handle messages from main thread
+// Handle messages from main thread.
+// Requests are processed strictly one at a time: html.convert()/html.clear()
+// share a single MathDocument, and a render that has to wait for a font to
+// load must neither be interleaved with, nor finish after, a later one.
+// A { type: 'cancel', id } message drops a request that is still queued.
+const queue = [];
+let processing = false;
+
+self.onmessage = function(e) {
+  const message = e.data;
+  if (message.type === 'cancel') {
+    const index = queue.findIndex((m) => m.id === message.id);
+    if (index !== -1) queue.splice(index, 1);
+    return;
+  }
+  queue.push(message);
+  processQueue();
+};
+
+async function processQueue() {
+  if (processing) return;
+  processing = true;
+  try {
+    while (queue.length > 0) {
+      await handleRequest(queue.shift());
+    }
+  } finally {
+    processing = false;
+  }
+}
+
 // Use async handler with handleRetriesFor to support MathJax operations that require async work
 // (e.g., loading fonts for \mathbb, \mathcal, etc.)
-self.onmessage = async function(e) {
-  const { id, latex, display } = e.data;
-
+async function handleRequest({ id, latex, display }) {
   try {
     // Convert TeX to SVG, handling any async retries MathJax may need
     const node = await mathjax.handleRetriesFor(() =>
@@ -117,4 +145,4 @@ self.onmessage = async function(e) {
   } catch (error) {
     self.postMessage({ id, success: false, error: error.message });
   }
-};
+}
