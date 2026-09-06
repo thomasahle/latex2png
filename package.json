@@ -45,10 +45,10 @@
     "codemirror": "^6.0.1",
     "codemirror-lang-latex": "^0.2.0",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.3",
+    "jspdf": "^4.2.1",
     "lz-string": "^1.5.0",
     "svelte-sonner": "^1.2.1",
-    "svg2pdf.js": "^2.6.0",
+    "svg2pdf.js": "^2.8.1",
     "tabbable": "^6.3.0",
     "tailwind-merge": "^3.6.0"
   }
