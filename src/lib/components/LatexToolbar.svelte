@@ -360,19 +360,26 @@
 <div class="font-sans">
   <DropdownMenu.Root bind:open={menuOpen}>
     <DropdownMenu.Trigger>
-      <div
-        role="presentation"
-        data-testid="latex-toolbar-trigger-region"
-        bind:this={triggerRegionEl}
-        onmouseenter={handleTriggerMouseEnter}
-        onmouseleave={handleTriggerMouseLeave}
-        onclickcapture={handleTriggerClick}
-        onpointerdowncapture={handleTriggerPointerDown}
-      >
-        <Button variant="secondary" size="icon" aria-label="Insert math symbol">
-          <MathSymbol latex="\Sigma" />
-        </Button>
-      </div>
+      {#snippet child({ props })}
+        <div
+          role="presentation"
+          data-testid="latex-toolbar-trigger-region"
+          bind:this={triggerRegionEl}
+          onmouseenter={handleTriggerMouseEnter}
+          onmouseleave={handleTriggerMouseLeave}
+          onclickcapture={handleTriggerClick}
+          onpointerdowncapture={handleTriggerPointerDown}
+        >
+          <Button
+            {...props}
+            variant="secondary"
+            size="icon"
+            aria-label="Insert math symbol"
+          >
+            <MathSymbol latex="\Sigma" />
+          </Button>
+        </div>
+      {/snippet}
     </DropdownMenu.Trigger>
     <DropdownMenu.Content
       forceMount
