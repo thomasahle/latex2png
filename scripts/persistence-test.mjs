@@ -4,6 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { chooseExportOption } from './export-controls.mjs';
 
 const baseUrl = process.env.SNAP_BASE_URL || 'http://localhost:5173/latex2png/';
 const profile = await mkdtemp(path.join(tmpdir(), 'latex2png-persistence-'));
@@ -45,6 +46,9 @@ async function assertSize(controls, split, height) {
 
 try {
   let current = await visit();
+  await chooseExportOption(current.page, 'Export background', 'Custom color');
+  await current.page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
+  await current.page.keyboard.press('Escape');
   await current.split.press('ArrowDown');
   await current.split.press('ArrowDown');
   await current.height.press('Shift+ArrowDown');
@@ -57,6 +61,8 @@ try {
   // Reopen the actual browser profile, without copying storage into a new
   // context: this must work across visits, not just an in-memory reload.
   current = await visit();
+  assert.match(await current.page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Custom/);
+  assert.equal(await current.page.getByLabel('Custom background color', { exact: true }).inputValue(), '#2060c0', 'custom color survives browser restart');
   assert.equal(await current.split.getAttribute('aria-orientation'), 'vertical');
   await assertSize(current, 55, 600);
   await current.toggle.click();
@@ -70,7 +76,7 @@ try {
   await assertSize(current, 50, 500);
   await current.toggle.click();
   await assertSize(current, 55, 500);
-  console.log('Persistence: both resizers, separate layout splits, and resets survive browser restarts.');
+  console.log('Persistence: both resizers, separate layout splits, resets, and custom export color survive browser restarts.');
 } finally {
   if (context) await closeBrowser();
   await rm(profile, { recursive: true, force: true });

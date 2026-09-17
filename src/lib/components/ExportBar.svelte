@@ -1,5 +1,6 @@
 <script>
   import { Button } from '$lib/components/ui/button';
+  import ExportSelect from './ExportSelect.svelte';
   import { toast } from '$lib/components/ui/sonner';
   import { exportSettings, exportFormats } from '../stores/exportSettings.js';
   import { savePNG, saveJPEG, saveSVG, savePDF } from '../utils/save.js';
@@ -11,10 +12,21 @@
   const saveActions = { PNG: savePNG, JPEG: saveJPEG, SVG: saveSVG, PDF: savePDF };
   let saving = $state(false);
   let copying = $state(false);
+  let colorInput;
   const opaque = $derived(['JPEG', 'PDF'].includes($exportSettings.format));
+  const background = $derived(opaque && $exportSettings.background === 'transparent' ? 'solid' : $exportSettings.background);
+  const backgroundOptions = $derived([
+    { value: 'transparent', label: 'Transparent', disabled: opaque, title: opaque ? `${$exportSettings.format} requires an opaque background` : undefined },
+    { value: 'solid', label: 'Solid' },
+    { value: 'custom', label: 'Custom color', triggerLabel: 'Custom', color: $exportSettings.customColor },
+  ]);
 
   function update(key, value) {
     exportSettings.update(settings => ({ ...settings, [key]: value }));
+  }
+
+  function chooseColor(event) {
+    exportSettings.update(settings => ({ ...settings, background: 'custom', customColor: event.currentTarget.value }));
   }
 
   async function download() {
@@ -38,13 +50,11 @@
 
 <div id="preview-actions" class="export-bar border-t border-border bg-card font-sans">
   <div class="export-options">
-    <select aria-label="Export format" title="File format" value={$exportSettings.format} onchange={e => update('format', e.currentTarget.value)}>
-      {#each exportFormats as format}<option value={format}>{format}</option>{/each}
-    </select>
-    <select aria-label="Export background" title={opaque ? `${$exportSettings.format} uses a solid background` : 'Image background'} value={opaque ? 'solid' : $exportSettings.background} disabled={opaque} onchange={e => update('background', e.currentTarget.value)}>
-      <option value="transparent">Transparent</option>
-      <option value="solid">Solid</option>
-    </select>
+    <ExportSelect label="Export format" value={$exportSettings.format} options={exportFormats.map(format => ({ value: format, label: format }))} onchange={value => update('format', value)} />
+    <ExportSelect label="Export background" value={background} options={backgroundOptions} class="min-w-36 max-[479px]:flex-1"
+      onchange={value => update('background', value)}
+      onselect={value => { if (value === 'custom') colorInput.click(); }} />
+    <input bind:this={colorInput} class="color-input" type="color" aria-label="Custom background color" tabindex="-1" value={$exportSettings.customColor} oninput={chooseColor} />
   </div>
   <div class="export-buttons">
     <Button variant="ghost" onclick={copy} disabled={copying} aria-label="Copy image" title="Copy image as PNG">
@@ -61,15 +71,12 @@
 <style>
   .export-bar { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .625rem; }
   .export-options, .export-buttons { display: flex; flex-shrink: 0; align-items: center; gap: .375rem; }
+  .export-options { position: relative; }
   .export-buttons { margin-left: auto; }
-  select { height: 2.25rem; max-width: 100%; border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); background: hsl(var(--card)); color: inherit; font-size: .875rem; padding: 0 .5rem; cursor: pointer; transition: background-color 150ms, border-color 150ms, box-shadow 150ms; }
-  select:hover:not(:disabled) { background: hsl(var(--accent) / .8); }
-  select:focus-visible { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / .5); }
-  select:disabled { opacity: .5; cursor: default; }
+  .color-input { position: absolute; bottom: 0; left: 50%; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   @media (max-width: 479px) {
     .export-bar { flex-wrap: wrap; }
     .export-options, .export-buttons { width: 100%; }
-    .export-options select:nth-child(2) { flex: 1; }
     .export-buttons { justify-content: flex-end; }
   }
 </style>

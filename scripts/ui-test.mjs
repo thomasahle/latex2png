@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { chooseExportOption } from './export-controls.mjs';
 
 const baseUrl = process.env.SNAP_BASE_URL || 'http://localhost:5173/latex2png/';
 const browser = await chromium.launch({ headless: true });
@@ -50,7 +51,7 @@ async function openSaveMenu() {
   await page.getByRole('region', { name: 'Equation preview' }).click({ button: 'right' });
 }
 async function save(format, newLatex) {
-  await page.getByLabel('Export format', { exact: true }).selectOption(format);
+  await chooseExportOption(page, 'Export format', format);
   if (newLatex !== undefined) {
     await editor.fill(newLatex);
     assert.equal(await preview.getAttribute('aria-busy'), 'true', 'exercise a pending render');
@@ -87,7 +88,7 @@ try {
   }
 
   for (const action of ['Copy Image', 'Share Image', 'Copy MathML']) {
-    await page.getByLabel('Export format', { exact: true }).selectOption('PNG');
+    await chooseExportOption(page, 'Export format', 'PNG');
     await setEquation('x');
     await openSaveMenu();
     const latex = String.raw`\frac{987654321}{2}`;
@@ -134,7 +135,7 @@ try {
   console.log('Accessibility: labelled editor, MathML, announced errors, recovery and empty input');
 
   // Keyboard operation and focus restoration for both menus.
-  for (const label of ['Insert math symbol', 'Settings']) {
+  for (const label of ['Insert math symbol', 'Settings', 'Export format', 'Export background']) {
     const trigger = page.getByRole('button', { name: label, exact: true });
     await trigger.focus();
     await page.keyboard.press('Enter');
@@ -380,7 +381,7 @@ try {
   const large = await save('PNG');
   assert.ok(Math.abs(large.readUInt32BE(16) - small.readUInt32BE(16) * 3) <= 1);
   assert.ok(Math.abs(large.readUInt32BE(20) - small.readUInt32BE(20) * 3) <= 1);
-  await page.getByLabel('Export background', { exact: true }).selectOption('solid');
+  await chooseExportOption(page, 'Export background', 'Solid');
   const solid = await save('PNG');
   const alpha = await page.evaluate(async bytes => {
     const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' }));
@@ -397,11 +398,66 @@ try {
   await page.waitForFunction(() => window.copiedItems.length);
   const copied = await page.evaluate(async () => [...new Uint8Array(await (await window.copiedItems[0].getType('image/png')).arrayBuffer())]);
   assert.deepEqual(Buffer.from(copied), solid, 'export bar Copy uses the selected size and background');
-  await page.getByLabel('Export format', { exact: true }).selectOption('JPEG');
-  assert.equal(await page.getByLabel('Export background', { exact: true }).isDisabled(), true, 'JPEG cannot select transparency');
-  await page.getByLabel('Export format', { exact: true }).selectOption('PNG');
-  await page.getByLabel('Export background', { exact: true }).selectOption('transparent');
+  await chooseExportOption(page, 'Export format', 'JPEG');
+  await page.getByRole('button', { name: 'Export background', exact: true }).click();
+  assert.equal(await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).getAttribute('aria-disabled'), 'true', 'JPEG cannot select transparency');
+  await page.keyboard.press('Escape');
+  await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).waitFor({ state: 'detached' });
+  await chooseExportOption(page, 'Export format', 'PNG');
+  await chooseExportOption(page, 'Export background', 'Transparent');
   console.log('Export bar: shared zoom, solid background, format constraints');
+
+  // Use a recognizable RGB value to check every export path, not just the UI.
+  await chooseExportOption(page, 'Export background', 'Custom color');
+  await page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
+  assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Custom/);
+  const customPNG = await save('PNG');
+  const customJPEG = await save('JPEG');
+  for (const [format, bytes] of [['PNG', customPNG], ['JPEG', customJPEG]]) {
+    const pixel = await page.evaluate(async ({ bytes, format }) => {
+      const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: format === 'PNG' ? 'image/png' : 'image/jpeg' }));
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width; canvas.height = image.height;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0); image.close();
+      return [...ctx.getImageData(0, 0, 1, 1).data];
+    }, { bytes: [...bytes], format });
+    [32, 96, 192, 255].forEach((value, i) => assert.ok(Math.abs(pixel[i] - value) <= 2, `${format}: custom background pixel`));
+  }
+  const customSVG = (await save('SVG')).toString();
+  assert.match(customSVG, /<rect[^>]+fill="#2060c0"/, 'SVG includes the custom background');
+  const customPDF = (await save('PDF')).toString('latin1');
+  const pdfColors = [...customPDF.matchAll(/([\d.]+) ([\d.]+) ([\d.]+) rg/g)];
+  assert.ok(pdfColors.some(match => [32, 96, 192].every((v, i) => Math.abs(Number(match[i + 1]) - v / 255) < .01)), 'PDF paints the custom background');
+  await page.evaluate(() => { window.copiedItems = []; });
+  await page.getByRole('button', { name: 'Copy image', exact: true }).click();
+  await page.waitForFunction(() => window.copiedItems.length);
+  const customCopied = await page.evaluate(async () => [...new Uint8Array(await (await window.copiedItems[0].getType('image/png')).arrayBuffer())]);
+  assert.deepEqual(Buffer.from(customCopied), customPNG, 'Copy preserves the custom background');
+  await page.getByRole('button', { name: 'Export background', exact: true }).click();
+  assert.equal(await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).getAttribute('aria-disabled'), 'true', 'PDF cannot select transparency');
+  assert.equal(await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).getAttribute('aria-checked'), 'true');
+  await page.keyboard.press('Escape');
+  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
+  await page.setViewportSize({ width: 320, height: 844 });
+  const customFits = await page.locator('#preview-actions').evaluate(bar => {
+    const bounds = bar.getBoundingClientRect();
+    return [...bar.querySelectorAll('button')].every(control => control.getBoundingClientRect().right <= bounds.right - 9);
+  });
+  assert.ok(customFits, 'custom color controls fit at 320px');
+  await page.getByRole('button', { name: 'Export background', exact: true }).click();
+  const mobileMenu = await page.locator('[role="menu"][data-state="open"]').boundingBox();
+  assert.ok(mobileMenu.x >= 0 && mobileMenu.x + mobileMenu.width <= 320, 'mobile background menu stays in the viewport');
+  await page.keyboard.press('Escape');
+  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await chooseExportOption(page, 'Export format', 'PNG');
+  await chooseExportOption(page, 'Export background', 'Transparent');
+  await chooseExportOption(page, 'Export format', 'JPEG');
+  assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Solid/);
+  await chooseExportOption(page, 'Export format', 'PNG');
+  assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Transparent/, 'switching to an opaque format preserves the transparency preference');
+  assert.equal(await page.getByLabel('Custom background color', { exact: true }).inputValue(), '#2060c0', 'switching backgrounds preserves the last custom color');
+  console.log('Custom color: PNG/JPEG/SVG/PDF, Copy, and format/background switching');
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors');
   console.log('UI regression tests passed.');

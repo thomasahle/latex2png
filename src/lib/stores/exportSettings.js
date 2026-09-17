@@ -7,7 +7,8 @@ try { saved = JSON.parse(localStorage.getItem('exportSettings') || '{}'); } catc
 
 export const exportSettings = writable({
   format: exportFormats.includes(saved?.format) ? saved.format : 'PNG',
-  background: saved?.background === 'solid' ? 'solid' : 'transparent',
+  background: ['solid', 'custom'].includes(saved?.background) ? saved.background : 'transparent',
+  customColor: /^#[\da-f]{6}$/i.test(saved?.customColor) ? saved.customColor : '#808080',
 });
 
 exportSettings.subscribe(value => {
@@ -16,7 +17,9 @@ exportSettings.subscribe(value => {
 
 // JPEG and PDF have an opaque page; PNG and SVG can preserve transparency.
 export function exportBackground(format = get(exportSettings).format) {
-  if (!['JPEG', 'PDF'].includes(format) && get(exportSettings).background === 'transparent') return null;
+  const settings = get(exportSettings);
+  if (settings.background === 'custom') return settings.customColor;
+  if (!['JPEG', 'PDF'].includes(format) && settings.background === 'transparent') return null;
   const color = getComputedStyle(document.body).getPropertyValue('--background').trim();
   return color ? `hsl(${color})` : '#ffffff';
 }
