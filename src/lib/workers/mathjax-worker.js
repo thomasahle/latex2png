@@ -69,6 +69,7 @@ const tex = new TeX({
     oiint: "\\unicode{x222F}",
     oiiint: "\\unicode{x2230}",
     Overrightarrow: ["\\overrightarrow{#1}", 1],
+    underbar: ["\\underline{#1}", 1],
     utilde: ["\\underset{\\sim}{#1}", 1],
     llbracket: "\\unicode{x27E6}",
     rrbracket: "\\unicode{x27E7}",

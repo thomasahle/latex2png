@@ -122,8 +122,12 @@ async function main() {
       // Extra time for dynamic font loading
       await page.waitForTimeout(500);
 
-      // Check for displayed error
-      const errorElement = await page.$('[data-mathjax-error]');
+      // MathJax can successfully return SVG containing an error: merror nodes
+      // for parse errors, or red mtext for commands handled by noundefined.
+      const errorElement = await page.$(
+        '[data-mathjax-error], #math-preview [data-mml-node="merror"], ' +
+        '#math-preview [data-mml-node="mtext"][fill="red"][data-latex^="\\\\"]'
+      );
       const hasDisplayedError = errorElement !== null;
 
       // Check for new console errors

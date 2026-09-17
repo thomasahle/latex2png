@@ -14,11 +14,11 @@ import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js';
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js';
 import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/mjs/svg.js';
 
-// TeX packages (must match mathjax-worker.js)
+// TeX packages match mathjax-worker.js, except that generated icons must reject
+// undefined commands instead of embedding the noundefined package's red text.
 import '@mathjax/src/js/input/tex/base/BaseConfiguration.js';
 import '@mathjax/src/js/input/tex/ams/AmsConfiguration.js';
 import '@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js';
-import '@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js';
 import '@mathjax/src/js/input/tex/color/ColorConfiguration.js';
 import '@mathjax/src/js/input/tex/boldsymbol/BoldsymbolConfiguration.js';
 import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration.js';
@@ -58,14 +58,16 @@ async function generate() {
 
   const tex = new TeX({
     packages: [
-      'base', 'ams', 'newcommand', 'noundefined',
+      'base', 'ams', 'newcommand',
       'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode',
       'configmacros', 'gensymb', 'textcomp'
     ],
+    formatError: (_jax, error) => { throw error; },
     macros: {
       oiint: "\\unicode{x222F}",
       oiiint: "\\unicode{x2230}",
       Overrightarrow: ["\\overrightarrow{#1}", 1],
+      underbar: ["\\underline{#1}", 1],
       utilde: ["\\underset{\\sim}{#1}", 1],
       llbracket: "\\unicode{x27E6}",
       rrbracket: "\\unicode{x27E7}",
@@ -125,7 +127,7 @@ async function generate() {
     try {
       displayMap[label] = await renderSymbol(label, true);
     } catch (err) {
-      console.warn(`  Failed: "${label}": ${err.message}`);
+      throw new Error(`Failed to render symbol "${label}": ${err.message}`, { cause: err });
     }
     if (++i % 50 === 0) console.log(`  ${i}/${displayLabels.size}...`);
   }
@@ -136,7 +138,7 @@ async function generate() {
     try {
       inlineMap[label] = await renderSymbol(label, false);
     } catch (err) {
-      console.warn(`  Failed inline: "${label}": ${err.message}`);
+      throw new Error(`Failed to render inline symbol "${label}": ${err.message}`, { cause: err });
     }
   }
 
