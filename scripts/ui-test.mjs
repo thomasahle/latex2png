@@ -177,11 +177,22 @@ try {
           return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, height: r.height };
         };
         const scroll = document.getElementById('preview-scroll');
+        const math = document.querySelector('#math-preview svg').getBoundingClientRect();
+        const controlsOverlap = [...document.querySelectorAll('#preview-toolbar button, #preview-toolbar input')].some(control => {
+          const r = control.getBoundingClientRect();
+          return r.left < math.right && r.right > math.left && r.top < math.bottom && r.bottom > math.top;
+        });
+        const pane = box('preview-pane');
         return { toolbar: box('preview-toolbar'), scroll: box('preview-scroll'), actions: box('preview-actions'),
           pageWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth,
+          controlsOverlap, centered: Math.abs((math.top + math.bottom - pane.top - pane.bottom) / 2) < 1,
+          fitsVertically: scroll.scrollHeight <= scroll.clientHeight,
+          topReachable: math.top >= scroll.getBoundingClientRect().top,
           canScroll: scroll.scrollWidth > scroll.clientWidth };
       });
-      assert.ok(bounds.toolbar.bottom <= bounds.scroll.top + 1, `toolbar clear at ${width}/${scale}`);
+      assert.ok(!bounds.controlsOverlap, `toolbar clear at ${width}/${scale}`);
+      if (bounds.fitsVertically) assert.ok(bounds.centered, `equation vertically centered at ${width}/${scale}`);
+      else assert.ok(bounds.topReachable, `tall equation starts inside the scroll region at ${width}/${scale}`);
       assert.ok(bounds.scroll.bottom <= bounds.actions.top + 1, `save clear at ${width}/${scale}`);
       assert.ok(bounds.scroll.height > 40, 'preview retains usable space');
       assert.ok(bounds.pageWidth <= bounds.viewportWidth + 1, 'wide equations scroll inside the preview');

@@ -15,6 +15,8 @@
   import { createPreviewRenderer } from "../utils/preview-renderer.js";
   import { previewState, registerPreview } from "../services/preview-service.js";
 
+  let { toolbarHeight = 0, toolbarInset = 0 } = $props();
+  let previewWidth = $state(0);
   let previewElement = $state(null);
   let accessibleMath = $state("");
   let renderer;
@@ -26,6 +28,9 @@
   let pngDataUrl = $state(null);
   let dragDownloadDataUrl = $state(null);
   let displaySize = $state({ width: 0, height: 0 });
+  // Leave equal space above and below wide equations so they remain centered
+  // when they fit, and scroll clear of the corner controls when they don't.
+  let controlClearance = $derived(displaySize.width + 2 * toolbarInset > previewWidth ? toolbarHeight : 0);
   let dragImage = $state(null); // Pre-loaded image for drag preview
   const dragFileName = "latex-equation.png";
   let dragPngGenerationPromise = null;
@@ -274,12 +279,13 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
   id="preview-scroll"
+  bind:clientWidth={previewWidth}
   class="flex-1 min-h-0 overflow-auto p-4"
   role="region"
   aria-label="Equation preview"
   aria-busy={$previewState.status === 'pending'}
   tabindex="0"
-  style="display: flex; align-items: flex-start; justify-content: safe center;"
+  style="display: flex; align-items: safe center; justify-content: safe center;"
   oncontextmenu={handleContextMenu}
 >
   {#if accessibleMath}
@@ -287,7 +293,7 @@
   {/if}
   <div
     class="relative inline-block shrink-0"
-    style={`min-width: 1px; min-height: 1px; width: ${Math.max(1, displaySize.width)}px; height: ${Math.max(1, displaySize.height)}px;`}
+    style={`box-sizing: content-box; padding-block: ${controlClearance}px; min-width: 1px; min-height: 1px; width: ${Math.max(1, displaySize.width)}px; height: ${Math.max(1, displaySize.height)}px;`}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div

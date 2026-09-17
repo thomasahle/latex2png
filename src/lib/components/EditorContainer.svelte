@@ -18,6 +18,9 @@
   let resizeTimeout;
   let lastSizes = null;
   let paneGroup = $state(null);
+  let toolbarHeight = $state(0);
+  let layoutControlsWidth = $state(0);
+  let zoomControlsWidth = $state(0);
   let activeDirection;
   let savedSizes = {};
   try {
@@ -137,18 +140,18 @@
     />
 
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
-      <section class="h-full min-h-0 flex flex-col bg-card text-center">
-        <div id="preview-toolbar" class="flex shrink-0 items-center justify-between gap-2 p-2.5">
-          <div class="flex items-center gap-0.5">
+      <section class="relative h-full min-h-0 flex flex-col bg-card text-center">
+        <div id="preview-toolbar" bind:clientHeight={toolbarHeight} class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-2.5 pointer-events-none">
+          <div bind:clientWidth={layoutControlsWidth} class="flex items-center gap-0.5 pointer-events-auto">
             <div class="hidden sm:block"><LayoutToggle /></div>
             <FullscreenToggle />
           </div>
-          <div class="ml-auto">
+          <div bind:clientWidth={zoomControlsWidth} class="ml-auto pointer-events-auto">
             <ZoomControls />
           </div>
         </div>
 
-        <MathPreview />
+        <MathPreview {toolbarHeight} toolbarInset={Math.max(layoutControlsWidth, zoomControlsWidth) + 20} />
       </section>
     </Resizable.Pane>
   </Resizable.PaneGroup>
