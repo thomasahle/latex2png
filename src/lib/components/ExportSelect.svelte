@@ -22,7 +22,7 @@
       <Button {...props} variant="outline" class={`justify-between border-border bg-card font-normal dark:border-border dark:bg-card ${className}`} aria-label={label}>
         <span class="flex items-center gap-2">
           {#if selected?.color}<span class="size-3.5 rounded-full border border-foreground/20" style:background={selected.color} aria-hidden="true"></span>{/if}
-          {selected?.triggerLabel ?? selected?.label}
+          {selected?.label}
         </span>
         <ChevronDownIcon class="size-4 opacity-60" />
       </Button>

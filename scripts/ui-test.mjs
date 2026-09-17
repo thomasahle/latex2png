@@ -417,7 +417,7 @@ try {
   console.log('Export bar: shared zoom, solid background, format constraints');
 
   // Use a recognizable RGB value to check every export path, not just the UI.
-  await chooseExportOption(page, 'Export background', 'Custom color');
+  await chooseExportOption(page, 'Export background', 'Custom');
   await page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
   assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Custom/);
   assert.equal(await preview.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(32, 96, 192)', 'custom background appears in the preview');
@@ -447,11 +447,11 @@ try {
   assert.equal(await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).getAttribute('aria-disabled'), 'true', 'PDF cannot select transparency');
   await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).hover();
   await page.getByRole('tooltip', { name: 'PDF exports use an opaque page background', exact: true }).waitFor();
-  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).hover();
+  await page.getByRole('menuitemradio', { name: 'Custom', exact: true }).hover();
   await page.getByRole('tooltip').waitFor({ state: 'detached' });
-  assert.equal(await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).getAttribute('aria-checked'), 'true');
+  assert.equal(await page.getByRole('menuitemradio', { name: 'Custom', exact: true }).getAttribute('aria-checked'), 'true');
   await page.keyboard.press('Escape');
-  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
+  await page.getByRole('menuitemradio', { name: 'Custom', exact: true }).waitFor({ state: 'detached' });
   await page.setViewportSize({ width: 320, height: 844 });
   const customFits = await page.locator('#preview-actions').evaluate(bar => {
     const bounds = bar.getBoundingClientRect();
@@ -462,7 +462,7 @@ try {
   const mobileMenu = await page.locator('[role="menu"][data-state="open"]').boundingBox();
   assert.ok(mobileMenu.x >= 0 && mobileMenu.x + mobileMenu.width <= 320, 'mobile background menu stays in the viewport');
   await page.keyboard.press('Escape');
-  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
+  await page.getByRole('menuitemradio', { name: 'Custom', exact: true }).waitFor({ state: 'detached' });
   await page.setViewportSize({ width: 1280, height: 844 });
   await chooseExportOption(page, 'Export format', 'PNG');
   await chooseExportOption(page, 'Export background', 'Solid');

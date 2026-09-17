@@ -46,7 +46,7 @@ async function assertSize(controls, split, height) {
 
 try {
   let current = await visit();
-  await chooseExportOption(current.page, 'Export background', 'Custom color');
+  await chooseExportOption(current.page, 'Export background', 'Custom');
   await current.page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
   await current.page.keyboard.press('Escape');
   await current.split.press('ArrowDown');

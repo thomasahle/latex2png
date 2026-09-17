@@ -18,7 +18,7 @@
   const backgroundOptions = $derived([
     { value: 'transparent', label: 'Transparent', disabled: opaque, title: opaque ? ($exportSettings.format === 'JPEG' ? "JPEG doesn't support transparency" : 'PDF exports use an opaque page background') : undefined },
     { value: 'solid', label: 'Solid' },
-    { value: 'custom', label: 'Custom color', triggerLabel: 'Custom', color: $exportSettings.customColor },
+    { value: 'custom', label: 'Custom', color: $exportSettings.customColor },
   ]);
 
   function update(key, value) {
