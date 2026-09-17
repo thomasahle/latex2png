@@ -18,7 +18,7 @@
   }
 </script>
 
-<div class="flex items-center gap-2 bg-secondary px-2.5 py-1 rounded">
+<div class="flex items-center gap-2 bg-secondary/50 backdrop-blur-sm px-2.5 py-1 rounded">
   <span class="text-xs min-w-[2.5em] text-center">{$zoom.toFixed(1)}x</span>
   <input
     type="range"
