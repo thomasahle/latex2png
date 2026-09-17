@@ -126,6 +126,48 @@ try {
       for await (const chunk of await download.createReadStream()) chunks.push(chunk);
       assert.deepEqual(Buffer.from(native.files[0].bytes), Buffer.concat(chunks), 'native image file matches the downloaded PNG');
       console.log('Drag file: trusted pointer drag starts with native, full-resolution PNG bytes');
+
+      const cdp = await context.newCDPSession(page);
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate(theme => localStorage.setItem('theme', theme), theme);
+        await page.reload();
+        await page.locator('#math-preview svg').waitFor();
+        for (const background of ['solid', 'transparent']) {
+          await page.getByRole('combobox', { name: 'Export background' }).selectOption(background);
+          await page.waitForFunction(() => {
+            const source = document.querySelector('#math-preview');
+            const data = new DataTransfer();
+            const allowed = source.dispatchEvent(new DragEvent('dragstart', { cancelable: true, dataTransfer: data }));
+            if (!allowed) return false;
+            window.backgroundDragPng = data.getData('text/uri-list');
+            return true;
+          });
+          // Chromium captures from the nearest stacking context. Ask its layout
+          // engine directly: the formula must be a separate context so opaque
+          // panels behind it cannot be painted into the cursor preview.
+          const snapshot = await cdp.send('DOMSnapshot.captureSnapshot', { computedStyles: ['background-color'] });
+          const doc = snapshot.documents[0];
+          const node = doc.nodes.attributes.findIndex(attrs => attrs?.some((value, i) =>
+            snapshot.strings[value] === 'id' && snapshot.strings[attrs[i + 1]] === 'math-preview'));
+          const layoutIndex = doc.layout.nodeIndex.indexOf(node);
+          assert.ok(doc.layout.stackingContexts.index.includes(layoutIndex), 'cursor image is painted independently of the panel behind it');
+          const color = snapshot.strings[doc.layout.styles[layoutIndex][0]];
+          assert.equal(color === 'rgba(0, 0, 0, 0)', background === 'transparent', `${theme}: cursor background follows the dropdown`);
+          const alpha = await page.evaluate(async () => {
+            document.querySelector('#math-preview').dispatchEvent(new DragEvent('dragend'));
+            const image = new Image(); image.src = window.backgroundDragPng;
+            await image.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0);
+            return ctx.getImageData(0, 0, 1, 1).data[3];
+          });
+          assert.equal(alpha, background === 'transparent' ? 0 : 255, `${theme}: PNG background follows the dropdown`);
+          assert.equal(await page.locator('#math-preview').evaluate(el => el.style.backgroundColor), '', 'dragend restores the displayed formula background');
+        }
+      }
+      await cdp.detach();
+      console.log('Drag background: transparent/solid cursor previews and PNGs in light/dark themes');
     }
     await context.close();
   }

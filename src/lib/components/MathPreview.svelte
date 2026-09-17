@@ -151,10 +151,12 @@
 
     // Set grabbing cursor during drag
     previewElement.style.cursor = "grabbing";
+    previewElement.style.backgroundColor = exportBackground() || "transparent";
     if (dragImageElement) dragImageElement.style.cursor = "grabbing";
 
-    // Snapshot the displayed formula so the cursor preview matches its CSS
-    // size and zoom. The exported PNG includes padding and Retina pixels.
+    // The formula has its own stacking context so the snapshot cannot include
+    // the panel behind it. Keep its CSS size and zoom; exports include padding
+    // and Retina pixels that must not enlarge the cursor preview.
     const rect = previewElement.getBoundingClientRect();
     const relativeX = event.clientX - rect.left;
     const relativeY = event.clientY - rect.top;
@@ -188,7 +190,10 @@
       resetCursor();
     };
     const resetCursor = () => {
-      if (previewElement) previewElement.style.cursor = "";
+      if (previewElement) {
+        previewElement.style.cursor = "";
+        previewElement.style.backgroundColor = "";
+      }
       if (dragImageElement) dragImageElement.style.cursor = "";
       document.removeEventListener("dragover", handleDocDragOver);
       document.removeEventListener("drop", handleDocDrop);
@@ -205,6 +210,7 @@
       dragCleanup();
     } else if (previewElement) {
       previewElement.style.cursor = "";
+      previewElement.style.backgroundColor = "";
       if (dragImageElement) dragImageElement.style.cursor = "";
     }
   }
@@ -306,7 +312,7 @@
       aria-hidden="true"
       style={`zoom: ${$zoom};`}
       bind:this={previewElement}
-      class="inline-block cursor-grab"
+      class="relative isolate inline-block cursor-grab"
       draggable="true"
       onmousedown={handleMouseDown}
       ondragstart={handleDragStart}
