@@ -167,7 +167,7 @@ try {
   await setEquation(formula);
   for (const width of [320, 390, 480, 640, 768, 1280]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const scale of ['1', '1.5', '5']) {
+    for (const scale of ['1', '1.5', '3.4', '3.8', '5']) {
       await page.getByRole('slider', { name: 'Zoom level' }).fill(scale);
       // Wait for the zoom layout effect, then measure the actual scroll area.
       await page.evaluate(() => new Promise(requestAnimationFrame));
@@ -178,19 +178,21 @@ try {
         };
         const scroll = document.getElementById('preview-scroll');
         const math = document.querySelector('#math-preview svg').getBoundingClientRect();
-        const controlsOverlap = [...document.querySelectorAll('#preview-toolbar button, #preview-toolbar input')].some(control => {
+        const controlsOnTop = [...document.querySelectorAll('#preview-toolbar button, #preview-toolbar input')].every(control => {
           const r = control.getBoundingClientRect();
-          return r.left < math.right && r.right > math.left && r.top < math.bottom && r.bottom > math.top;
+          if (!r.width || !r.height) return true;
+          return control.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
         });
         const pane = box('preview-pane');
+        const padding = getComputedStyle(scroll);
         return { toolbar: box('preview-toolbar'), scroll: box('preview-scroll'), actions: box('preview-actions'),
           pageWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth,
-          controlsOverlap, centered: Math.abs((math.top + math.bottom - pane.top - pane.bottom) / 2) < 1,
-          fitsVertically: scroll.scrollHeight <= scroll.clientHeight,
+          controlsOnTop, centered: Math.abs((math.top + math.bottom - pane.top - pane.bottom) / 2) < 1,
+          fitsVertically: math.height + parseFloat(padding.paddingTop) + parseFloat(padding.paddingBottom) <= scroll.clientHeight,
           topReachable: math.top >= scroll.getBoundingClientRect().top,
           canScroll: scroll.scrollWidth > scroll.clientWidth };
       });
-      assert.ok(!bounds.controlsOverlap, `toolbar clear at ${width}/${scale}`);
+      assert.ok(bounds.controlsOnTop, `floating controls remain clickable at ${width}/${scale}`);
       if (bounds.fitsVertically) assert.ok(bounds.centered, `equation vertically centered at ${width}/${scale}`);
       else assert.ok(bounds.topReachable, `tall equation starts inside the scroll region at ${width}/${scale}`);
       assert.ok(bounds.scroll.bottom <= bounds.actions.top + 1, `save clear at ${width}/${scale}`);
