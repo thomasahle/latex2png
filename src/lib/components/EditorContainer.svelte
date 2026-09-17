@@ -149,7 +149,7 @@
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
       <section class="relative h-full min-h-0 flex flex-col bg-card text-center">
         <div id="preview-toolbar" class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-2.5 pointer-events-none">
-          <div class="flex items-center gap-0.5 rounded-md bg-card/50 backdrop-blur-sm pointer-events-auto">
+          <div class="flex items-center gap-0.5 pointer-events-auto">
             <div class="hidden sm:block"><LayoutToggle /></div>
             <FullscreenToggle />
           </div>

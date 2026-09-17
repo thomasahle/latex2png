@@ -12,7 +12,7 @@
 </script>
 
 <Button
-  variant="ghost"
+  variant="floating"
   size="icon-sm"
   aria-label="Toggle layout orientation"
   title={$layout === 'stacked' ? 'Side by side' : 'Stack vertically'}

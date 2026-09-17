@@ -7,7 +7,7 @@
 </script>
 
 <Button
-  variant="ghost"
+  variant="floating"
   size="icon-sm"
   aria-label={$fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
   aria-pressed={$fullscreen}

@@ -62,8 +62,9 @@
   .export-bar { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .625rem; }
   .export-options, .export-buttons { display: flex; flex-shrink: 0; align-items: center; gap: .375rem; }
   .export-buttons { margin-left: auto; }
-  select { height: 2.25rem; max-width: 100%; border: 1px solid hsl(var(--border)); border-radius: .5rem; background: hsl(var(--card)); color: inherit; font-size: .8125rem; padding: 0 .5rem; cursor: pointer; }
-  select:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+  select { height: 2.25rem; max-width: 100%; border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); background: hsl(var(--card)); color: inherit; font-size: .875rem; padding: 0 .5rem; cursor: pointer; transition: background-color 150ms, border-color 150ms, box-shadow 150ms; }
+  select:hover:not(:disabled) { background: hsl(var(--accent) / .8); }
+  select:focus-visible { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / .5); }
   select:disabled { opacity: .5; cursor: default; }
   @media (max-width: 479px) {
     .export-bar { flex-wrap: wrap; }

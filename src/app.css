@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
+@utility floating-surface {
+  background-color: hsl(var(--card) / 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 @theme inline {
   --font-sans: system-ui, -apple-system, sans-serif;
   --font-serif: serif;

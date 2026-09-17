@@ -29,7 +29,7 @@
 <DropdownMenu.Root bind:open={menuOpen}>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="outline" size="icon" aria-label="Share">
+      <Button {...props} variant="ghost" size="icon-sm" aria-label="Share" title="Share">
         <Share2Icon />
       </Button>
     {/snippet}

@@ -81,7 +81,7 @@
 <DropdownMenu.Root bind:open={menuOpen}>
   <DropdownMenu.Trigger>
     {#snippet child({ props })}
-      <Button {...props} variant="outline" size="icon" aria-label="History">
+      <Button {...props} variant="ghost" size="icon-sm" aria-label="History" title="History">
         <HistoryIcon />
       </Button>
     {/snippet}

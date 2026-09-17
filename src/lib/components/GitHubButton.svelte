@@ -23,7 +23,8 @@
 </script>
 
 <Button
-  variant="outline"
+  variant="ghost"
+  size="sm"
   href="https://github.com/thomasahle/latex2png"
   target="_blank"
   rel="noopener noreferrer"
