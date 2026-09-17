@@ -136,7 +136,7 @@ async function captureTheme(browser, theme) {
 
   for (const format of FORMATS) {
     // Right-click to open context menu
-    await page.click('#math-preview', { button: 'right' });
+    await page.getByRole('region', { name: 'Equation preview' }).click({ button: 'right' });
 
     // Wait for context menu to appear (must be open state, not the force-mounted toolbar)
     await page.waitForSelector('[role="menu"][data-state="open"]', { state: 'visible' });

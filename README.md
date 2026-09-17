@@ -35,7 +35,8 @@ height, pointer and keyboard resizing, reset, and fullscreen entry/exit
 (including menu and Vim keyboard behavior).
 `npm run test:drag` checks cursor-preview dimensions and grab points at 1–5×
 zoom and pixel densities of 1, 1.5, 2, and 3, while ensuring the dropped PNG
-retains the same full-resolution pixels as a download.
+retains the same full-resolution pixels as a download. It also checks that a
+trusted pointer drag starts with the browser's native PNG file.
 `npm run test:persistence` restarts Chromium with the same browser profile to
 check that both resizers, each layout's split, and resets survive later visits.
 `npm run generate:symbols` validates and regenerates the menu icons.
@@ -47,6 +48,13 @@ only the current platform's references; review those exports before committing.
 
 Pull requests and main-branch pushes run these checks against the production
 build. Pages deployment depends on all checks passing.
+
+Formula drags include a PNG file for upload drop zones, image HTML for rich
+editors, and LaTeX for text fields. A transparent native image drag source
+preserves the file in Chromium, which drops script-created files during native
+drags. Browser-generated filenames and a target's own upload rules can vary.
+Check file-only, text, and rich-text targets with real browser drags when changing
+this code; Playwright's headless drop transport does not preserve native PNG files.
 
 ## License
 

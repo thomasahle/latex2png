@@ -47,7 +47,7 @@ async function setEquation(latex) {
   await ready();
 }
 async function openSaveMenu() {
-  await page.locator('#math-preview').click({ button: 'right' });
+  await page.getByRole('region', { name: 'Equation preview' }).click({ button: 'right' });
 }
 async function save(format, newLatex) {
   await page.getByLabel('Export format', { exact: true }).selectOption(format);

@@ -16,6 +16,7 @@
   import { previewState, registerPreview } from "../services/preview-service.js";
 
   let previewElement = $state(null);
+  let dragImageElement = $state(null);
   let accessibleMath = $state("");
   let renderer;
   let dragVersion = 0;
@@ -23,6 +24,7 @@
   let contextMenuOpen = $state(false);
   let contextMenuPosition = $state({ x: 0, y: 0 });
   let dragPngUrl = $state(null);
+  let dragPngFile = null;
   let pngDataUrl = $state(null);
   let dragDownloadDataUrl = $state(null);
   let displaySize = $state({ width: 0, height: 0 });
@@ -67,6 +69,7 @@
       dragPngUrl = null;
     }
     pngDataUrl = null;
+    dragPngFile = null;
     dragDownloadDataUrl = null;
   }
 
@@ -81,9 +84,10 @@
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob || version !== dragVersion || disposed) return null;
       const dataUrl = canvas.toDataURL("image/png");
+      dragPngFile = new File([blob], dragFileName, { type: "image/png" });
       pngDataUrl = dataUrl;
       dragDownloadDataUrl = dataUrl.replace("image/png", "application/octet-stream");
-      dragPngUrl = URL.createObjectURL(blob);
+      dragPngUrl = URL.createObjectURL(dragPngFile);
       return dragPngUrl;
     })();
     dragPngGenerationPromise = promise;
@@ -131,7 +135,8 @@
   }
 
   function handleDragStart(event) {
-    if (!pngDataUrl || $previewState.status !== 'ready') {
+    if (!pngDataUrl || $previewState.status !== 'ready' ||
+        (event.currentTarget === dragImageElement && !dragImageElement?.naturalWidth)) {
       event.preventDefault();
       return;
     }
@@ -146,6 +151,7 @@
 
     // Set grabbing cursor during drag
     previewElement.style.cursor = "grabbing";
+    if (dragImageElement) dragImageElement.style.cursor = "grabbing";
 
     // Snapshot the displayed formula so the cursor preview matches its CSS
     // size and zoom. The exported PNG includes padding and Retina pixels.
@@ -163,6 +169,18 @@
     dt.setData("text/html", `<img src="${pngDataUrl}" alt="${escapeAttr(currentLatex) || dragFileName}" />`);
     dt.setData("text/plain", currentLatex);
 
+    // Upload drop zones read files, rather than image HTML or data URLs.
+    // Prepare the File ahead of time: the drag store is only writable
+    // synchronously during dragstart.
+    if (!dt.files.length && dragPngFile && dt.items?.add) {
+      try {
+        dt.items.add(dragPngFile);
+      } catch (error) {
+        // Keep the other formats available if this browser rejects files.
+        trackError(error, { context: 'drag_file' });
+      }
+    }
+
     // Make document a drop target so drop fires immediately (no fly-back delay)
     const handleDocDragOver = (e) => e.preventDefault();
     const handleDocDrop = (e) => {
@@ -171,6 +189,7 @@
     };
     const resetCursor = () => {
       if (previewElement) previewElement.style.cursor = "";
+      if (dragImageElement) dragImageElement.style.cursor = "";
       document.removeEventListener("dragover", handleDocDragOver);
       document.removeEventListener("drop", handleDocDrop);
       dragCleanup = null;
@@ -186,6 +205,7 @@
       dragCleanup();
     } else if (previewElement) {
       previewElement.style.cursor = "";
+      if (dragImageElement) dragImageElement.style.cursor = "";
     }
   }
 
@@ -292,6 +312,24 @@
       ondragstart={handleDragStart}
       ondragend={handleDragEnd}
     ></div>
+    {#if dragPngUrl}
+      <!-- A native image source lets Chromium carry PNG bytes to file-only
+           targets; script-added File objects alone are lost during a drag.
+           The SVG underneath remains the visible, sharp formula. -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <img
+        id="formula-drag-image"
+        bind:this={dragImageElement}
+        src={dragPngUrl}
+        alt=""
+        aria-hidden="true"
+        class="absolute inset-0 h-full w-full opacity-0 cursor-grab"
+        draggable="true"
+        onmousedown={handleMouseDown}
+        ondragstart={handleDragStart}
+        ondragend={handleDragEnd}
+      />
+    {/if}
   </div>
 </div>
 
