@@ -6,7 +6,6 @@
   import { snippet } from "@codemirror/autocomplete";
   import { toolbarCommands } from "$lib/utils/toolbarCommands.js";
   import { trackEvent } from "$lib/utils/analytics.js";
-  import SigmaIcon from "@lucide/svelte/icons/sigma";
 
   let { editorInstance } = $props();
 
@@ -392,7 +391,9 @@
             aria-label="Insert math symbol"
             title="Insert math symbol"
           >
-            <SigmaIcon />
+            <span class="text-xl leading-none" aria-hidden="true">
+              <MathSymbol latex="\Sigma" />
+            </span>
           </Button>
         </div>
       {/snippet}
