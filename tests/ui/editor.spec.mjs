@@ -70,6 +70,65 @@ test("pending drag cannot use an obsolete image", async ({ page, app }) => {
   });
 });
 
+test("formula drags reject the page background and still reach valid drop targets", async ({ page, app, browserName }) => {
+  await app.setEquation(formula);
+  await page.waitForFunction(() => document.querySelector('#formula-drag-image')?.naturalWidth > 0);
+  await page.evaluate(() => {
+    const target = document.createElement('div');
+    target.id = 'drag-test-target';
+    target.style = 'position:fixed;top:70px;left:0;width:100px;height:100px;z-index:10000';
+    document.body.append(target);
+    document.addEventListener('dragstart', event => {
+      window.dragResult = { started: event.isTrusted, drops: 0, targetAccepted: false };
+    }, { capture: true });
+    document.addEventListener('dragover', event => {
+      if (event.target.id === 'drag-test-target') {
+        window.dragResult.overTarget = true;
+        window.dragResult.targetAccepted = event.defaultPrevented;
+      }
+    });
+    document.addEventListener('drop', () => window.dragResult.drops++, { capture: true });
+    document.addEventListener('dragend', event => {
+      window.dragResult.ended = event.isTrusted;
+      window.dragResult.effect = event.dataTransfer.dropEffect;
+    });
+  });
+
+  for (const accepted of [false, true]) {
+    if (accepted) await page.evaluate(() => {
+      const target = document.getElementById('drag-test-target');
+      target.ondragover = event => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; };
+      target.ondrop = event => {
+        event.preventDefault();
+        window.dragResult.latex = event.dataTransfer.getData('text/plain');
+      };
+    });
+    await page.evaluate(() => { window.dragResult = null; });
+    const source = await page.locator('#math-preview').boundingBox();
+    const x = source.x + source.width / 2;
+    const y = source.y + source.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 12, y, { steps: 5 });
+    await page.mouse.move(50, 120, { steps: 5 });
+    // WebKit needs a movement inside the target after dragenter to send dragover.
+    await page.mouse.move(51, 121);
+    await page.mouse.up();
+    await page.waitForFunction(() => window.dragResult?.ended);
+    const result = await page.evaluate(() => window.dragResult);
+    assert.equal(result.started, true, 'exercise the native browser drag');
+    assert.equal(result.overTarget, true, 'the pointer reaches the drop target');
+    assert.equal(result.targetAccepted, accepted, 'the page must not override a target’s dragover decision');
+    assert.equal(result.drops, accepted ? 1 : 0, 'only a real drop target accepts the formula');
+    // WebKit reports a stale operation at dragend even when no drop occurred.
+    // Its dragover/drop assertions above still verify acceptance and rejection.
+    if (browserName !== 'webkit') assert.equal(result.effect, accepted ? 'copy' : 'none', 'rejected drops retain native return feedback');
+    if (accepted) assert.equal(result.latex, formula);
+    assert.equal(await page.locator('#math-preview').evaluate(el => el.style.cursor), '');
+    assert.equal(await page.locator('#math-preview').evaluate(el => el.style.backgroundColor), '');
+  }
+});
+
 for (const background of ['Transparent', 'Solid', 'Custom']) {
   test(`drag ghost uses the displayed formula size and ${background} background`, async ({ page, app }) => {
     await app.setEquation(formula);

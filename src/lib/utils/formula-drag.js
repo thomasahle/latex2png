@@ -1,7 +1,7 @@
 import { renderExport, captureExportOptions } from '../services/export-service.js';
 import { trackEvent, trackError } from './analytics.js';
 
-// Own the asynchronous drag assets and document listeners independently of the
+// Own the asynchronous drag assets and drag cleanup independently of the
 // preview component. getState supplies the current DOM and rendered equation.
 export function createFormulaDrag({ getState, onUrl }) {
   let dragVersion = 0;
@@ -63,8 +63,6 @@ export function createFormulaDrag({ getState, onUrl }) {
     }
   }
 
-  let dragCleanup = null;
-
   function escapeAttr(text) {
     return text
       .replace(/&/g, "&amp;")
@@ -88,7 +86,6 @@ export function createFormulaDrag({ getState, onUrl }) {
 
     dt.clearData();
     dt.effectAllowed = "copy";
-    dt.dropEffect = "copy";
 
     // Set grabbing cursor during drag
     previewElement.style.cursor = "grabbing";
@@ -124,37 +121,17 @@ export function createFormulaDrag({ getState, onUrl }) {
       }
     }
 
-    // Make document a drop target so drop fires immediately (no fly-back delay)
-    const handleDocDragOver = (e) => e.preventDefault();
-    const handleDocDrop = (e) => {
-      e.preventDefault();
-      resetCursor();
-    };
-    const resetCursor = () => {
-      if (previewElement) {
-        previewElement.style.cursor = "";
-        previewElement.style.backgroundColor = "";
-      }
-      if (dragImageElement) dragImageElement.style.cursor = "";
-      document.removeEventListener("dragover", handleDocDragOver);
-      document.removeEventListener("drop", handleDocDrop);
-      dragCleanup = null;
-    };
-
-    document.addEventListener("dragover", handleDocDragOver);
-    document.addEventListener("drop", handleDocDrop);
-    dragCleanup = resetCursor;
+    // Only real drop targets should accept dragover. Leaving the page background
+    // unhandled preserves the browser's native return animation for invalid drops.
   }
 
   function handleDragEnd() {
     const { previewElement, dragImageElement } = getState();
-    if (dragCleanup) {
-      dragCleanup();
-    } else if (previewElement) {
+    if (previewElement) {
       previewElement.style.cursor = "";
       previewElement.style.backgroundColor = "";
-      if (dragImageElement) dragImageElement.style.cursor = "";
     }
+    if (dragImageElement) dragImageElement.style.cursor = "";
   }
 
   return {
