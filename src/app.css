@@ -5,9 +5,14 @@
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 @utility floating-surface {
-  background-color: hsl(var(--card) / 0.5);
+  background-color: hsl(var(--floating-control) / 0.5);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
+
+  &:hover,
+  &[data-state="open"] {
+    background-color: hsl(var(--floating-control) / 0.8);
+  }
 }
 
 @theme inline {
@@ -75,6 +80,7 @@
     --background: 0 0% 98%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
+    --floating-control: 0 0% 88%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
@@ -98,6 +104,7 @@
     --background: 0 0% 13.3%;
     --foreground: 0 0% 93.3%;
     --card: 0 0% 20%;
+    --floating-control: 0 0% 38%;
     --card-foreground: 0 0% 93.3%;
     --popover: 0 0% 20%;
     --popover-foreground: 0 0% 93.3%;
