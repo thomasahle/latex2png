@@ -1,8 +1,6 @@
 import { get, writable } from 'svelte/store';
-import { zoom } from './zoom.js';
 
 export const exportFormats = ['PNG', 'JPEG', 'SVG', 'PDF'];
-export const exportScales = [1, 1.5, 2, 3, 4, 5];
 
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('exportSettings') || '{}'); } catch {}
@@ -10,7 +8,6 @@ try { saved = JSON.parse(localStorage.getItem('exportSettings') || '{}'); } catc
 export const exportSettings = writable({
   format: exportFormats.includes(saved?.format) ? saved.format : 'PNG',
   background: saved?.background === 'solid' ? 'solid' : 'transparent',
-  scale: exportScales.includes(saved?.scale) ? saved.scale : (exportScales.includes(get(zoom)) ? get(zoom) : 1.5),
 });
 
 exportSettings.subscribe(value => {

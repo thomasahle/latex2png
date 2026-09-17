@@ -84,7 +84,7 @@
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
     const version = dragVersion;
     const promise = (async () => {
-      const canvas = await generateImage(previewElement, $exportSettings.scale, exportBackground());
+      const canvas = await generateImage(previewElement, $zoom, exportBackground());
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob || version !== dragVersion) return null;
       const dataUrl = canvas.toDataURL("image/png");

@@ -2,7 +2,8 @@ import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
-import { exportSettings, exportBackground } from "../stores/exportSettings.js";
+import { exportBackground } from "../stores/exportSettings.js";
+import { zoom } from "../stores/zoom.js";
 import { ensureCurrentPreview } from "../services/preview-service.js";
 import { generateImage } from "./image-generation.js";
 import { trackEvent, trackError } from "./analytics.js";
@@ -82,7 +83,7 @@ async function renderCanvas() {
   await nextFrame();
 
   const { element: previewElement } = await ensureCurrentPreview();
-  const scaleOverride = get(exportSettings).scale;
+  const scaleOverride = get(zoom);
   try {
     return await generateImage(previewElement, scaleOverride ?? 1, exportBackground());
   } catch (error) {

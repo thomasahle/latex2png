@@ -113,7 +113,7 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
   const padding = Math.round(BASE_PADDING_EM * zoomScale * dpr);
 
-  // Export size stays stable while the user zooms or rearranges the preview.
+  // Apply the requested scale independently of the current pane dimensions.
   const contentWidth = Math.max(1, Math.round(rect.width * dpr));
   const contentHeight = Math.max(1, Math.round(rect.height * dpr));
   const outputWidth = contentWidth + padding * 2;

@@ -1,7 +1,7 @@
 <script>
   import { Button } from '$lib/components/ui/button';
   import { toast } from '$lib/components/ui/sonner';
-  import { exportSettings, exportFormats, exportScales } from '../stores/exportSettings.js';
+  import { exportSettings, exportFormats } from '../stores/exportSettings.js';
   import { savePNG, saveJPEG, saveSVG, savePDF } from '../utils/save.js';
   import { copyImage } from '../utils/share.js';
   import CopyIcon from '@lucide/svelte/icons/copy';
@@ -44,9 +44,6 @@
     <select aria-label="Export background" title={opaque ? `${$exportSettings.format} uses a solid background` : 'Image background'} value={opaque ? 'solid' : $exportSettings.background} disabled={opaque} onchange={e => update('background', e.currentTarget.value)}>
       <option value="transparent">Transparent</option>
       <option value="solid">Solid</option>
-    </select>
-    <select aria-label="Export scale" title="Image size (independent of preview zoom)" value={$exportSettings.scale} onchange={e => update('scale', Number(e.currentTarget.value))}>
-      {#each exportScales as scale}<option value={scale}>{scale}×</option>{/each}
     </select>
   </div>
   <div class="export-buttons">

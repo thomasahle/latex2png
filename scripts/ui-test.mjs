@@ -218,8 +218,6 @@ try {
   await page.getByRole('button', { name: 'Exit fullscreen', exact: true }).click();
   await page.getByRole('slider', { name: 'Zoom level' }).fill('1.5');
   const beforeResize = await save('PNG');
-  await page.getByRole('slider', { name: 'Zoom level' }).fill('5');
-  assert.deepEqual(await save('PNG'), beforeResize, 'preview zoom does not change export pixels');
   const divider = page.getByRole('separator', { name: 'Resize editor and preview' });
   await divider.press('ArrowRight');
   assert.equal(await divider.getAttribute('aria-valuenow'), '55');
@@ -274,9 +272,9 @@ try {
   console.log('Workspace: separate remembered splits, reset, stable exports, fullscreen Escape');
 
   await setEquation(formula);
-  await page.getByLabel('Export scale', { exact: true }).selectOption('1');
+  await page.getByRole('slider', { name: 'Zoom level' }).fill('1');
   const small = await save('PNG');
-  await page.getByLabel('Export scale', { exact: true }).selectOption('3');
+  await page.getByRole('slider', { name: 'Zoom level' }).fill('3');
   const large = await save('PNG');
   assert.ok(Math.abs(large.readUInt32BE(16) - small.readUInt32BE(16) * 3) <= 1);
   assert.ok(Math.abs(large.readUInt32BE(20) - small.readUInt32BE(20) * 3) <= 1);
@@ -301,7 +299,7 @@ try {
   assert.equal(await page.getByLabel('Export background', { exact: true }).isDisabled(), true, 'JPEG cannot select transparency');
   await page.getByLabel('Export format', { exact: true }).selectOption('PNG');
   await page.getByLabel('Export background', { exact: true }).selectOption('transparent');
-  console.log('Export bar: independent size, solid background, format constraints');
+  console.log('Export bar: shared zoom, solid background, format constraints');
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors');
   console.log('UI regression tests passed.');

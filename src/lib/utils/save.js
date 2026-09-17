@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
-import { exportSettings, exportBackground } from '../stores/exportSettings.js';
+import { exportBackground } from '../stores/exportSettings.js';
+import { zoom } from '../stores/zoom.js';
 import { history } from '../stores/history.js';
 import { ensureCurrentPreview } from '../services/preview-service.js';
 import { generateImage, generateSvg, downloadImage } from './image-generation.js';
@@ -21,7 +22,7 @@ function downloadFile(url, filename) {
 export async function savePNG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(exportSettings).scale;
+    const zoomScale = get(zoom);
     const canvas = await generateImage(previewElement, zoomScale, exportBackground('PNG'));
 
     downloadImage(canvas, 'latex-equation.png');
@@ -36,7 +37,7 @@ export async function savePNG() {
 export async function saveJPEG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(exportSettings).scale;
+    const zoomScale = get(zoom);
     const backgroundColor = exportBackground('JPEG');
     const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
@@ -51,7 +52,7 @@ export async function saveJPEG() {
 export async function saveSVG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(exportSettings).scale ?? 1;
+    const zoomScale = get(zoom) ?? 1;
     const { svgString } = generateSvg(previewElement, zoomScale, exportBackground('SVG'));
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
@@ -69,7 +70,7 @@ export async function saveSVG() {
 export async function savePDF() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(exportSettings).scale ?? 1;
+    const zoomScale = get(zoom) ?? 1;
     const backgroundColor = exportBackground('PDF');
     const { svgString, width, height } = generateSvg(previewElement, zoomScale, backgroundColor);
 
