@@ -33,6 +33,8 @@ themes, and every symbol. `npm run test:unit` needs no browser or server.
 The UI suite also checks export settings, remembered pane sizes and workspace
 height, pointer and keyboard resizing, reset, and fullscreen entry/exit
 (including menu and Vim keyboard behavior).
+`npm run test:persistence` restarts Chromium with the same browser profile to
+check that both resizers, each layout's split, and resets survive later visits.
 `npm run generate:symbols` validates and regenerates the menu icons.
 Update export baselines deliberately with `UPDATE_SNAPSHOTS=1 npm run test:snap`.
 Export snapshots use a fixed viewport, pixel density, and bundled font. Exact
