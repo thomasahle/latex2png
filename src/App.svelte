@@ -53,7 +53,7 @@
 <svelte:window onkeydown={handleEscape} />
 
 <div
-  class="bg-background text-foreground font-serif"
+  class="flow-root bg-background text-foreground font-serif"
   class:min-h-screen={!$fullscreen}
   class:fullscreen-app={$fullscreen}
 >
