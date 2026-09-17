@@ -1,9 +1,16 @@
 const BASE_PADDING_EM = 16; // 1em in pixels
 
+function exportRect(svg, previewElement, scale) {
+  const rect = svg.getBoundingClientRect();
+  const previewZoom = parseFloat(getComputedStyle(previewElement).zoom) || 1;
+  const ratio = scale / previewZoom;
+  return { width: rect.width * ratio, height: rect.height * ratio };
+}
+
 /**
  * Generate a canvas image from a preview element containing MathJax content
  * @param {HTMLElement} previewElement - The preview element to capture
- * @param {number} zoomScale - The current zoom scale (e.g., 1.0, 1.5, 2.0)
+ * @param {number} zoomScale - Output scale, independent of preview zoom (e.g., 1.0, 1.5, 2.0)
  * @param {string|null} backgroundColor - Background color for the image (null for transparent)
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
@@ -58,7 +65,7 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
   const svg = mjxSvg.cloneNode(true);
   bakeSvgColors(svg, fgColor);
 
-  const rect = mjxSvg.getBoundingClientRect();
+  const rect = exportRect(mjxSvg, previewElement, zoomScale);
   const baseExportWidth = Math.max(1, rect.width || bbox.width * zoomScale);
   const baseExportHeight = Math.max(1, rect.height || bbox.height * zoomScale);
 
@@ -102,11 +109,11 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
 }
 
 async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor, zoomScale = 1) {
-  const rect = svgEl.getBoundingClientRect();
+  const rect = exportRect(svgEl, previewElement, zoomScale);
   const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
   const padding = Math.round(BASE_PADDING_EM * zoomScale * dpr);
 
-  // Respect how large the preview is currently shown (includes zoom), then scale for DPI.
+  // Export size stays stable while the user zooms or rearranges the preview.
   const contentWidth = Math.max(1, Math.round(rect.width * dpr));
   const contentHeight = Math.max(1, Math.round(rect.height * dpr));
   const outputWidth = contentWidth + padding * 2;

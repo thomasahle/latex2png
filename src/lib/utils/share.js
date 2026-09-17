@@ -2,7 +2,7 @@ import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
-import { zoom } from "../stores/zoom.js";
+import { exportSettings, exportBackground } from "../stores/exportSettings.js";
 import { ensureCurrentPreview } from "../services/preview-service.js";
 import { generateImage } from "./image-generation.js";
 import { trackEvent, trackError } from "./analytics.js";
@@ -82,16 +82,16 @@ async function renderCanvas() {
   await nextFrame();
 
   const { element: previewElement } = await ensureCurrentPreview();
-  const scaleOverride = get(zoom);
+  const scaleOverride = get(exportSettings).scale;
   try {
-    return await generateImage(previewElement, scaleOverride ?? 1, null);
+    return await generateImage(previewElement, scaleOverride ?? 1, exportBackground());
   } catch (error) {
     trackError(error, { context: 'renderCanvas_fallback', fallback: 'html2canvas' });
     const { element: currentElement } = await ensureCurrentPreview();
     return await html2canvas(currentElement, {
       scale: scaleOverride ?? Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
       useCORS: true,
-      backgroundColor: null,
+      backgroundColor: exportBackground(),
       logging: false
     });
   }

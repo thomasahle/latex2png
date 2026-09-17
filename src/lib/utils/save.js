@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { zoom } from '../stores/zoom.js';
+import { exportSettings, exportBackground } from '../stores/exportSettings.js';
 import { history } from '../stores/history.js';
 import { ensureCurrentPreview } from '../services/preview-service.js';
 import { generateImage, generateSvg, downloadImage } from './image-generation.js';
@@ -18,27 +18,11 @@ function downloadFile(url, filename) {
   link.click();
 }
 
-function resolveBackgroundColor(previewElement) {
-  const style = getComputedStyle(previewElement);
-  const bg = style.backgroundColor;
-  // Prefer the actual preview background if set
-  if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return bg;
-
-  // Otherwise use the theme variable
-  const root = getComputedStyle(document.body);
-  const varBg = root.getPropertyValue('--background')?.trim();
-  if (varBg) return `hsl(${varBg})`;
-
-  // Fallback by theme hint
-  if (document.body.dataset.theme === 'dark') return '#222';
-  return '#ffffff';
-}
-
 export async function savePNG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(zoom);
-    const canvas = await generateImage(previewElement, zoomScale, null);
+    const zoomScale = get(exportSettings).scale;
+    const canvas = await generateImage(previewElement, zoomScale, exportBackground('PNG'));
 
     downloadImage(canvas, 'latex-equation.png');
     addToHistory(latex);
@@ -52,8 +36,8 @@ export async function savePNG() {
 export async function saveJPEG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(zoom);
-    const backgroundColor = resolveBackgroundColor(previewElement);
+    const zoomScale = get(exportSettings).scale;
+    const backgroundColor = exportBackground('JPEG');
     const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
     addToHistory(latex);
@@ -67,8 +51,8 @@ export async function saveJPEG() {
 export async function saveSVG() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(zoom) ?? 1;
-    const { svgString } = generateSvg(previewElement, zoomScale, null);
+    const zoomScale = get(exportSettings).scale ?? 1;
+    const { svgString } = generateSvg(previewElement, zoomScale, exportBackground('SVG'));
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     downloadFile(url, 'latex-equation.svg');
@@ -85,8 +69,8 @@ export async function saveSVG() {
 export async function savePDF() {
   try {
     const { element: previewElement, latex } = await ensureCurrentPreview();
-    const zoomScale = get(zoom) ?? 1;
-    const backgroundColor = resolveBackgroundColor(previewElement);
+    const zoomScale = get(exportSettings).scale ?? 1;
+    const backgroundColor = exportBackground('PDF');
     const { svgString, width, height } = generateSvg(previewElement, zoomScale, backgroundColor);
 
     const parser = new DOMParser();

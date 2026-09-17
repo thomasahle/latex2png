@@ -10,6 +10,8 @@
 	}: ResizablePrimitive.PaneGroupProps & {
 		this?: ResizablePrimitive.PaneGroup;
 	} = $props();
+
+	export function setLayout(sizes: number[]) { paneGroup?.setLayout(sizes); }
 </script>
 
 <ResizablePrimitive.PaneGroup

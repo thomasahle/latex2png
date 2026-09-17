@@ -6,21 +6,24 @@ function createFullscreenStore() {
     return saved === 'true';
   })();
 
-  const { subscribe, set, update } = writable(savedFullscreen);
+  const { subscribe, set } = writable(savedFullscreen);
+  let current = savedFullscreen;
+  let previousScroll = 0;
+
+  function setFullscreen(value) {
+    // Capture before notifying Svelte: reducing the page height can clamp
+    // scrollY to zero before component subscriptions or effects run.
+    if (value && !current) previousScroll = window.scrollY;
+    current = value;
+    set(value);
+    localStorage.setItem('fullscreen', value.toString());
+  }
 
   return {
     subscribe,
-    set: (value) => {
-      set(value);
-      localStorage.setItem('fullscreen', value.toString());
-    },
-    toggle: () => {
-      update(value => {
-        const next = !value;
-        localStorage.setItem('fullscreen', next.toString());
-        return next;
-      });
-    }
+    set: setFullscreen,
+    toggle: () => setFullscreen(!current),
+    getPreviousScroll: () => previousScroll,
   };
 }
 

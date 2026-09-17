@@ -2,6 +2,7 @@
   import { onMount, onDestroy, untrack } from "svelte";
   import { latexContent } from "../stores/content.js";
   import { zoom } from "../stores/zoom.js";
+  import { exportSettings, exportBackground } from "../stores/exportSettings.js";
   import { theme } from "../stores/theme.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { generateImage } from "../utils/image-generation.js";
@@ -78,7 +79,7 @@
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
     const version = dragVersion;
     const promise = (async () => {
-      const canvas = await generateImage(previewElement, $zoom ?? 1, null);
+      const canvas = await generateImage(previewElement, $exportSettings.scale, exportBackground());
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob || version !== dragVersion) return null;
       const dataUrl = canvas.toDataURL("image/png");
@@ -252,6 +253,7 @@
   $effect(() => {
     const z = $zoom;
     const currentTheme = $theme;
+    const settings = $exportSettings;
     if (!previewElement) return;
     untrack(() => {
       measureDisplay();

@@ -1,4 +1,5 @@
 <script>
+  import { onDestroy, untrack } from 'svelte';
   import { layout } from "../stores/layout.js";
   import { fullscreen } from "../stores/fullscreen.js";
   import LatexEditor from "./LatexEditor.svelte";
@@ -7,7 +8,8 @@
   import ZoomControls from "./ZoomControls.svelte";
   import LayoutToggle from "./LayoutToggle.svelte";
   import * as Resizable from "$lib/components/ui/resizable";
-  import SaveButton from "./SaveButton.svelte";
+  import ExportBar from "./ExportBar.svelte";
+  import FullscreenToggle from "./FullscreenToggle.svelte";
   import { trackEvent } from "../utils/analytics.js";
   import { previewState } from "../services/preview-service.js";
 
@@ -15,9 +17,35 @@
 
   let resizeTimeout;
   let lastSizes = null;
+  let paneGroup = $state(null);
+  let activeDirection;
+  let savedSizes = {};
+  try {
+    const saved = JSON.parse(localStorage.getItem('paneSizes') || '{}');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) savedSizes = saved;
+  } catch {}
+
+  function getSavedSizes(key) {
+    const sizes = savedSizes[key];
+    return Array.isArray(sizes) && sizes.length === 2 && sizes.every(n => Number.isFinite(n) && n >= 30 && n <= 70)
+      && Math.abs(sizes[0] + sizes[1] - 100) < .1 ? sizes : [50, 50];
+  }
+
+  $effect(() => {
+    const nextDirection = direction;
+    if (!paneGroup) return;
+    untrack(() => {
+      activeDirection = nextDirection;
+      paneGroup.setLayout(getSavedSizes(nextDirection));
+    });
+  });
+
   function onLayoutChange(sizes) {
+    if (activeDirection !== direction || sizes.length !== 2) return;
+    savedSizes[direction] = [...sizes];
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
+      persistSizes();
       const editor = Math.round(sizes[0]);
       const preview = Math.round(sizes[1]);
       if (lastSizes && (lastSizes[0] !== editor || lastSizes[1] !== preview)) {
@@ -30,30 +58,48 @@
     $layout === "side-by-side" ? "horizontal" : "vertical",
   );
 
+  function resetPanes() {
+    paneGroup?.setLayout([50, 50]);
+    trackEvent('reset_panes', { layout: $layout });
+  }
+
+  function persistSizes() {
+    try { localStorage.setItem('paneSizes', JSON.stringify(savedSizes)); } catch {}
+  }
+
+  onDestroy(() => {
+    clearTimeout(resizeTimeout);
+    persistSizes();
+  });
+
   // Styling helpers
   const handleBase =
-    "border border-border flex items-center justify-center relative bg-slate-50 dark:bg-background " +
-    "hover:bg-black/2 dark:hover:bg-white/5 active:bg-black/5 dark:active:bg-white/10 " +
+    "flex items-center justify-center relative bg-card " +
+    "hover:bg-secondary active:bg-secondary transition-colors " +
     "select-none touch-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/60 " +
-    "before:content-[''] before:absolute before:bg-border before:rounded-sm " +
-    "hover:before:bg-(--accent) active:before:bg-(--accent)";
+    "after:w-5 data-[direction=vertical]:after:h-5 " +
+    "before:content-[''] before:absolute before:bg-border before:rounded-full " +
+    "hover:before:bg-primary/50 active:before:bg-primary";
 
   const handleVertical =
-    "border-x-0 h-4! cursor-ns-resize before:w-[60px] before:h-[6px]";
+    "border-y border-border h-2.5! cursor-ns-resize before:w-9 before:h-[3px]";
 
   const handleHorizontal =
-    "border-y-0 w-4! cursor-ew-resize before:h-[60px] before:w-[6px]";
+    "border-x border-border w-2.5! cursor-ew-resize before:h-9 before:w-[3px]";
 </script>
 
+<svelte:window onpagehide={persistSizes} />
+
 <div
-  class="relative"
+  id="equation-workspace"
+  class="relative min-h-0 flex flex-col"
   class:border={!$fullscreen}
   class:border-border={!$fullscreen}
   class:flex-1={$fullscreen}
   class:mb-0={true}
   class:h-[500px]={!$fullscreen}
 >
-  <Resizable.PaneGroup {direction} {onLayoutChange}>
+  <Resizable.PaneGroup bind:this={paneGroup} {direction} {onLayoutChange} keyboardResizeBy={5} class="min-h-0 flex-1">
     <Resizable.Pane defaultSize={50} minSize={30} id="editor-pane">
       <div class="relative h-full flex flex-col min-h-0">
         <div class="absolute top-2.5 right-2.5 z-10">
@@ -77,14 +123,25 @@
       aria-orientation={direction}
       aria-controls="editor-pane preview-pane"
       data-orientation={direction}
+      aria-label="Resize editor and preview"
+      title="Drag to resize · Double-click or Enter to reset"
+      ondblclick={resetPanes}
+      onkeydowncapture={event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          resetPanes();
+        }
+      }}
+      onDraggingChange={dragging => { if (!dragging) persistSizes(); }}
       class={`${handleBase} ${direction === "vertical" ? handleVertical : handleHorizontal}`}
     />
 
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
       <section class="h-full min-h-0 flex flex-col bg-card text-center">
         <div id="preview-toolbar" class="flex shrink-0 items-center justify-between gap-2 p-2.5">
-          <div class="hidden sm:block">
-            <LayoutToggle />
+          <div class="flex items-center gap-0.5">
+            <div class="hidden sm:block"><LayoutToggle /></div>
+            <FullscreenToggle />
           </div>
           <div class="ml-auto">
             <ZoomControls />
@@ -92,10 +149,8 @@
         </div>
 
         <MathPreview />
-        <div id="preview-actions" class="flex shrink-0 justify-end p-2.5 font-sans">
-          <SaveButton />
-        </div>
       </section>
     </Resizable.Pane>
   </Resizable.PaneGroup>
+  <ExportBar />
 </div>

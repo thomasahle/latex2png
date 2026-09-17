@@ -12,9 +12,10 @@
 </script>
 
 <Button
-  variant="secondary"
-  size="icon"
+  variant="ghost"
+  size="icon-sm"
   aria-label="Toggle layout orientation"
+  title={$layout === 'stacked' ? 'Side by side' : 'Stack vertically'}
   onclick={toggleLayout}
 >
   {#if $layout === "stacked"}

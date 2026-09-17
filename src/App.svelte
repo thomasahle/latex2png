@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import Navbar from "./lib/components/Navbar.svelte";
   import EditorContainer from "./lib/components/EditorContainer.svelte";
   import LatexToolbar from "./lib/components/LatexToolbar.svelte";
@@ -9,10 +9,26 @@
   import { layout } from "./lib/stores/layout.js";
   import { fullscreen } from "./lib/stores/fullscreen.js";
   import { trackEvent } from "./lib/utils/analytics.js";
+  import { vimMode } from './lib/stores/vimMode.js';
 
   let editor = $state(null);
 
-  onMount(() => document.body.classList.add("loaded"));
+  onMount(() => {
+    document.body.classList.add('loaded');
+    const originalOverflow = document.body.style.overflow;
+    let wasFullscreen = false;
+    const unsubscribe = fullscreen.subscribe(async enabled => {
+      if (enabled === wasFullscreen) return;
+      wasFullscreen = enabled;
+      document.body.style.overflow = enabled ? 'hidden' : originalOverflow;
+      await tick();
+      if (enabled === wasFullscreen) window.scrollTo({ top: enabled ? 0 : fullscreen.getPreviousScroll(), behavior: 'instant' });
+    });
+    return () => {
+      unsubscribe();
+      document.body.style.overflow = originalOverflow;
+    };
+  });
 
   function showExample() {
     const randomExample =
@@ -23,7 +39,18 @@
     });
   }
 
+  function handleEscape(event) {
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || !$fullscreen) return;
+    // Let menus and Vim consume Escape before leaving the workspace.
+    if (document.querySelector('[role="menu"][data-state="open"], [role="dialog"][data-state="open"]')) return;
+    if ($vimMode && event.target.closest?.('.cm-editor')) return;
+    fullscreen.set(false);
+    trackEvent('toggle_fullscreen', { fullscreen: false, method: 'escape' });
+  }
+
 </script>
+
+<svelte:window onkeydown={handleEscape} />
 
 <div
   class="bg-background text-foreground font-serif"
