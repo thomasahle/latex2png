@@ -242,7 +242,45 @@ try {
   await divider.press('Enter');
   assert.equal(await divider.getAttribute('aria-valuenow'), '50', 'keyboard reset restores balanced panes');
 
+  const workspace = page.locator('#equation-workspace');
+  const heightHandle = page.getByRole('separator', { name: 'Resize workspace height', exact: true });
+  const heightEditor = await editor.elementHandle();
+  const heightSource = await editor.innerText();
+  const originalHeight = (await workspace.boundingBox()).height;
+  const grip = await heightHandle.boundingBox();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2 + 100, { steps: 5 });
+  await page.mouse.up();
+  assert.equal((await workspace.boundingBox()).height, originalHeight + 100, 'bottom handle grows the whole workspace');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '50', 'height resize preserves the split');
+  assert.equal(await heightEditor.evaluate(node => node.isConnected), true, 'height resize keeps the editor mounted');
+  assert.equal(await editor.innerText(), heightSource);
+
+  // Cancelling a drag restores its starting height and releases capture.
+  const cancelGrip = await heightHandle.boundingBox();
+  await page.mouse.move(cancelGrip.x + cancelGrip.width / 2, cancelGrip.y + cancelGrip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(cancelGrip.x + cancelGrip.width / 2, cancelGrip.y + cancelGrip.height / 2 - 40);
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  assert.equal((await workspace.boundingBox()).height, originalHeight + 100);
+
+  await heightHandle.press('Home');
+  await heightHandle.press('ArrowUp');
+  assert.equal((await workspace.boundingBox()).height, 360, 'height is bounded below');
+  await heightHandle.press('End');
+  await heightHandle.press('ArrowDown');
+  assert.equal((await workspace.boundingBox()).height, 1600, 'height is bounded above');
+  await heightHandle.press('Enter');
+  assert.equal((await workspace.boundingBox()).height, originalHeight, 'Enter resets workspace height');
+  await heightHandle.press('Shift+ArrowDown');
+  await page.reload();
+  await ready();
+  assert.equal((await workspace.boundingBox()).height, originalHeight + 100, 'workspace height survives reload');
+
   await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
+  assert.equal(await heightHandle.count(), 0, 'fullscreen uses the viewport height');
   assert.equal(await page.evaluate(() => window.scrollY), 0, 'fullscreen starts at the viewport top');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.keyboard.press('Escape');
@@ -250,6 +288,9 @@ try {
   await page.locator('[role="menu"]:not([data-latex-toolbar-layer])').waitFor({ state: 'detached' });
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).waitFor();
+  assert.equal((await workspace.boundingBox()).height, originalHeight + 100, 'leaving fullscreen restores custom height');
+  await heightHandle.dblclick();
+  assert.equal((await workspace.boundingBox()).height, originalHeight, 'double-click resets workspace height');
   await page.setViewportSize({ width: 1280, height: 600 });
   // Let the browser finish scroll anchoring after changing viewport height.
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -269,7 +310,7 @@ try {
   await page.keyboard.press('Escape');
   await page.waitForFunction(y => window.scrollY === y, previousScroll);
   await page.setViewportSize({ width: 1280, height: 844 });
-  console.log('Workspace: separate remembered splits, reset, stable exports, fullscreen Escape');
+  console.log('Workspace: remembered splits and height, pointer/keyboard resize, reset, stable exports, fullscreen Escape');
 
   await setEquation(formula);
   await page.getByRole('slider', { name: 'Zoom level' }).fill('1');

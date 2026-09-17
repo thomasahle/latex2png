@@ -30,8 +30,9 @@ SNAP_BASE_URL=http://127.0.0.1:4173/latex2png/ npm test
 This checks render races, immediate exports and copies, error recovery,
 accessible math, keyboard navigation, mobile layouts, export snapshots in both
 themes, and every symbol. `npm run test:unit` needs no browser or server.
-The UI suite also checks export settings, remembered pane sizes, double-click
-reset, and fullscreen entry/exit (including menu and Vim keyboard behavior).
+The UI suite also checks export settings, remembered pane sizes and workspace
+height, pointer and keyboard resizing, reset, and fullscreen entry/exit
+(including menu and Vim keyboard behavior).
 `npm run generate:symbols` validates and regenerates the menu icons.
 Update export baselines deliberately with `UPDATE_SNAPSHOTS=1 npm run test:snap`.
 
