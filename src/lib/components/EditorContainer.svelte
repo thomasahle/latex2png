@@ -236,7 +236,7 @@
       onlostpointercapture={() => finishHeightResize()}
       ondblclick={resetHeight}
       onkeydown={handleHeightKey}
-      class="group relative flex h-3 shrink-0 cursor-ns-resize touch-none select-none items-center justify-center border-t border-border bg-card hover:bg-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/60 after:absolute after:inset-x-0 after:-inset-y-1"
+      class="group relative -mb-px flex h-2.5 shrink-0 cursor-ns-resize touch-none select-none items-center justify-center border-y border-border bg-card hover:bg-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/60 after:absolute after:inset-x-0 after:top-1/2 after:h-5 after:-translate-y-1/2"
     >
       <span aria-hidden="true" class="h-[3px] w-9 rounded-full bg-border group-hover:bg-primary/50 group-active:bg-primary"></span>
     </div>
