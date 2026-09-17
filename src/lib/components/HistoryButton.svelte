@@ -58,7 +58,7 @@
       if (renderedPreviews[entry.timestamp]) continue;
       try {
         const latex = prepareLatex(entry.latex);
-        const svg = await renderLatexToSvg(latex, false); // inline math
+        const svg = await renderLatexToSvg(latex, false, { key: null }); // inline math
         renderedPreviews[entry.timestamp] = svg;
         renderedPreviews = { ...renderedPreviews }; // trigger reactivity
       } catch (err) {

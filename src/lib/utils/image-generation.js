@@ -180,18 +180,3 @@ function normalizeColor(color) {
   ctx.fillStyle = color;
   return ctx.fillStyle; // normalized css color string
 }
-
-/**
- * Download a canvas as an image file.
- * @param {HTMLCanvasElement} canvas
- * @param {string} filename
- */
-export function downloadImage(canvas, filename) {
-  const extension = filename.split('.').pop().toLowerCase();
-  const mimeType = extension === 'jpeg' || extension === 'jpg' ? 'image/jpeg' : 'image/png';
-  const dataUrl = canvas.toDataURL(mimeType);
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = filename;
-  link.click();
-}

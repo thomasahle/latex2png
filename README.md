@@ -19,7 +19,7 @@ npm run build
 
 ## Testing
 
-Install Chromium once with `npx playwright install chromium`. Start the built
+Install browsers once with `npx playwright install chromium firefox webkit`. Start the built
 site in one terminal with `npm run preview -- --host 127.0.0.1 --port 4173`,
 then run the full suite in another:
 
@@ -29,7 +29,21 @@ SNAP_BASE_URL=http://127.0.0.1:4173/latex2png/ npm test
 
 This checks render races, immediate exports and copies, error recovery,
 accessible math, keyboard navigation, mobile layouts, export snapshots in both
-themes, and every symbol. `npm run test:unit` needs no browser or server.
+themes, and every symbol. `npm run test:unit` needs no browser or server and covers
+render races, storage errors and flushes, shared-link initialization, format
+capabilities, and worker retry/timeout/termination behavior.
+
+UI cases run in independent contexts in Chromium, Firefox, and WebKit. Dedicated
+Pixel and iPhone profiles check mobile touch controls, portrait/landscape layout,
+exports and persistence. These are device emulations, not physical-device tests. Run a single area
+with `npm run test:ui -- tests/ui/exports.spec.mjs`, select a browser with
+`--project=webkit`, or filter by title with `-g "custom color"`. Failures keep a
+screenshot and trace in `test-results/` (also uploaded by CI). Clipboard and
+native sharing APIs are mocked to inspect their payloads; OS dialogs and drops
+into other desktop applications still require manual checks. Native touch
+injection and the detailed native-file drag checks use Chromium's DevTools
+protocol; the shared desktop UI behavior is checked in all three engines.
+
 The UI suite also checks export settings, remembered pane sizes and workspace
 height, pointer and keyboard resizing, reset, and fullscreen entry/exit
 (including menu and Vim keyboard behavior).

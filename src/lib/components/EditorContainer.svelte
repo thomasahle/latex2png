@@ -1,5 +1,6 @@
 <script>
   import { onDestroy, untrack } from 'svelte';
+  import { readStoredValue, writeStoredValue } from '../stores/persisted.js';
   import { layout } from "../stores/layout.js";
   import { fullscreen } from "../stores/fullscreen.js";
   import LatexEditor from "./LatexEditor.svelte";
@@ -18,11 +19,9 @@
   const defaultHeight = 500;
   const minHeight = 360;
   const maxHeight = 1600;
-  let workspaceHeight = $state(defaultHeight);
-  try {
-    const saved = Number(localStorage.getItem('workspaceHeight'));
-    if (Number.isFinite(saved) && saved >= minHeight && saved <= maxHeight) workspaceHeight = saved;
-  } catch {}
+  let workspaceHeight = $state(readStoredValue('workspaceHeight', defaultHeight, {
+    validate: value => Number.isFinite(value) && value >= minHeight && value <= maxHeight,
+  }));
 
   function setHeight(height) {
     workspaceHeight = Math.round(Math.max(minHeight, Math.min(maxHeight, height)));
@@ -33,11 +32,9 @@
   let paneGroup = $state(null);
   let editorSize = $state(50);
   let activeDirection;
-  let savedSizes = {};
-  try {
-    const saved = JSON.parse(localStorage.getItem('paneSizes') || '{}');
-    if (saved && typeof saved === 'object' && !Array.isArray(saved)) savedSizes = saved;
-  } catch {}
+  let savedSizes = readStoredValue('paneSizes', {}, {
+    validate: value => value && typeof value === 'object' && !Array.isArray(value),
+  });
 
   function getSavedSizes(key) {
     const sizes = savedSizes[key];
@@ -87,10 +84,8 @@
   }
 
   function persistLayout() {
-    try {
-      localStorage.setItem('paneSizes', JSON.stringify(savedSizes));
-      localStorage.setItem('workspaceHeight', String(workspaceHeight));
-    } catch {}
+    writeStoredValue('paneSizes', savedSizes);
+    writeStoredValue('workspaceHeight', workspaceHeight);
   }
 
   onDestroy(() => {

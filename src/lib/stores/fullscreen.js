@@ -1,30 +1,16 @@
-import { writable } from 'svelte/store';
+import { get } from 'svelte/store';
+import { persisted } from './persisted.js';
 
-function createFullscreenStore() {
-  const savedFullscreen = (() => {
-    const saved = localStorage.getItem('fullscreen');
-    return saved === 'true';
-  })();
-
-  const { subscribe, set } = writable(savedFullscreen);
-  let current = savedFullscreen;
-  let previousScroll = 0;
-
-  function setFullscreen(value) {
-    // Capture before notifying Svelte: reducing the page height can clamp
-    // scrollY to zero before component subscriptions or effects run.
-    if (value && !current) previousScroll = window.scrollY;
-    current = value;
-    set(value);
-    localStorage.setItem('fullscreen', value.toString());
-  }
-
-  return {
-    subscribe,
-    set: setFullscreen,
-    toggle: () => setFullscreen(!current),
-    getPreviousScroll: () => previousScroll,
-  };
+const store = persisted('fullscreen', false, { validate: value => typeof value === 'boolean' });
+let previousScroll = 0;
+function set(value) {
+  if (typeof value !== 'boolean') return;
+  // Capture before Svelte reduces the page height and clamps scrollY.
+  if (value && !get(store)) previousScroll = window.scrollY;
+  store.set(value);
 }
-
-export const fullscreen = createFullscreenStore();
+export const fullscreen = {
+  subscribe: store.subscribe, set,
+  toggle: () => set(!get(store)),
+  getPreviousScroll: () => previousScroll,
+};

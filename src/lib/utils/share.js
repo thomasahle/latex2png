@@ -1,11 +1,8 @@
-import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
-import { exportBackground } from "../stores/exportSettings.js";
-import { zoom } from "../stores/zoom.js";
 import { ensureCurrentPreview } from "../services/preview-service.js";
-import { generateImage } from "./image-generation.js";
+import { renderExport, captureExportOptions, downloadExport } from "../services/export-service.js";
 import { trackEvent, trackError } from "./analytics.js";
 
 const IS_SECURE = window.isSecureContext;
@@ -13,41 +10,6 @@ const IS_SECURE = window.isSecureContext;
 // ---------- helpers ----------
 function getLatexCode() {
   return get(latexContent);
-}
-
-async function nextFrame() {
-  return new Promise(requestAnimationFrame);
-}
-
-async function ensureFontsReady() {
-  try {
-    if (document.fonts?.ready) await document.fonts.ready;
-  } catch (error) {
-    trackError(error, { context: 'ensureFontsReady' });
-  }
-}
-
-async function canvasToBlob(canvas, type = "image/png", quality) {
-  return new Promise((resolve, reject) => {
-    try {
-      canvas.toBlob(b => (b ? resolve(b) : reject(new Error("toBlob returned null"))), type, quality);
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Delay revocation to ensure download completes (click is async in some browsers)
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function fallbackCopyText(text) {
@@ -78,24 +40,8 @@ async function buildShareUrl({ compress = false, useHash = false } = {}) {
   return useHash ? `${base}#${params}` : `${base}?${params}`;
 }
 
-async function renderCanvas() {
-  await ensureFontsReady();
-  await nextFrame();
-
-  const { element: previewElement } = await ensureCurrentPreview();
-  const scaleOverride = get(zoom);
-  try {
-    return await generateImage(previewElement, scaleOverride ?? 1, exportBackground());
-  } catch (error) {
-    trackError(error, { context: 'renderCanvas_fallback', fallback: 'html2canvas' });
-    const { element: currentElement } = await ensureCurrentPreview();
-    return await html2canvas(currentElement, {
-      scale: scaleOverride ?? Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
-      useCORS: true,
-      backgroundColor: exportBackground(),
-      logging: false
-    });
-  }
+function renderShareImage() {
+  return renderExport({ format: 'PNG', options: captureExportOptions() });
 }
 
 // ---------- public API ----------
@@ -136,8 +82,8 @@ export async function shareToTwitter() {
 
 export async function copyImage() {
   try {
-    const canvas = await renderCanvas();
-    const blob = await canvasToBlob(canvas, "image/png");
+    const image = await renderShareImage();
+    const { blob } = image;
 
     if (IS_SECURE && navigator.clipboard?.write && "ClipboardItem" in window) {
       try {
@@ -151,7 +97,7 @@ export async function copyImage() {
       }
     }
 
-    downloadBlob(blob, "latex-image.png");
+    downloadExport(image);
     toast.info("Clipboard not supported; downloaded the image instead.");
     trackEvent('share', { method: 'copy_image_fallback' });
   } catch (error) {
@@ -182,9 +128,9 @@ export async function copyMathML() {
 
 export async function shareImage() {
   try {
-    const canvas = await renderCanvas();
-    const blob = await canvasToBlob(canvas, "image/png");
-    const file = new File([blob], "latex-image.png", { type: "image/png" });
+    const image = await renderShareImage();
+    const { blob } = image;
+    const file = new File([blob], image.filename, { type: "image/png" });
 
     if (navigator.canShare?.({ files: [file] })) {
       try {
@@ -212,7 +158,7 @@ export async function shareImage() {
       }
     }
 
-    downloadBlob(blob, "latex-image.png");
+    downloadExport(image);
     toast.info("Image sharing not supported; downloaded the image instead.");
     trackEvent('share', { method: 'share_fallback_download' });
   } catch (error) {

@@ -1,47 +1,21 @@
-import { writable } from 'svelte/store';
+import { derived, readable } from 'svelte/store';
+import { persisted } from './persisted.js';
 
-function createLayoutStore() {
-  const savedLayout = localStorage.getItem('layout') || 'stacked';
-  let userPreference = savedLayout; // Track what user actually wants
-
-  const { subscribe, set, update } = writable(savedLayout);
-  
-  // Force stacked layout on mobile but remember user preference
-  if (typeof window !== 'undefined') {
-    const mediaQuery = window.matchMedia('(max-width: 639px)');
-    
-    const handleResize = (e) => {
-      if (e.matches) {
-        // Mobile: force stacked but don't change user preference
-        set('stacked');
-      } else {
-        // Desktop: restore user preference
-        set(userPreference);
-      }
-    };
-    
-    // Check on init
-    if (mediaQuery.matches) {
-      set('stacked');
-    }
-    
-    mediaQuery.addEventListener('change', handleResize);
-  }
-
-  return {
-    subscribe,
-    set: (value) => {
-      userPreference = value;
-      set(value);
-      localStorage.setItem('layout', value);
-    },
-    toggle: () => {
-      const next = userPreference === 'side-by-side' ? 'stacked' : 'side-by-side';
-      userPreference = next;
-      set(next);
-      localStorage.setItem('layout', next);
-    }
-  };
-}
-
-export const layout = createLayoutStore();
+const preference = persisted('layout', 'stacked', {
+  parse: value => value, serialize: value => value,
+  validate: value => value === 'stacked' || value === 'side-by-side',
+});
+const mobile = readable(false, set => {
+  const query = globalThis.window?.matchMedia('(max-width: 639px)');
+  if (!query) return;
+  const update = () => set(query.matches);
+  update();
+  query.addEventListener('change', update);
+  return () => query.removeEventListener('change', update);
+});
+const effective = derived([preference, mobile], ([value, isMobile]) => isMobile ? 'stacked' : value);
+export const layout = {
+  subscribe: effective.subscribe,
+  set: preference.set,
+  toggle: () => preference.update(value => value === 'stacked' ? 'side-by-side' : 'stacked'),
+};

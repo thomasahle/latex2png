@@ -9,3 +9,5 @@ dist/
 # Environment files
 .env
 snapshots/*.actual
+test-results/
+playwright-report/

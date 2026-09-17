@@ -3,20 +3,20 @@
   import ExportSelect from './ExportSelect.svelte';
   import { toast } from '$lib/components/ui/sonner';
   import { exportSettings, exportFormats } from '../stores/exportSettings.js';
-  import { savePNG, saveJPEG, saveSVG, savePDF } from '../utils/save.js';
+  import { saveImage } from '../utils/save.js';
+  import { exportFormats as formats, effectiveBackground } from '../utils/export-formats.js';
   import { copyImage } from '../utils/share.js';
   import CopyIcon from '@lucide/svelte/icons/copy';
   import DownloadIcon from '@lucide/svelte/icons/download';
   import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
-  const saveActions = { PNG: savePNG, JPEG: saveJPEG, SVG: saveSVG, PDF: savePDF };
   let saving = $state(false);
   let copying = $state(false);
   let colorInput;
-  const opaque = $derived(['JPEG', 'PDF'].includes($exportSettings.format));
-  const background = $derived(opaque && $exportSettings.background === 'transparent' ? 'solid' : $exportSettings.background);
+  const opaque = $derived(!formats[$exportSettings.format].transparent);
+  const background = $derived(effectiveBackground($exportSettings));
   const backgroundOptions = $derived([
-    { value: 'transparent', label: 'Transparent', disabled: opaque, title: opaque ? ($exportSettings.format === 'JPEG' ? "JPEG doesn't support transparency" : 'PDF exports use an opaque page background') : undefined },
+    { value: 'transparent', label: 'Transparent', disabled: opaque, title: formats[$exportSettings.format].transparencyReason },
     { value: 'solid', label: 'Solid' },
     { value: 'custom', label: 'Custom', color: $exportSettings.customColor },
   ]);
@@ -33,7 +33,7 @@
     if (saving) return;
     saving = true;
     try {
-      await saveActions[$exportSettings.format]();
+      await saveImage($exportSettings.format);
     } catch (error) {
       toast.error(`Download failed: ${error.message}`);
     } finally {

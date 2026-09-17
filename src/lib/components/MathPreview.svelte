@@ -2,11 +2,11 @@
   import { onMount, onDestroy, untrack } from "svelte";
   import { latexContent } from "../stores/content.js";
   import { zoom } from "../stores/zoom.js";
-  import { exportSettings, exportBackground } from "../stores/exportSettings.js";
+  import { exportSettings } from "../stores/exportSettings.js";
   import { theme } from "../stores/theme.js";
   import { wrapContent } from "../stores/wrapContent.js";
-  import { generateImage } from "../utils/image-generation.js";
-  import { trackEvent, trackError } from "../utils/analytics.js";
+  import { createFormulaDrag } from "../utils/formula-drag.js";
+  import { trackEvent } from "../utils/analytics.js";
   import { saveMenuItems } from "../utils/saveMenuItems.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { toast } from "$lib/components/ui/sonner";
@@ -19,17 +19,14 @@
   let dragImageElement = $state(null);
   let accessibleMath = $state("");
   let renderer;
-  let dragVersion = 0;
-  let disposed = false;
   let contextMenuOpen = $state(false);
   let contextMenuPosition = $state({ x: 0, y: 0 });
   let dragPngUrl = $state(null);
-  let dragPngFile = null;
-  let pngDataUrl = $state(null);
-  let dragDownloadDataUrl = $state(null);
   let displaySize = $state({ width: 0, height: 0 });
-  const dragFileName = "latex-equation.png";
-  let dragPngGenerationPromise = null;
+  const drag = createFormulaDrag({
+    getState: () => ({ previewElement, dragImageElement, currentLatex, ready: $previewState.status === 'ready' }),
+    onUrl: url => { dragPngUrl = url; },
+  });
 
   function measureDisplay() {
     if (!previewElement) return;
@@ -43,7 +40,7 @@
   }
 
   function scheduleRender() {
-    invalidateDragPng();
+    drag.invalidate();
     accessibleMath = "";
     renderer.schedule({ latex: currentLatex, shouldWrap: currentWrap });
   }
@@ -60,56 +57,6 @@
   let unsubscribeWrap;
   let currentLatex = "";
   let currentWrap = true;
-
-  function invalidateDragPng() {
-    dragVersion++;
-    dragPngGenerationPromise = null;
-    if (dragPngUrl) {
-      URL.revokeObjectURL(dragPngUrl);
-      dragPngUrl = null;
-    }
-    pngDataUrl = null;
-    dragPngFile = null;
-    dragDownloadDataUrl = null;
-  }
-
-  async function ensureDragPng() {
-    if (disposed || $previewState.status !== 'ready' || !currentLatex.trim()) return null;
-    if (!previewElement?.querySelector('mjx-container svg')) return null;
-    if (pngDataUrl) return dragPngUrl;
-    if (dragPngGenerationPromise) return dragPngGenerationPromise;
-    const version = dragVersion;
-    const promise = (async () => {
-      const canvas = await generateImage(previewElement, $zoom, exportBackground());
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob || version !== dragVersion || disposed) return null;
-      const dataUrl = canvas.toDataURL("image/png");
-      dragPngFile = new File([blob], dragFileName, { type: "image/png" });
-      pngDataUrl = dataUrl;
-      dragDownloadDataUrl = dataUrl.replace("image/png", "application/octet-stream");
-      dragPngUrl = URL.createObjectURL(dragPngFile);
-      return dragPngUrl;
-    })();
-    dragPngGenerationPromise = promise;
-    try {
-      return await promise;
-    } catch (error) {
-      trackError(error, { context: 'drag_preview' });
-      return null;
-    } finally {
-      if (dragPngGenerationPromise === promise) dragPngGenerationPromise = null;
-    }
-  }
-
-  let dragCleanup = null;
-
-  function escapeAttr(text) {
-    return text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
 
   function handleContextMenu(event) {
     event.preventDefault();
@@ -129,92 +76,6 @@
     }
   }
 
-  function handleMouseDown() {
-    // Start generating drag image on mousedown to have it ready by dragstart
-    ensureDragPng();
-  }
-
-  function handleDragStart(event) {
-    if (!pngDataUrl || $previewState.status !== 'ready' ||
-        (event.currentTarget === dragImageElement && !dragImageElement?.naturalWidth)) {
-      event.preventDefault();
-      return;
-    }
-    const dt = event.dataTransfer;
-    if (!dt) return;
-
-    trackEvent("drag_formula", { method: "drag" });
-
-    dt.clearData();
-    dt.effectAllowed = "copy";
-    dt.dropEffect = "copy";
-
-    // Set grabbing cursor during drag
-    previewElement.style.cursor = "grabbing";
-    previewElement.style.backgroundColor = exportBackground() || "transparent";
-    if (dragImageElement) dragImageElement.style.cursor = "grabbing";
-
-    // The formula has its own stacking context so the snapshot cannot include
-    // the panel behind it. Keep its CSS size and zoom; exports include padding
-    // and Retina pixels that must not enlarge the cursor preview.
-    const rect = previewElement.getBoundingClientRect();
-    const relativeX = event.clientX - rect.left;
-    const relativeY = event.clientY - rect.top;
-    dt.setDragImage(previewElement, relativeX, relativeY);
-
-    const downloadSource = dragDownloadDataUrl || pngDataUrl;
-    const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
-    dt.setData("DownloadURL", downloadPayload);
-    dt.setData("text/uri-list", pngDataUrl);
-    // Image for rich targets; the LaTeX source for plain-text targets so a
-    // drop into a text field doesn't paste a huge data URL.
-    dt.setData("text/html", `<img src="${pngDataUrl}" alt="${escapeAttr(currentLatex) || dragFileName}" />`);
-    dt.setData("text/plain", currentLatex);
-
-    // Upload drop zones read files, rather than image HTML or data URLs.
-    // Prepare the File ahead of time: the drag store is only writable
-    // synchronously during dragstart.
-    if (!dt.files.length && dragPngFile && dt.items?.add) {
-      try {
-        dt.items.add(dragPngFile);
-      } catch (error) {
-        // Keep the other formats available if this browser rejects files.
-        trackError(error, { context: 'drag_file' });
-      }
-    }
-
-    // Make document a drop target so drop fires immediately (no fly-back delay)
-    const handleDocDragOver = (e) => e.preventDefault();
-    const handleDocDrop = (e) => {
-      e.preventDefault();
-      resetCursor();
-    };
-    const resetCursor = () => {
-      if (previewElement) {
-        previewElement.style.cursor = "";
-        previewElement.style.backgroundColor = "";
-      }
-      if (dragImageElement) dragImageElement.style.cursor = "";
-      document.removeEventListener("dragover", handleDocDragOver);
-      document.removeEventListener("drop", handleDocDrop);
-      dragCleanup = null;
-    };
-
-    document.addEventListener("dragover", handleDocDragOver);
-    document.addEventListener("drop", handleDocDrop);
-    dragCleanup = resetCursor;
-  }
-
-  function handleDragEnd() {
-    if (dragCleanup) {
-      dragCleanup();
-    } else if (previewElement) {
-      previewElement.style.cursor = "";
-      previewElement.style.backgroundColor = "";
-      if (dragImageElement) dragImageElement.style.cursor = "";
-    }
-  }
-
   onMount(() => {
     // Initialize MathJax worker
     initWorker();
@@ -224,7 +85,7 @@
         previewElement.innerHTML = svg;
         accessibleMath = currentLatex.trim() ? mathml : "";
         measureDisplay();
-        setTimeout(() => ensureDragPng(), 0);
+        drag.schedule();
       },
       onState: (state) => {
         previewState.set(state);
@@ -257,16 +118,9 @@
     };
   });
 
-  onDestroy(() => {
-    disposed = true;
-    clearTimeout(zoomDebounceTimer);
-    dragCleanup?.();
-    invalidateDragPng();
-  });
+  onDestroy(() => drag.dispose());
 
-  // Regenerate drag images when their size or colors change.
-  let zoomDebounceTimer;
-
+  // Display measurements stay in the component; drag asset lifecycle is shared.
   $effect(() => {
     const z = $zoom;
     const currentTheme = $theme;
@@ -274,16 +128,9 @@
     if (!previewElement) return;
     untrack(() => {
       measureDisplay();
-      invalidateDragPng();
+      drag.invalidate();
     });
-    clearTimeout(zoomDebounceTimer);
-    zoomDebounceTimer = setTimeout(() => {
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => ensureDragPng(), { timeout: 2000 });
-      } else {
-        ensureDragPng();
-      }
-    }, 300);
+    drag.schedule(300);
   });
 </script>
 
@@ -315,9 +162,9 @@
       bind:this={previewElement}
       class="relative isolate inline-block cursor-grab"
       draggable="true"
-      onmousedown={handleMouseDown}
-      ondragstart={handleDragStart}
-      ondragend={handleDragEnd}
+      onmousedown={drag.prepare}
+      ondragstart={drag.start}
+      ondragend={drag.end}
     ></div>
     {#if dragPngUrl}
       <!-- A native image source lets Chromium carry PNG bytes to file-only
@@ -332,9 +179,9 @@
         aria-hidden="true"
         class="absolute inset-0 h-full w-full opacity-0 cursor-grab"
         draggable="true"
-        onmousedown={handleMouseDown}
-        ondragstart={handleDragStart}
-        ondragend={handleDragEnd}
+        onmousedown={drag.prepare}
+        ondragstart={drag.start}
+        ondragend={drag.end}
       />
     {/if}
   </div>

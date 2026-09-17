@@ -1,4 +1,5 @@
 <script>
+  import { readStoredValue, writeStoredValue } from '../stores/persisted.js';
   import { tick } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -16,7 +17,9 @@
   let triggerRegionEl = $state(null);
   let savedTop = $state(0);
   let contentEl = $state(null);
-  let recentCommands = $state([]);
+  let recentCommands = $state(readStoredValue('latexRecentCommands', [], {
+    validate: value => Array.isArray(value) && value.every(command => typeof command?.latex === 'string'),
+  }));
   let sectionRefs = $state({});
   let activeSection = $state(null);
   let lastSubTriggerPointerType = $state(null);
@@ -24,25 +27,13 @@
   let skipTriggerRefocus = false;
   const toolbarLayerSelector = "[data-latex-toolbar-layer]";
 
-  // Load recent commands from localStorage
-  $effect(() => {
-    const stored = localStorage.getItem("latexRecentCommands");
-    if (stored) {
-      try {
-        recentCommands = JSON.parse(stored);
-      } catch (e) {
-        recentCommands = [];
-      }
-    }
-  });
-
   function addToRecent(command) {
     // Remove if already exists
     const filtered = recentCommands.filter((c) => c.latex !== command.latex);
     // Add to front
     const updated = [command, ...filtered].slice(0, 18);
     recentCommands = updated;
-    localStorage.setItem("latexRecentCommands", JSON.stringify(updated));
+    writeStoredValue("latexRecentCommands", updated);
   }
 
   function markToolbarInteraction() {

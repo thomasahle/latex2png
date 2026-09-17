@@ -1,66 +1,34 @@
-import { writable } from 'svelte/store';
+import { persisted } from './persisted.js';
 
-function createContentStore() {
-  const { subscribe, set, update } = writable('');
-  let initialized = false;
-
-  // Read the shared LaTeX from the URL. Share links use either
-  // ?latex=<plain> or ?z=<lz-string compressed>&v=1 (see utils/share.js).
-  async function getLatexFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const latexParam = urlParams.get('latex');
-    if (latexParam) return latexParam;
-
-    const zParam = urlParams.get('z');
-    if (zParam) {
-      try {
-        const { decompressFromEncodedURIComponent } = await import('lz-string');
-        return decompressFromEncodedURIComponent(zParam) || '';
-      } catch (error) {
-        console.error('Failed to decode shared link:', error);
-      }
-    }
-    return '';
-  }
-
-  // Initialize content from URL or localStorage with delay to avoid race condition
-  if (typeof window !== 'undefined') {
-    setTimeout(async () => {
-      const latexParam = await getLatexFromUrl();
-
-      if (latexParam) {
-        set(latexParam);
-      } else {
-        const savedContent = localStorage.getItem('latexContent');
-        if (savedContent) {
-          set(savedContent);
-        }
-      }
-
-      // Enable localStorage saving after initialization
-      setTimeout(() => {
-        initialized = true;
-      }, 500);
-    }, 100);
-  }
-
-  // Debounce localStorage writes to avoid blocking during rapid typing
-  let saveTimeout;
-
+export function createContentStore(options = {}) {
+  const store = persisted('latexContent', '', {
+    parse: value => value, serialize: value => value,
+    validate: value => typeof value === 'string', debounce: 1000, ...options,
+  });
+  let revision = 0;
+  function set(value) { revision++; store.set(value); }
   return {
-    subscribe,
-    set: (value) => {
-      set(value);
-      // Only save to localStorage after initialization, debounced
-      if (initialized) {
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
-          localStorage.setItem('latexContent', value);
-        }, 1000);
+    ...store,
+    set,
+    update(callback) { revision++; store.update(callback); },
+    async initialize(url, decompress = async value => {
+      const { decompressFromEncodedURIComponent } = await import('lz-string');
+      return decompressFromEncodedURIComponent(value);
+    }) {
+      const startingRevision = revision;
+      const params = new URLSearchParams(url.search || url.hash?.slice(1));
+      if (params.has('latex')) {
+        set(params.get('latex'));
+      } else if (params.has('z')) {
+        try {
+          const latex = await decompress(params.get('z'));
+          // A delayed shared link must never overwrite a newer edit.
+          if (typeof latex === 'string' && revision === startingRevision) set(latex);
+        } catch { /* Keep the saved equation if the shared link cannot be decoded. */ }
       }
     },
-    update
   };
 }
 
 export const latexContent = createContentStore();
+if (import.meta.hot) import.meta.hot.dispose(() => latexContent.destroy());

@@ -27,8 +27,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Install test browser
-        run: npx playwright install --with-deps chromium
+      - name: Install test browsers
+        run: npx playwright install --with-deps chromium firefox webkit
       - name: Validate every generated symbol
         run: |
           npm run generate:symbols
@@ -51,6 +51,7 @@ jobs:
           name: test-failures
           path: |
             snapshots/*.actual
+            test-results/
             /tmp/preview.log
           if-no-files-found: ignore
       - name: Upload Pages artifact
