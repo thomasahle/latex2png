@@ -9,6 +9,7 @@
   import * as Resizable from "$lib/components/ui/resizable";
   import SaveButton from "./SaveButton.svelte";
   import { trackEvent } from "../utils/analytics.js";
+  import { previewState } from "../services/preview-service.js";
 
   let { editorInstance = $bindable(null) } = $props();
 
@@ -54,11 +55,20 @@
 >
   <Resizable.PaneGroup {direction} {onLayoutChange}>
     <Resizable.Pane defaultSize={50} minSize={30} id="editor-pane">
-      <div class="relative h-full">
+      <div class="relative h-full flex flex-col min-h-0">
         <div class="absolute top-2.5 right-2.5 z-10">
           <LatexToolbar {editorInstance} />
         </div>
         <LatexEditor bind:editorInstance />
+        <p
+          id="latex-feedback"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          data-mathjax-error={$previewState.status === 'error' ? '' : undefined}
+          class="shrink-0 max-h-20 overflow-auto px-2.5 text-sm font-sans text-red-600 dark:text-red-400"
+          class:py-2={$previewState.status === 'error'}
+        >{$previewState.error ? `Check your LaTeX: ${$previewState.error}` : ''}</p>
       </div>
     </Resizable.Pane>
 
@@ -71,20 +81,20 @@
     />
 
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
-      <section class="h-full min-h-[200px] bg-card text-center relative pt-2.5">
-        <div class="absolute top-2.5 right-2.5 z-10">
-          <ZoomControls />
-        </div>
-
-        <div class="hidden sm:block absolute top-2.5 left-2.5 z-10">
-          <LayoutToggle />
-        </div>
-
-        <div class="absolute bottom-2.5 right-2.5 z-10 font-sans">
-          <SaveButton />
+      <section class="h-full min-h-0 flex flex-col bg-card text-center">
+        <div id="preview-toolbar" class="flex shrink-0 items-center justify-between gap-2 p-2.5">
+          <div class="hidden sm:block">
+            <LayoutToggle />
+          </div>
+          <div class="ml-auto">
+            <ZoomControls />
+          </div>
         </div>
 
         <MathPreview />
+        <div id="preview-actions" class="flex shrink-0 justify-end p-2.5 font-sans">
+          <SaveButton />
+        </div>
       </section>
     </Resizable.Pane>
   </Resizable.PaneGroup>

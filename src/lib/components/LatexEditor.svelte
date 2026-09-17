@@ -13,6 +13,7 @@
   import { theme } from "../stores/theme.js";
   import { vimMode } from "../stores/vimMode.js";
   import { latexCompletions } from "../utils/latexCompletions.js";
+  import { previewState } from "../services/preview-service.js";
 
   let { editorInstance = $bindable(null) } = $props();
   let editorElement = $state(null);
@@ -27,6 +28,11 @@
       doc: "",
       extensions: [
         minimalSetup,
+        EditorView.contentAttributes.of({
+          'aria-label': 'LaTeX equation',
+          'aria-describedby': 'latex-feedback',
+          'aria-multiline': 'true',
+        }),
         latex().language,
         bracketMatching(),
         closeBrackets(),
@@ -55,7 +61,7 @@
             // Extra right padding keeps wrapped text clear of the symbol
             // toolbar button overlaid in the pane's top-right corner.
             padding: "10px 48px 10px 10px",
-            minHeight: "200px",
+            minHeight: "100%",
           },
         }),
       ],
@@ -87,6 +93,9 @@
       latexContent.set(text);
     });
     editorInstance = editor;
+    const unsubscribePreview = previewState.subscribe(({ status }) => {
+      editor.view.contentDOM.setAttribute('aria-invalid', String(status === 'error'));
+    });
 
     // Sync store to editor
     const unsubscribeContent = latexContent.subscribe((value) => {
@@ -130,6 +139,7 @@
       unsubscribeFullscreen();
       unsubscribeTheme();
       unsubscribeVim();
+      unsubscribePreview();
     };
   });
 
@@ -140,4 +150,4 @@
   });
 </script>
 
-<div class="h-full min-h-[200px]" bind:this={editorElement}></div>
+<div class="flex-1 min-h-0" bind:this={editorElement}></div>

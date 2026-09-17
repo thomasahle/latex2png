@@ -167,6 +167,12 @@ export async function renderLatexToMathML(latex, display = true) {
   return sendRequest({ type: 'mathml', latex, display }, null);
 }
 
+// The preview manages obsolete responses itself. Never leave an export waiting
+// on a superseded worker promise.
+export async function renderLatexForPreview(latex) {
+  return sendRequest({ type: 'preview', latex, display: true }, null);
+}
+
 export function terminateWorker() {
   if (worker) {
     worker.terminate();

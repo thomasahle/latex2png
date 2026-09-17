@@ -1,13 +1,11 @@
 import { get } from 'svelte/store';
 import { zoom } from '../stores/zoom.js';
-import { latexContent } from '../stores/content.js';
 import { history } from '../stores/history.js';
-import { toast } from '../components/ui/sonner';
+import { ensureCurrentPreview } from '../services/preview-service.js';
 import { generateImage, generateSvg, downloadImage } from './image-generation.js';
 import { trackEvent, trackError } from './analytics.js';
 
-function addToHistory() {
-  const latex = get(latexContent);
+function addToHistory(latex) {
   if (latex) {
     history.add(latex);
   }
@@ -37,20 +35,14 @@ function resolveBackgroundColor(previewElement) {
 }
 
 export async function savePNG() {
-  const previewElement = document.querySelector('#math-preview');
-  if (!previewElement) {
-    toast.error('Preview not found');
-    trackError(new Error('Preview not found'), { context: 'savePNG' });
-    return;
-  }
-
   try {
+    const { element: previewElement, latex } = await ensureCurrentPreview();
     const zoomScale = get(zoom);
     const canvas = await generateImage(previewElement, zoomScale, null);
 
     downloadImage(canvas, 'latex-equation.png');
-    addToHistory();
-    trackEvent('save_image', { format: 'png', zoom: zoomScale, latex_length: get(latexContent).length });
+    addToHistory(latex);
+    trackEvent('save_image', { format: 'png', zoom: zoomScale, latex_length: latex.length });
   } catch (error) {
     trackError(error, { context: 'savePNG' });
     throw error;
@@ -58,20 +50,14 @@ export async function savePNG() {
 }
 
 export async function saveJPEG() {
-  const previewElement = document.querySelector('#math-preview');
-  if (!previewElement) {
-    toast.error('Preview not found');
-    trackError(new Error('Preview not found'), { context: 'saveJPEG' });
-    return;
-  }
-
   try {
+    const { element: previewElement, latex } = await ensureCurrentPreview();
     const zoomScale = get(zoom);
     const backgroundColor = resolveBackgroundColor(previewElement);
     const canvas = await generateImage(previewElement, zoomScale, backgroundColor);
     downloadImage(canvas, 'latex-equation.jpg');
-    addToHistory();
-    trackEvent('save_image', { format: 'jpeg', zoom: zoomScale, latex_length: get(latexContent).length });
+    addToHistory(latex);
+    trackEvent('save_image', { format: 'jpeg', zoom: zoomScale, latex_length: latex.length });
   } catch (error) {
     trackError(error, { context: 'saveJPEG' });
     throw error;
@@ -79,13 +65,8 @@ export async function saveJPEG() {
 }
 
 export async function saveSVG() {
-  const previewElement = document.querySelector('#math-preview');
-  if (!previewElement) {
-    trackError(new Error('Preview not found'), { context: 'saveSVG' });
-    return;
-  }
-
   try {
+    const { element: previewElement, latex } = await ensureCurrentPreview();
     const zoomScale = get(zoom) ?? 1;
     const { svgString } = generateSvg(previewElement, zoomScale, null);
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
@@ -93,8 +74,8 @@ export async function saveSVG() {
     downloadFile(url, 'latex-equation.svg');
     // Delay revocation to ensure download completes (click is async in some browsers)
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    addToHistory();
-    trackEvent('save_image', { format: 'svg', latex_length: get(latexContent).length });
+    addToHistory(latex);
+    trackEvent('save_image', { format: 'svg', latex_length: latex.length });
   } catch (error) {
     trackError(error, { context: 'saveSVG' });
     throw error;
@@ -103,13 +84,7 @@ export async function saveSVG() {
 
 export async function savePDF() {
   try {
-    const previewElement = document.querySelector('#math-preview');
-    if (!previewElement) {
-      toast.error('Preview not found');
-      trackError(new Error('Preview not found'), { context: 'savePDF' });
-      return;
-    }
-
+    const { element: previewElement, latex } = await ensureCurrentPreview();
     const zoomScale = get(zoom) ?? 1;
     const backgroundColor = resolveBackgroundColor(previewElement);
     const { svgString, width, height } = generateSvg(previewElement, zoomScale, backgroundColor);
@@ -129,11 +104,11 @@ export async function savePDF() {
 
     await pdf.svg(svgEl, { x: 0, y: 0, width, height });
     pdf.save('latex-equation.pdf');
-    addToHistory();
-    trackEvent('save_image', { format: 'pdf', latex_length: get(latexContent).length });
+    addToHistory(latex);
+    trackEvent('save_image', { format: 'pdf', latex_length: latex.length });
   } catch (error) {
     console.error('Error in savePDF:', error);
-    toast.error(`Failed to generate PDF: ${error.message}`);
     trackError(error, { context: 'savePDF' });
+    throw error;
   }
 }

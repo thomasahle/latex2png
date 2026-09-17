@@ -17,6 +17,25 @@ npm run dev
 npm run build
 ```
 
+## Testing
+
+Install Chromium once with `npx playwright install chromium`. Start the built
+site in one terminal with `npm run preview -- --host 127.0.0.1 --port 4173`,
+then run the full suite in another:
+
+```bash
+SNAP_BASE_URL=http://127.0.0.1:4173/latex2png/ npm test
+```
+
+This checks render races, immediate exports and copies, error recovery,
+accessible math, keyboard navigation, mobile layouts, export snapshots in both
+themes, and every symbol. `npm run test:unit` needs no browser or server.
+`npm run generate:symbols` validates and regenerates the menu icons.
+Update export baselines deliberately with `UPDATE_SNAPSHOTS=1 npm run test:snap`.
+
+Pull requests and main-branch pushes run these checks against the production
+build. Pages deployment depends on all checks passing.
+
 ## License
 
 GPL-3.0

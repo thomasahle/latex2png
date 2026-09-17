@@ -51,11 +51,12 @@ async function main() {
     }
     await browser.close();
 
-    if (UPDATE || !fs.existsSync(BASELINE_FILE)) {
+    if (UPDATE) {
       writeBaselines(results);
       console.log('Baselines updated.');
       process.exit(0);
     } else {
+      if (!fs.existsSync(BASELINE_FILE)) throw new Error('Missing export snapshot baseline');
       verify(results);
     }
   } finally {

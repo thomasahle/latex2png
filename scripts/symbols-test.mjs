@@ -174,18 +174,13 @@ async function main() {
     errors: errors.length
   };
 
-  if (UPDATE || !fs.existsSync(BASELINE_FILE)) {
+  if (failedBatches > 0 || errors.length > 0) {
+    console.error('\nSymbols test failed: every symbol must render without errors.');
+    process.exitCode = 1;
+  } else if (UPDATE) {
     fs.writeFileSync(BASELINE_FILE, JSON.stringify(result, null, 2));
     console.log('\nBaseline updated.');
-  } else {
-    const baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
-    if (failedBatches > baseline.failedBatches) {
-      console.error(`\nRegression: ${failedBatches} batches failed (baseline: ${baseline.failedBatches})`);
-      process.exitCode = 1;
-    } else {
-      console.log('\nSymbols test passed.');
-    }
-  }
+  } else console.log('\nSymbols test passed.');
 }
 
 main().catch(err => {

@@ -1,16 +1,24 @@
 <script>
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, untrack } from "svelte";
   import { latexContent } from "../stores/content.js";
   import { zoom } from "../stores/zoom.js";
+  import { theme } from "../stores/theme.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { generateImage } from "../utils/image-generation.js";
   import { trackEvent, trackError } from "../utils/analytics.js";
   import { saveMenuItems } from "../utils/saveMenuItems.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { toast } from "$lib/components/ui/sonner";
-  import { initWorker, renderLatexToSvg } from "../services/mathjax-service.js";
+  import { initWorker, renderLatexForPreview } from "../services/mathjax-service.js";
+
+  import { createPreviewRenderer } from "../utils/preview-renderer.js";
+  import { previewState, registerPreview } from "../services/preview-service.js";
 
   let previewElement = $state(null);
+  let accessibleMath = $state("");
+  let renderer;
+  let dragVersion = 0;
+  let disposed = false;
   let contextMenuOpen = $state(false);
   let contextMenuPosition = $state({ x: 0, y: 0 });
   let dragPngUrl = $state(null);
@@ -32,49 +40,19 @@
     }
   }
 
-  function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
+  function scheduleRender() {
+    invalidateDragPng();
+    accessibleMath = "";
+    renderer.schedule({ latex: currentLatex, shouldWrap: currentWrap });
   }
 
-  const renderMath = debounce(async (latex, shouldWrap) => {
-    if (!previewElement || typeof window === "undefined") return;
-
-    // Keep the previous render visible until the new one arrives; the
-    // container is only replaced on success (or with an error message).
-    const container = previewElement;
-
-    // Prepare LaTeX for rendering
-    let texToRender = latex;
-    if (!latex || latex.trim() === "") {
-      texToRender = "\\text{intentionally blank}";
-    } else if (shouldWrap) {
-      const hasAlignment = latex.includes("&") || latex.includes("\\\\");
-      texToRender = hasAlignment
-        ? "\\begin{aligned}" + latex + "\\end{aligned}"
-        : latex;
+  async function renderMath({ latex, shouldWrap }) {
+    let tex = latex.trim() ? latex : "\\text{intentionally blank}";
+    if (latex.trim() && shouldWrap && (latex.includes("&") || latex.includes("\\\\"))) {
+      tex = "\\begin{aligned}" + latex + "\\end{aligned}";
     }
-
-    try {
-      const svg = await renderLatexToSvg(texToRender, true);
-      container.innerHTML = svg;
-      measureDisplay();
-      invalidateDragPng(); // Clear stale drag image when content changes
-      // Defer canvas generation to idle time to avoid blocking paint
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => ensureDragPng(), { timeout: 2000 });
-      } else {
-        setTimeout(() => ensureDragPng(), 100);
-      }
-    } catch (err) {
-      console.error("MathJax error:", err);
-      trackError(err, { context: 'renderMath', latex_length: texToRender?.length });
-      container.innerHTML = `<p class="text-red-500">Error: ${err.message || 'Failed to render LaTeX'}</p>`;
-    }
-  }, 300);
+    return renderLatexForPreview(tex);
+  }
 
   let unsubscribeContent;
   let unsubscribeWrap;
@@ -82,6 +60,8 @@
   let currentWrap = true;
 
   function invalidateDragPng() {
+    dragVersion++;
+    dragPngGenerationPromise = null;
     if (dragPngUrl) {
       URL.revokeObjectURL(dragPngUrl);
       dragPngUrl = null;
@@ -92,42 +72,37 @@
   }
 
   async function ensureDragPng() {
-    if (!previewElement) return null;
-    if (!previewElement.querySelector('mjx-container svg')) return null;
+    if (disposed || $previewState.status !== 'ready' || !currentLatex.trim()) return null;
+    if (!previewElement?.querySelector('mjx-container svg')) return null;
+    if (dragImage) return dragPngUrl;
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
-    dragPngGenerationPromise = (async () => {
+    const version = dragVersion;
+    const promise = (async () => {
       const canvas = await generateImage(previewElement, $zoom ?? 1, null);
-      if (!canvas) return null;
-      const rect = previewElement.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        displaySize = {
-          width: Math.max(1, Math.round(rect.width)),
-          height: Math.max(1, Math.round(rect.height)),
-        };
-      }
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return null;
-      pngDataUrl = canvas.toDataURL("image/png");
-
-      // Generate image for drag preview
-      const dragCanvas = await generateImage(previewElement, $zoom ?? 1, null);
+      if (!blob || version !== dragVersion) return null;
+      const dataUrl = canvas.toDataURL("image/png");
       const dragImg = new Image();
-      dragImg.src = dragCanvas.toDataURL("image/png");
       await new Promise((resolve, reject) => {
         dragImg.onload = resolve;
         dragImg.onerror = () => reject(new Error('Failed to load drag image'));
+        dragImg.src = dataUrl;
       });
+      if (version !== dragVersion || disposed) return null;
+      pngDataUrl = dataUrl;
       dragImage = dragImg;
-      // Some OS drag bridges handle application/octet-stream data URLs better than image/png
-      dragDownloadDataUrl = pngDataUrl.replace("image/png", "application/octet-stream");
-      if (dragPngUrl) URL.revokeObjectURL(dragPngUrl);
+      dragDownloadDataUrl = dataUrl.replace("image/png", "application/octet-stream");
       dragPngUrl = URL.createObjectURL(blob);
       return dragPngUrl;
     })();
+    dragPngGenerationPromise = promise;
     try {
-      return await dragPngGenerationPromise;
+      return await promise;
+    } catch (error) {
+      trackError(error, { context: 'drag_preview' });
+      return null;
     } finally {
-      dragPngGenerationPromise = null;
+      if (dragPngGenerationPromise === promise) dragPngGenerationPromise = null;
     }
   }
 
@@ -165,7 +140,10 @@
   }
 
   function handleDragStart(event) {
-    if (!dragImage) return;
+    if (!dragImage || $previewState.status !== 'ready') {
+      event.preventDefault();
+      return;
+    }
     const dt = event.dataTransfer;
     if (!dt) return;
 
@@ -222,36 +200,63 @@
   onMount(() => {
     // Initialize MathJax worker
     initWorker();
+    renderer = createPreviewRenderer({
+      render: renderMath,
+      commit: ({ svg, mathml }) => {
+        previewElement.innerHTML = svg;
+        accessibleMath = currentLatex.trim() ? mathml : "";
+        measureDisplay();
+        setTimeout(() => ensureDragPng(), 0);
+      },
+      onState: (state) => {
+        previewState.set(state);
+        if (state.status === 'error') {
+          previewElement.replaceChildren();
+          accessibleMath = "";
+          displaySize = { width: 0, height: 0 };
+        }
+      },
+    });
+    const unregister = registerPreview(async () => ({
+      ...await renderer.flush(), element: previewElement,
+    }));
 
     unsubscribeContent = latexContent.subscribe((value) => {
       currentLatex = value;
-      renderMath(currentLatex, currentWrap);
+      scheduleRender();
     });
 
     unsubscribeWrap = wrapContent.subscribe((value) => {
       currentWrap = value;
-      renderMath(currentLatex, currentWrap);
+      scheduleRender();
     });
 
     return () => {
       unsubscribeContent();
       unsubscribeWrap();
+      unregister();
+      renderer.dispose();
     };
   });
 
   onDestroy(() => {
+    disposed = true;
+    clearTimeout(zoomDebounceTimer);
+    dragCleanup?.();
     invalidateDragPng();
   });
 
-  // Debounce timer for zoom-triggered canvas regeneration
+  // Regenerate drag images when their size or colors change.
   let zoomDebounceTimer;
 
   $effect(() => {
     const z = $zoom;
+    const currentTheme = $theme;
     if (!previewElement) return;
-    measureDisplay();
-    // Note: Don't invalidateDragPng here - just regenerate at new zoom level
-    // Invalidation happens in renderMath when content actually changes
+    untrack(() => {
+      measureDisplay();
+      invalidateDragPng();
+    });
     clearTimeout(zoomDebounceTimer);
     zoomDebounceTimer = setTimeout(() => {
       if ('requestIdleCallback' in window) {
@@ -263,19 +268,29 @@
   });
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- The scroll region is focusable so keyboard users can pan large equations. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-  class="h-full overflow-auto"
-  style="display: flex; align-items: flex-start; justify-content: safe center; padding-top: 1rem;"
+  id="preview-scroll"
+  class="flex-1 min-h-0 overflow-auto p-4"
+  role="region"
+  aria-label="Equation preview"
+  aria-busy={$previewState.status === 'pending'}
+  tabindex="0"
+  style="display: flex; align-items: flex-start; justify-content: safe center;"
   oncontextmenu={handleContextMenu}
 >
+  {#if accessibleMath}
+    <div class="sr-only">{@html accessibleMath}</div>
+  {/if}
   <div
-    class="relative inline-block"
+    class="relative inline-block shrink-0"
     style={`min-width: 1px; min-height: 1px; width: ${Math.max(1, displaySize.width)}px; height: ${Math.max(1, displaySize.height)}px;`}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       id="math-preview"
+      aria-hidden="true"
       style={`zoom: ${$zoom};`}
       bind:this={previewElement}
       class="inline-block cursor-grab"

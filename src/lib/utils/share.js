@@ -2,8 +2,9 @@ import html2canvas from "html2canvas";
 import { toast } from "../components/ui/sonner";
 import { get } from "svelte/store";
 import { latexContent } from "../stores/content.js";
-import { wrapContent } from "../stores/wrapContent.js";
-import { renderLatexToMathML } from "../services/mathjax-service.js";
+import { zoom } from "../stores/zoom.js";
+import { ensureCurrentPreview } from "../services/preview-service.js";
+import { generateImage } from "./image-generation.js";
 import { trackEvent, trackError } from "./analytics.js";
 
 const IS_SECURE = window.isSecureContext;
@@ -11,16 +12,6 @@ const IS_SECURE = window.isSecureContext;
 // ---------- helpers ----------
 function getLatexCode() {
   return get(latexContent);
-}
-
-// The LaTeX as the preview renders it: with "wrap content" on, input that
-// uses alignment (& or \\) is wrapped in an aligned environment.
-function getDisplayedLatex() {
-  const latex = getLatexCode();
-  if (get(wrapContent) && (latex.includes("&") || latex.includes("\\\\"))) {
-    return `\\begin{aligned}${latex}\\end{aligned}`;
-  }
-  return latex;
 }
 
 async function nextFrame() {
@@ -86,28 +77,18 @@ async function buildShareUrl({ compress = false, useHash = false } = {}) {
   return useHash ? `${base}#${params}` : `${base}?${params}`;
 }
 
-async function getZoomScale() {
-  try {
-    const { get } = await import("svelte/store");
-    const { zoom } = await import("../stores/zoom.js");
-    return get(zoom) ?? 1;
-  } catch (error) {
-    trackError(error, { context: 'getZoomScale' });
-    return 1;
-  }
-}
-
-async function renderCanvas(previewElement, scaleOverride) {
+async function renderCanvas() {
   await ensureFontsReady();
   await nextFrame();
 
-  // Prefer your custom generator if present; otherwise html2canvas
+  const { element: previewElement } = await ensureCurrentPreview();
+  const scaleOverride = get(zoom);
   try {
-    const { generateImage } = await import("./image-generation.js");
     return await generateImage(previewElement, scaleOverride ?? 1, null);
   } catch (error) {
     trackError(error, { context: 'renderCanvas_fallback', fallback: 'html2canvas' });
-    return await html2canvas(previewElement, {
+    const { element: currentElement } = await ensureCurrentPreview();
+    return await html2canvas(currentElement, {
       scale: scaleOverride ?? Math.max(1, Math.ceil(window.devicePixelRatio || 1)),
       useCORS: true,
       backgroundColor: null,
@@ -153,15 +134,8 @@ export async function shareToTwitter() {
 }
 
 export async function copyImage() {
-  const previewElement = document.querySelector("#math-preview");
-  if (!previewElement) {
-    trackError(new Error('Preview not found'), { context: 'copyImage' });
-    return;
-  }
-
   try {
-    const scale = await getZoomScale();
-    const canvas = await renderCanvas(previewElement, scale);
+    const canvas = await renderCanvas();
     const blob = await canvasToBlob(canvas, "image/png");
 
     if (IS_SECURE && navigator.clipboard?.write && "ClipboardItem" in window) {
@@ -181,21 +155,14 @@ export async function copyImage() {
     trackEvent('share', { method: 'copy_image_fallback' });
   } catch (error) {
     console.error("Error copying image:", error);
-    toast.error("Failed to copy image");
+    toast.error(`Failed to copy image: ${error.message}`);
     trackError(error, { context: 'copyImage' });
   }
 }
 
 export async function copyMathML() {
-  const latex = getDisplayedLatex();
-  if (!latex.trim()) {
-    toast.error("No math found to copy");
-    return;
-  }
-
   try {
-    // MathJax lives in the worker; ask it for the MathML directly
-    const mathml = await renderLatexToMathML(latex, true);
+    const { mathml } = await ensureCurrentPreview();
 
     if (IS_SECURE && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(mathml);
@@ -207,21 +174,14 @@ export async function copyMathML() {
     trackEvent('share', { method: 'copy_mathml' });
   } catch (error) {
     console.error("Error copying MathML:", error);
-    toast.error("Failed to copy MathML");
+    toast.error(`Failed to copy MathML: ${error.message}`);
     trackError(error, { context: 'copyMathML' });
   }
 }
 
 export async function shareImage() {
-  const previewElement = document.querySelector("#math-preview");
-  if (!previewElement) {
-    trackError(new Error('Preview not found'), { context: 'shareImage' });
-    return;
-  }
-
   try {
-    const scale = await getZoomScale();
-    const canvas = await renderCanvas(previewElement, scale);
+    const canvas = await renderCanvas();
     const blob = await canvasToBlob(canvas, "image/png");
     const file = new File([blob], "latex-image.png", { type: "image/png" });
 
@@ -256,7 +216,7 @@ export async function shareImage() {
     trackEvent('share', { method: 'share_fallback_download' });
   } catch (error) {
     console.error("Error sharing image:", error);
-    toast.error("Failed to share image");
+    toast.error(`Failed to share image: ${error.message}`);
     trackError(error, { context: 'shareImage' });
   }
 }

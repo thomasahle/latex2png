@@ -42,7 +42,6 @@ mathjax.asyncLoad = (name) => {
 import '@mathjax/src/js/input/tex/base/BaseConfiguration.js';
 import '@mathjax/src/js/input/tex/ams/AmsConfiguration.js';
 import '@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js';
-import '@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js';
 import '@mathjax/src/js/input/tex/color/ColorConfiguration.js';
 import '@mathjax/src/js/input/tex/boldsymbol/BoldsymbolConfiguration.js';
 import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration.js';
@@ -61,10 +60,12 @@ RegisterHTMLHandler(adaptor);
 // Create TeX input with packages and custom macros
 const tex = new TeX({
   packages: [
-    'base', 'ams', 'newcommand', 'noundefined',
+    'base', 'ams', 'newcommand',
     'color', 'boldsymbol', 'mhchem', 'physics', 'braket', 'cancel', 'unicode',
     'configmacros', 'gensymb', 'textcomp'
   ],
+  // Surface syntax errors to the editor instead of exporting red error glyphs.
+  formatError: (_jax, error) => { throw error; },
   macros: {
     oiint: "\\unicode{x222F}",
     oiiint: "\\unicode{x2230}",
@@ -108,8 +109,7 @@ const mmlVisitor = new SerializedMmlVisitor();
 self.postMessage({ type: 'ready' });
 
 // Handle messages from main thread.
-// Request types: 'render' (TeX -> SVG string, the default) and 'mathml'
-// (TeX -> MathML string, using the same packages and macros).
+// Request types: 'render' (SVG), 'mathml', and 'preview' (SVG plus MathML).
 // Requests are processed strictly one at a time: html.convert()/html.clear()
 // share a single MathDocument, and a render that has to wait for a font to
 // load must neither be interleaved with, nor finish after, a later one.
@@ -159,13 +159,18 @@ async function handleRequest({ id, type = 'render', latex, display }) {
 
       // Get the outer HTML
       result = adaptor.outerHTML(node);
+      if (type === 'preview') {
+        // SVG output retains the MathItem from this conversion, so the
+        // accessible MathML describes exactly the same equation.
+        result = { svg: result, mathml: mmlVisitor.visitTree(svg.math.root) };
+      }
     }
-
-    // Clear the document for next conversion
-    html.clear();
 
     self.postMessage({ id, success: true, result });
   } catch (error) {
     self.postMessage({ id, success: false, error: error.message });
+  } finally {
+    // Clear after errors too, so the next edit can recover.
+    html.clear();
   }
 }
