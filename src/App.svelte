@@ -62,7 +62,8 @@
   <main
     class="mx-auto flex flex-1 flex-col my-0 bg-card text-card-foreground shadow-[0_0_50px_0_rgb(0_0_0/0.03)]"
     class:max-w-full={true}
-    class:md:max-w-[900px]={!$fullscreen}
+    class:md:max-w-[900px]={!$fullscreen && $layout !== 'side-by-side'}
+    class:md:max-w-[1170px]={!$fullscreen && $layout === 'side-by-side'}
     class:min-h-0={$fullscreen}
     class:w-full={$fullscreen}
     class:h-auto={!$fullscreen}
