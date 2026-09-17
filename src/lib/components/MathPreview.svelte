@@ -26,7 +26,6 @@
   let pngDataUrl = $state(null);
   let dragDownloadDataUrl = $state(null);
   let displaySize = $state({ width: 0, height: 0 });
-  let dragImage = $state(null); // Pre-loaded image for drag preview
   const dragFileName = "latex-equation.png";
   let dragPngGenerationPromise = null;
 
@@ -67,7 +66,6 @@
       URL.revokeObjectURL(dragPngUrl);
       dragPngUrl = null;
     }
-    dragImage = null;
     pngDataUrl = null;
     dragDownloadDataUrl = null;
   }
@@ -75,23 +73,15 @@
   async function ensureDragPng() {
     if (disposed || $previewState.status !== 'ready' || !currentLatex.trim()) return null;
     if (!previewElement?.querySelector('mjx-container svg')) return null;
-    if (dragImage) return dragPngUrl;
+    if (pngDataUrl) return dragPngUrl;
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
     const version = dragVersion;
     const promise = (async () => {
       const canvas = await generateImage(previewElement, $zoom, exportBackground());
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob || version !== dragVersion) return null;
+      if (!blob || version !== dragVersion || disposed) return null;
       const dataUrl = canvas.toDataURL("image/png");
-      const dragImg = new Image();
-      await new Promise((resolve, reject) => {
-        dragImg.onload = resolve;
-        dragImg.onerror = () => reject(new Error('Failed to load drag image'));
-        dragImg.src = dataUrl;
-      });
-      if (version !== dragVersion || disposed) return null;
       pngDataUrl = dataUrl;
-      dragImage = dragImg;
       dragDownloadDataUrl = dataUrl.replace("image/png", "application/octet-stream");
       dragPngUrl = URL.createObjectURL(blob);
       return dragPngUrl;
@@ -141,7 +131,7 @@
   }
 
   function handleDragStart(event) {
-    if (!dragImage || $previewState.status !== 'ready') {
+    if (!pngDataUrl || $previewState.status !== 'ready') {
       event.preventDefault();
       return;
     }
@@ -157,11 +147,12 @@
     // Set grabbing cursor during drag
     previewElement.style.cursor = "grabbing";
 
-    // Set custom drag image (1x scale), preserving cursor position
+    // Snapshot the displayed formula so the cursor preview matches its CSS
+    // size and zoom. The exported PNG includes padding and Retina pixels.
     const rect = previewElement.getBoundingClientRect();
     const relativeX = event.clientX - rect.left;
     const relativeY = event.clientY - rect.top;
-    dt.setDragImage(dragImage, relativeX, relativeY);
+    dt.setDragImage(previewElement, relativeX, relativeY);
 
     const downloadSource = dragDownloadDataUrl || pngDataUrl;
     const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
