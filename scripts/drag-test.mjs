@@ -136,6 +136,8 @@ try {
         for (const background of ['solid', 'transparent', 'custom']) {
           await chooseExportOption(page, 'Export background', { solid: 'Solid', transparent: 'Transparent', custom: 'Custom color' }[background]);
           if (background === 'custom') await page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
+          const previewBackground = await page.locator('#preview-scroll').evaluate(el => getComputedStyle(el).backgroundColor);
+          assert.equal(previewBackground, background === 'custom' ? 'rgb(32, 96, 192)' : 'rgba(0, 0, 0, 0)', `${theme}: preview follows the custom background selection`);
           await page.waitForFunction(() => {
             const source = document.querySelector('#math-preview');
             const data = new DataTransfer();

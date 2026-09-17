@@ -16,7 +16,7 @@
   const opaque = $derived(['JPEG', 'PDF'].includes($exportSettings.format));
   const background = $derived(opaque && $exportSettings.background === 'transparent' ? 'solid' : $exportSettings.background);
   const backgroundOptions = $derived([
-    { value: 'transparent', label: 'Transparent', disabled: opaque, title: opaque ? `${$exportSettings.format} requires an opaque background` : undefined },
+    { value: 'transparent', label: 'Transparent', disabled: opaque, title: opaque ? ($exportSettings.format === 'JPEG' ? "JPEG doesn't support transparency" : 'PDF exports use an opaque page background') : undefined },
     { value: 'solid', label: 'Solid' },
     { value: 'custom', label: 'Custom color', triggerLabel: 'Custom', color: $exportSettings.customColor },
   ]);

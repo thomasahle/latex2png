@@ -296,6 +296,7 @@
   aria-label="Equation preview"
   aria-busy={$previewState.status === 'pending'}
   tabindex="0"
+  style:background-color={$exportSettings.background === 'custom' ? $exportSettings.customColor : undefined}
   style="display: flex; align-items: safe center; justify-content: safe center;"
   oncontextmenu={handleContextMenu}
 >

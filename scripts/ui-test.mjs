@@ -401,6 +401,15 @@ try {
   await chooseExportOption(page, 'Export format', 'JPEG');
   await page.getByRole('button', { name: 'Export background', exact: true }).click();
   assert.equal(await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).getAttribute('aria-disabled'), 'true', 'JPEG cannot select transparency');
+  await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).hover();
+  await page.getByRole('tooltip', { name: "JPEG doesn't support transparency", exact: true }).waitFor();
+  const explanationBox = await page.getByRole('tooltip').boundingBox();
+  const viewportSize = page.viewportSize();
+  assert.ok(explanationBox.x >= 0 && explanationBox.y >= 0 && explanationBox.x + explanationBox.width <= viewportSize.width && explanationBox.y + explanationBox.height <= viewportSize.height, 'disabled explanation is positioned inside the viewport');
+  await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).click({ force: true });
+  assert.equal(await page.getByRole('menuitemradio', { name: 'Solid', exact: true }).getAttribute('aria-checked'), 'true', 'hoverable disabled item stays unselectable');
+  await page.getByRole('menuitemradio', { name: 'Solid', exact: true }).hover();
+  await page.getByRole('tooltip').waitFor({ state: 'detached' });
   await page.keyboard.press('Escape');
   await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).waitFor({ state: 'detached' });
   await chooseExportOption(page, 'Export format', 'PNG');
@@ -411,6 +420,7 @@ try {
   await chooseExportOption(page, 'Export background', 'Custom color');
   await page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
   assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Custom/);
+  assert.equal(await preview.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(32, 96, 192)', 'custom background appears in the preview');
   const customPNG = await save('PNG');
   const customJPEG = await save('JPEG');
   for (const [format, bytes] of [['PNG', customPNG], ['JPEG', customJPEG]]) {
@@ -435,6 +445,10 @@ try {
   assert.deepEqual(Buffer.from(customCopied), customPNG, 'Copy preserves the custom background');
   await page.getByRole('button', { name: 'Export background', exact: true }).click();
   assert.equal(await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).getAttribute('aria-disabled'), 'true', 'PDF cannot select transparency');
+  await page.getByRole('menuitemradio', { name: 'Transparent', exact: true }).hover();
+  await page.getByRole('tooltip', { name: 'PDF exports use an opaque page background', exact: true }).waitFor();
+  await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).hover();
+  await page.getByRole('tooltip').waitFor({ state: 'detached' });
   assert.equal(await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).getAttribute('aria-checked'), 'true');
   await page.keyboard.press('Escape');
   await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
@@ -451,7 +465,10 @@ try {
   await page.getByRole('menuitemradio', { name: 'Custom color', exact: true }).waitFor({ state: 'detached' });
   await page.setViewportSize({ width: 1280, height: 844 });
   await chooseExportOption(page, 'Export format', 'PNG');
+  await chooseExportOption(page, 'Export background', 'Solid');
+  assert.equal(await preview.evaluate(el => el.style.backgroundColor), '', 'solid mode clears the custom preview color');
   await chooseExportOption(page, 'Export background', 'Transparent');
+  assert.equal(await preview.evaluate(el => el.style.backgroundColor), '', 'transparent mode uses the normal preview background');
   await chooseExportOption(page, 'Export format', 'JPEG');
   assert.match(await page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Solid/);
   await chooseExportOption(page, 'Export format', 'PNG');

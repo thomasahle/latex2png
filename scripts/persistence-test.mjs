@@ -63,6 +63,7 @@ try {
   current = await visit();
   assert.match(await current.page.getByRole('button', { name: 'Export background', exact: true }).textContent(), /Custom/);
   assert.equal(await current.page.getByLabel('Custom background color', { exact: true }).inputValue(), '#2060c0', 'custom color survives browser restart');
+  assert.equal(await current.page.locator('#preview-scroll').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(32, 96, 192)', 'preview restores the saved custom color');
   assert.equal(await current.split.getAttribute('aria-orientation'), 'vertical');
   await assertSize(current, 55, 600);
   await current.toggle.click();
