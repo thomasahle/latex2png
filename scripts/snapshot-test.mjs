@@ -22,8 +22,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const SNAP_DIR = path.resolve(__dirname, '../snapshots');
-const REF_DIR = path.join(SNAP_DIR, 'reference');
-const BASELINE_FILE = path.join(SNAP_DIR, 'baseline.json');
+// Browser font metrics and rasterization differ between operating systems,
+// even with a shared font. Keep exact reference exports for each platform.
+const REF_DIR = path.join(SNAP_DIR, 'reference', process.platform);
+const BASELINE_FILE = path.join(SNAP_DIR, `baseline-${process.platform}.json`);
 const UPDATE = !!process.env.UPDATE_SNAPSHOTS;
 const BASE_URL = process.env.SNAP_BASE_URL || 'http://localhost:5173/latex2png/';
 const START_SERVER = !!process.env.SNAP_START_SERVER;
@@ -59,7 +61,9 @@ async function main() {
       console.log('Baselines updated.');
       process.exit(0);
     } else {
-      if (!fs.existsSync(BASELINE_FILE)) throw new Error('Missing export snapshot baseline');
+      if (!fs.existsSync(BASELINE_FILE)) {
+        throw new Error(`Missing export snapshot baseline for ${process.platform}. Run UPDATE_SNAPSHOTS=1 npm run test:snap and review the generated exports.`);
+      }
       verify(results);
     }
   } finally {
@@ -119,8 +123,8 @@ async function captureTheme(browser, theme) {
   await page.goto(`${BASE_URL}?latex=${encodeURIComponent(LATEX)}`);
   await page.waitForSelector('#math-preview mjx-container svg');
 
-  // MathJax's SVG dimensions use CSS ex units. Use the same bundled font on
-  // every OS so platform serif fallbacks cannot change the export dimensions.
+  // MathJax's SVG dimensions use CSS ex units. A bundled font avoids dependence
+  // on the machine's installed serif fonts within each platform.
   await page.evaluate(async (fontData) => {
     const font = new FontFace('SnapshotMath', `url(data:font/woff2;base64,${fontData})`);
     await font.load();

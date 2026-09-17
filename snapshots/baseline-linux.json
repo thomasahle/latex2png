@@ -1,0 +1,15 @@
+{
+  "latex": "X: {\\color{orange}455} {\\color{blue}blue}",
+  "themes": {
+    "light": {
+      "png": "6c70869f541ee94ead9add974fbb07c50312a41a557f79ededc51adeaf8a6430",
+      "jpeg": "4f9f90808a51bbce897efa7f5ecb425899fbbc22b3fabbbba70603a92f01e865",
+      "svg": "c419cbbf02b6ee2f177ee197ee6cc17ebdeedf56a9b2cd5a29e0673df94e8195"
+    },
+    "dark": {
+      "png": "1e167f006846a022f2f351786d81c0d4996d27cc26edac96b15632585655fe7b",
+      "jpeg": "b328a900e4c7ccfc7304e69cdf361a2124447b7746c0ad9711e472e38b765c7d",
+      "svg": "9e82f5b03c42493098dc2382164107b5c4748387a153801760b01fa23e916218"
+    }
+  }
+}

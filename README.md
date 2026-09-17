@@ -35,8 +35,10 @@ height, pointer and keyboard resizing, reset, and fullscreen entry/exit
 (including menu and Vim keyboard behavior).
 `npm run generate:symbols` validates and regenerates the menu icons.
 Update export baselines deliberately with `UPDATE_SNAPSHOTS=1 npm run test:snap`.
-Export snapshots use a fixed viewport, pixel density, and bundled font so CSS
-`ex` units have the same size on macOS and Linux.
+Export snapshots use a fixed viewport, pixel density, and bundled font. Exact
+references are stored separately for macOS (`darwin`) and Linux because browser
+font metrics and rasterization still differ by OS. Updating snapshots changes
+only the current platform's references; review those exports before committing.
 
 Pull requests and main-branch pushes run these checks against the production
 build. Pages deployment depends on all checks passing.
