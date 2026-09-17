@@ -151,14 +151,16 @@
     <div class="sr-only">{@html accessibleMath}</div>
   {/if}
   <div
-    class="relative inline-block shrink-0"
+    class="relative inline-block shrink-0 text-left"
     style={`min-width: 1px; min-height: 1px; width: ${Math.max(1, displaySize.width)}px; height: ${Math.max(1, displaySize.height)}px;`}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- Scale the laid-out SVG. CSS zoom recalculates font-relative ex units
+         with different hinted metrics in Firefox/WebKit on Linux. -->
     <div
       id="math-preview"
       aria-hidden="true"
-      style={`zoom: ${$zoom};`}
+      style={`scale: ${$zoom}; transform-origin: top left;`}
       bind:this={previewElement}
       class="relative isolate inline-block cursor-grab"
       draggable="true"

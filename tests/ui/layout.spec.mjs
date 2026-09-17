@@ -4,8 +4,9 @@ import { test, formula } from './fixtures.mjs';
 for (const width of [320, 390, 480, 640, 768, 1280]) {
   test(`preview layout at ${width}px supports 1–5x zoom`, async ({ page, app }) => {
     const { preview, setEquation, save } = app;
-  await setEquation(formula);
+    await setEquation(formula);
     await page.setViewportSize({ width, height: 844 });
+    let unscaledMath;
     for (const scale of ['1', '1.5', '3.4', '3.8', '5']) {
       await page.getByRole('slider', { name: 'Zoom level' }).fill(scale);
       // Wait for the zoom layout effect, then measure the actual scroll area.
@@ -28,12 +29,21 @@ for (const width of [320, 390, 480, 640, 768, 1280]) {
           pageWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth,
           controlsOnTop, centered: Math.abs((math.top + math.bottom - pane.top - pane.bottom) / 2) < 1,
           fitsVertically: math.height + parseFloat(padding.paddingTop) + parseFloat(padding.paddingBottom) <= scroll.clientHeight,
+          horizontallyCentered: Math.abs((math.left + math.right - pane.left - pane.right) / 2) < 1,
+          fitsHorizontally: math.width + parseFloat(padding.paddingLeft) + parseFloat(padding.paddingRight) <= scroll.clientWidth,
           topReachable: math.top >= scroll.getBoundingClientRect().top,
-          canScroll: scroll.scrollWidth > scroll.clientWidth };
+          canScroll: scroll.scrollWidth > scroll.clientWidth,
+          math: { width: math.width, height: math.height } };
       });
+      if (scale === '1') unscaledMath = bounds.math;
+      for (const dimension of ['width', 'height']) {
+        assert.ok(Math.abs(bounds.math[dimension] - unscaledMath[dimension] * Number(scale)) < 1,
+          `formula ${dimension} scales linearly at ${width}px/${scale}×`);
+      }
       assert.ok(bounds.controlsOnTop, `floating controls remain clickable at ${width}/${scale}`);
       if (bounds.fitsVertically) assert.ok(bounds.centered, `equation vertically centered at ${width}/${scale}`);
       else assert.ok(bounds.topReachable, `tall equation starts inside the scroll region at ${width}/${scale}`);
+      if (bounds.fitsHorizontally) assert.ok(bounds.horizontallyCentered, `equation horizontally centered at ${width}/${scale}`);
       assert.ok(bounds.scroll.bottom <= bounds.actions.top + 1, `save clear at ${width}/${scale}`);
       assert.ok(bounds.scroll.height > 40, 'preview retains usable space');
       assert.ok(bounds.pageWidth <= bounds.viewportWidth + 1, 'wide equations scroll inside the preview');

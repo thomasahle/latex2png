@@ -49,8 +49,11 @@ test("export bar shares zoom and background; JPEG explains disabled transparency
   const small = await save('PNG');
   await page.getByRole('slider', { name: 'Zoom level' }).fill('3');
   const large = await save('PNG');
-  assert.ok(Math.abs(large.readUInt32BE(16) - small.readUInt32BE(16) * 3) <= 1);
-  assert.ok(Math.abs(large.readUInt32BE(20) - small.readUInt32BE(20) * 3) <= 1);
+  for (const [dimension, offset] of [['width', 16], ['height', 20]]) {
+    const before = small.readUInt32BE(offset);
+    const after = large.readUInt32BE(offset);
+    assert.ok(Math.abs(after - before * 3) <= 1, `3× PNG ${dimension}: ${after}px vs 1× ${before}px`);
+  }
   await chooseExportOption(page, 'Export background', 'Solid');
   const solid = await save('PNG');
   const alpha = await page.evaluate(async bytes => {

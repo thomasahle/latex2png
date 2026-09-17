@@ -2,8 +2,8 @@ const BASE_PADDING_EM = 16; // 1em in pixels
 
 function exportRect(svg, previewElement, scale) {
   const rect = svg.getBoundingClientRect();
-  const previewZoom = parseFloat(getComputedStyle(previewElement).zoom) || 1;
-  const ratio = scale / previewZoom;
+  const previewScale = parseFloat(getComputedStyle(previewElement).scale) || 1;
+  const ratio = scale / previewScale;
   return { width: rect.width * ratio, height: rect.height * ratio };
 }
 
