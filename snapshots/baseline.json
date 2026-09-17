@@ -2,16 +2,16 @@
   "latex": "X: {\\color{orange}455} {\\color{blue}blue}",
   "themes": {
     "light": {
-      "png": "6856b595ea02c2bdd363f7e7a1754f9bb66c2f32ed784beb5fd066ead18b87dc",
-      "jpeg": "115d2e0b50b706fea7381c861e3ac88035563437035d9ee582f25b840ec87329",
-      "svg": "7d1b45ec0e464d27cbcc3eebdc9b90ecefa942d3dc3e246276288c86a99f547b",
-      "pdf": "cb905aa1798970a917b594d1ec248db8b56bb79dba442968093ad520f3f86c6c"
+      "png": "df8f375455de5201a967be1cd8b5735023f10d23dfe016f232325e7a1a6af503",
+      "jpeg": "9681bfd5c7691566969e6ba8b4f177d74962e6525a6d111de235aeb143b9bc30",
+      "svg": "4301c88e2ffead02b2a6bfce0acb556b0473dc0b93fcaec93ddab97cface32d3",
+      "pdf": "8b86ce0a4bccfc96b11beb09557277243624e625d7d93b99d9d3bf9bb63f9d6c"
     },
     "dark": {
-      "png": "570d90ef62c66b7b7468879253d073a8a2adb4a562069935013102859022ab12",
-      "jpeg": "f74dc87f05d31b0aed6ad9ad771a9998d5ed45e1288146adb9fda50b9f69624f",
-      "svg": "58f71765204436d3355c97a675fe317faf557be61eccda41964a3fa48f63bd30",
-      "pdf": "3a0419661634640a1c91662d033f64f348cb5dff8c0c27c860b384d5e17bc3df"
+      "png": "4f2ba0b09c7de37d3189a1ada13f3aef2ff1ad46ed29b67c111c7c5c34f9808c",
+      "jpeg": "49be6980f5742a6c71404b5b89f82156501dd531ea604bc6a239095abee60c8d",
+      "svg": "3cf6d9e443796ed4bda7ed8a5363046ebd83fc630e64adc909d3be04fcf3e3e6",
+      "pdf": "4c67f6c5ef2798b576755ab3bc3f62fef809288373ada0d097e1872e9e88d97d"
     }
   }
 }

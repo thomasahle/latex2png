@@ -29,6 +29,9 @@ const BASE_URL = process.env.SNAP_BASE_URL || 'http://localhost:5173/latex2png/'
 const START_SERVER = !!process.env.SNAP_START_SERVER;
 const PORT = Number(new URL(BASE_URL).port) || 4173;
 const LATEX = 'X: {\\color{orange}455} {\\color{blue}blue}';
+const SNAPSHOT_FONT = fs.readFileSync(
+  path.resolve(__dirname, '../node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2')
+).toString('base64');
 
 // Format configs: menu label, file extension, and whether to hash-compare
 // PDF has non-deterministic metadata (timestamps) so we only verify it generates
@@ -98,7 +101,11 @@ function startDevServer() {
 }
 
 async function captureTheme(browser, theme) {
-  const context = await browser.newContext({ acceptDownloads: true });
+  const context = await browser.newContext({
+    acceptDownloads: true,
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1
+  });
   const page = await context.newPage();
 
   // Seed theme and latex before navigation
@@ -112,8 +119,14 @@ async function captureTheme(browser, theme) {
   await page.goto(`${BASE_URL}?latex=${encodeURIComponent(LATEX)}`);
   await page.waitForSelector('#math-preview mjx-container svg');
 
-  // Give MathJax a moment to fully render
-  await page.waitForTimeout(500);
+  // MathJax's SVG dimensions use CSS ex units. Use the same bundled font on
+  // every OS so platform serif fallbacks cannot change the export dimensions.
+  await page.evaluate(async (fontData) => {
+    const font = new FontFace('SnapshotMath', `url(data:font/woff2;base64,${fontData})`);
+    await font.load();
+    document.fonts.add(font);
+    document.getElementById('math-preview').style.fontFamily = 'SnapshotMath';
+  }, SNAPSHOT_FONT);
 
   const artifacts = {};
 
