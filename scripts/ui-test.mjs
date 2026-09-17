@@ -209,7 +209,7 @@ try {
   }
   await page.getByRole('button', { name: 'Toggle layout orientation' }).click();
   await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
-  assert.equal(await page.locator('[data-pane-resizer]').getAttribute('data-direction'), 'horizontal');
+  assert.equal(await page.getByRole('separator', { name: 'Resize editor and preview' }).getAttribute('aria-orientation'), 'vertical');
   const previewBox = await preview.boundingBox();
   assert.ok(previewBox.height > 100, 'side by side fullscreen preview remains usable');
   console.log('Layout: 320–1280px, 1–5x zoom, side by side and fullscreen');
@@ -244,6 +244,65 @@ try {
 
   const workspace = page.locator('#equation-workspace');
   const heightHandle = page.getByRole('separator', { name: 'Resize workspace height', exact: true });
+
+  // Both handles share pointer/keyboard behavior and keep focus on the grip,
+  // without drawing a large outline around the entire workspace edge.
+  await page.getByRole('button', { name: 'Toggle layout orientation' }).click();
+  const focusStyle = handle => handle.evaluate(el => {
+    const bar = getComputedStyle(el);
+    const grip = getComputedStyle(el.querySelector('[aria-hidden="true"]'));
+    return { height: el.getBoundingClientRect().height, outline: bar.outlineStyle,
+      shadow: bar.boxShadow, gripColor: grip.backgroundColor, gripOutline: grip.outline };
+  });
+  const keyboardStyles = [];
+  const touch = await context.newCDPSession(page);
+  for (const handle of [divider, heightHandle]) {
+    await handle.press('ArrowDown');
+    const focused = await focusStyle(handle);
+    assert.equal(focused.height, 10);
+    assert.equal(focused.outline, 'none', 'keyboard focus does not outline the entire bar');
+    assert.equal(focused.shadow, 'none', 'keyboard focus does not ring the entire bar');
+    assert.match(focused.gripOutline, /solid 2px/, 'keyboard focus remains visible on the grip');
+    keyboardStyles.push(focused);
+    await handle.click();
+    assert.match((await focusStyle(handle)).gripOutline, /none/, 'pointer focus has no keyboard highlight');
+    const startValue = await handle.getAttribute('aria-valuenow');
+    const box = await handle.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 20, { steps: 4 });
+    assert.notEqual(await handle.getAttribute('aria-valuenow'), startValue, 'drag updates the value');
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    assert.equal(await handle.getAttribute('aria-valuenow'), startValue, 'Escape cancels either drag');
+    const touchBox = await handle.boundingBox();
+    const touchPoint = { x: touchBox.x + touchBox.width / 2, y: touchBox.y + touchBox.height / 2 };
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint] });
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...touchPoint, y: touchPoint.y + 20 }] });
+    assert.notEqual(await handle.getAttribute('aria-valuenow'), startValue, 'touch drag updates either value');
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    assert.equal(await handle.getAttribute('aria-valuenow'), startValue, 'cancelled touch restores either value');
+    await handle.press('Enter');
+  }
+  await touch.detach();
+  assert.deepEqual(keyboardStyles[0], keyboardStyles[1], 'both horizontal handles have identical focus styling');
+  await divider.press('Home');
+  await divider.press('ArrowUp');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '30', 'split is bounded below');
+  await divider.press('End');
+  await divider.press('ArrowDown');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '70', 'split is bounded above');
+  await divider.press('Enter');
+  await page.getByRole('button', { name: 'Toggle layout orientation' }).click();
+  const splitBox = await divider.boundingBox();
+  await page.mouse.move(splitBox.x + splitBox.width / 2, splitBox.y + splitBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(splitBox.x + splitBox.width / 2 + 80, splitBox.y + splitBox.height / 2, { steps: 4 });
+  await page.mouse.up();
+  assert.ok(Number(await divider.getAttribute('aria-valuenow')) > 50, 'vertical divider drags horizontally');
+  await divider.dblclick();
+  console.log('Resizers: matching grip focus, pointer focus, both drag axes, touch cancellation, bounds and reset');
+
   const heightEditor = await editor.elementHandle();
   const heightSource = await editor.innerText();
   const originalHeight = (await workspace.boundingBox()).height;

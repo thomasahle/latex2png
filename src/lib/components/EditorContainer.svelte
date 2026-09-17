@@ -19,7 +19,6 @@
   const minHeight = 360;
   const maxHeight = 1600;
   let workspaceHeight = $state(defaultHeight);
-  let heightDrag = null;
   try {
     const saved = Number(localStorage.getItem('workspaceHeight'));
     if (Number.isFinite(saved) && saved >= minHeight && saved <= maxHeight) workspaceHeight = saved;
@@ -29,50 +28,10 @@
     workspaceHeight = Math.round(Math.max(minHeight, Math.min(maxHeight, height)));
   }
 
-  function startHeightResize(event) {
-    if (event.button !== 0 || !event.isPrimary) return;
-    event.preventDefault();
-    event.currentTarget.focus({ preventScroll: true });
-    event.currentTarget.setPointerCapture(event.pointerId);
-    heightDrag = { element: event.currentTarget, pointerId: event.pointerId, y: event.pageY, height: workspaceHeight };
-  }
-
-  function resizeHeight(event) {
-    if (heightDrag?.pointerId === event.pointerId) setHeight(heightDrag.height + event.pageY - heightDrag.y);
-  }
-
-  function finishHeightResize(cancel = false) {
-    if (!heightDrag) return;
-    const drag = heightDrag;
-    heightDrag = null;
-    if (cancel) workspaceHeight = drag.height;
-    if (drag.element.hasPointerCapture(drag.pointerId)) drag.element.releasePointerCapture(drag.pointerId);
-    persistLayout();
-  }
-
-  function resetHeight() {
-    workspaceHeight = defaultHeight;
-    persistLayout();
-  }
-
-  function handleHeightKey(event) {
-    const step = event.shiftKey ? 100 : 20;
-    if (event.key === 'ArrowUp') setHeight(workspaceHeight - step);
-    else if (event.key === 'ArrowDown') setHeight(workspaceHeight + step);
-    else if (event.key === 'Home') setHeight(minHeight);
-    else if (event.key === 'End') setHeight(maxHeight);
-    else if (event.key === 'Enter') resetHeight();
-    else if (event.key === 'Escape' && heightDrag) finishHeightResize(true);
-    else return;
-    event.preventDefault();
-    persistLayout();
-  }
-
-  $effect(() => { if ($fullscreen) finishHeightResize(); });
-
   let resizeTimeout;
   let lastSizes = null;
   let paneGroup = $state(null);
+  let editorSize = $state(50);
   let toolbarHeight = $state(0);
   let layoutControlsWidth = $state(0);
   let zoomControlsWidth = $state(0);
@@ -94,12 +53,15 @@
     if (!paneGroup) return;
     untrack(() => {
       activeDirection = nextDirection;
-      paneGroup.setLayout(getSavedSizes(nextDirection));
+      const sizes = getSavedSizes(nextDirection);
+      editorSize = sizes[0];
+      paneGroup.setLayout(sizes);
     });
   });
 
   function onLayoutChange(sizes) {
     if (activeDirection !== direction || sizes.length !== 2) return;
+    editorSize = sizes[0];
     savedSizes[direction] = [...sizes];
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
@@ -116,9 +78,15 @@
     $layout === "side-by-side" ? "horizontal" : "vertical",
   );
 
-  function resetPanes() {
-    paneGroup?.setLayout([50, 50]);
-    trackEvent('reset_panes', { layout: $layout });
+  function setEditorSize(size) {
+    const sizes = [size, 100 - size];
+    paneGroup?.setLayout(sizes);
+    onLayoutChange(sizes);
+  }
+
+  function panePixelsPerUnit(handle) {
+    const axis = direction === 'horizontal' ? 'width' : 'height';
+    return (handle.parentElement.getBoundingClientRect()[axis] - handle.getBoundingClientRect()[axis]) / 100;
   }
 
   function persistLayout() {
@@ -130,27 +98,12 @@
 
   onDestroy(() => {
     clearTimeout(resizeTimeout);
-    finishHeightResize();
     persistLayout();
   });
 
-  // Styling helpers
-  const handleBase =
-    "flex items-center justify-center relative bg-card " +
-    "hover:bg-secondary active:bg-secondary transition-colors " +
-    "select-none touch-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/60 " +
-    "after:w-5 data-[direction=vertical]:after:h-5 " +
-    "before:content-[''] before:absolute before:bg-border before:rounded-full " +
-    "hover:before:bg-primary/50 active:before:bg-primary";
-
-  const handleVertical =
-    "border-y border-border h-2.5! cursor-ns-resize before:w-9 before:h-[3px]";
-
-  const handleHorizontal =
-    "border-x border-border w-2.5! cursor-ew-resize before:h-9 before:w-[3px]";
 </script>
 
-<svelte:window onpagehide={persistLayout} onblur={() => finishHeightResize()} />
+<svelte:window onpagehide={persistLayout} />
 
 <div
   id="equation-workspace"
@@ -161,7 +114,7 @@
   class:mb-0={true}
   style:height={$fullscreen ? undefined : `${workspaceHeight}px`}
 >
-  <Resizable.PaneGroup bind:this={paneGroup} {direction} {onLayoutChange} keyboardResizeBy={5} class="min-h-0 flex-1">
+  <Resizable.PaneGroup bind:this={paneGroup} {direction} {onLayoutChange} class="min-h-0 flex-1">
     <Resizable.Pane defaultSize={50} minSize={30} id="editor-pane">
       <div class="relative h-full flex flex-col min-h-0">
         <div class="absolute top-2.5 right-2.5 z-10">
@@ -181,21 +134,19 @@
     </Resizable.Pane>
 
     <Resizable.Handle
-      role="separator"
-      aria-orientation={direction}
+      orientation={direction === 'vertical' ? 'horizontal' : 'vertical'}
       aria-controls="editor-pane preview-pane"
-      data-orientation={direction}
       aria-label="Resize editor and preview"
       title="Drag to resize · Double-click or Enter to reset"
-      ondblclick={resetPanes}
-      onkeydowncapture={event => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          resetPanes();
-        }
-      }}
-      onDraggingChange={dragging => { if (!dragging) persistLayout(); }}
-      class={`${handleBase} ${direction === "vertical" ? handleVertical : handleHorizontal}`}
+      value={editorSize}
+      min={30}
+      max={70}
+      step={5}
+      resetValue={50}
+      getPixelsPerUnit={panePixelsPerUnit}
+      onValueChange={setEditorSize}
+      onCommit={persistLayout}
+      onReset={() => trackEvent('reset_panes', { layout: $layout })}
     />
 
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
@@ -216,29 +167,20 @@
   </Resizable.PaneGroup>
   <ExportBar />
   {#if !$fullscreen}
-    <!-- A focusable separator implements ARIA's adjustable splitter pattern. -->
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-    <div
-      role="separator"
-      tabindex="0"
+    <Resizable.Handle
+      orientation="horizontal"
       aria-label="Resize workspace height"
-      aria-orientation="horizontal"
       aria-controls="equation-workspace"
-      aria-valuemin={minHeight}
-      aria-valuemax={maxHeight}
-      aria-valuenow={workspaceHeight}
       aria-valuetext={`${workspaceHeight} pixels`}
       title="Drag to change height · Double-click or Enter to reset"
-      onpointerdown={startHeightResize}
-      onpointermove={resizeHeight}
-      onpointerup={() => finishHeightResize()}
-      onpointercancel={() => finishHeightResize(true)}
-      onlostpointercapture={() => finishHeightResize()}
-      ondblclick={resetHeight}
-      onkeydown={handleHeightKey}
-      class="group relative -mb-px flex h-2.5 shrink-0 cursor-ns-resize touch-none select-none items-center justify-center border-y border-border bg-card hover:bg-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/60 after:absolute after:inset-x-0 after:top-1/2 after:h-5 after:-translate-y-1/2"
-    >
-      <span aria-hidden="true" class="h-[3px] w-9 rounded-full bg-border group-hover:bg-primary/50 group-active:bg-primary"></span>
-    </div>
+      value={workspaceHeight}
+      min={minHeight}
+      max={maxHeight}
+      step={20}
+      resetValue={defaultHeight}
+      onValueChange={setHeight}
+      onCommit={persistLayout}
+      class="-mb-px"
+    />
   {/if}
 </div>
