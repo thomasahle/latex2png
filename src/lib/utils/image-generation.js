@@ -56,36 +56,35 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
 
   const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor, foregroundColor);
 
-  const bbox = mjxSvg.getBBox();
   const svg = mjxSvg.cloneNode(true);
   bakeSvgColors(svg, fgColor);
 
   const rect = exportRect(mjxSvg, previewElement, zoomScale);
-  const baseExportWidth = Math.max(1, rect.width || bbox.width * zoomScale);
-  const baseExportHeight = Math.max(1, rect.height || bbox.height * zoomScale);
+  const baseExportWidth = Math.max(1, rect.width);
+  const baseExportHeight = Math.max(1, rect.height);
 
-  // Calculate padding: 1em * zoom in pixels, then convert to viewBox units
   const pixelPadding = BASE_PADDING_EM * zoomScale;
-  const scaleX = bbox.width / baseExportWidth;
-  const scaleY = bbox.height / baseExportHeight;
-  const viewBoxPaddingX = pixelPadding * scaleX;
-  const viewBoxPaddingY = pixelPadding * scaleY;
-
-  // Normalize coordinates so the viewBox starts at (0,0) with padding offset
-  const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  while (svg.firstChild) {
-    wrapper.appendChild(svg.firstChild);
-  }
-  wrapper.setAttribute('transform', `translate(${-bbox.x + viewBoxPaddingX}, ${-bbox.y + viewBoxPaddingY})`);
-  svg.appendChild(wrapper);
-
-  const viewBoxWidth = bbox.width + viewBoxPaddingX * 2;
-  const viewBoxHeight = bbox.height + viewBoxPaddingY * 2;
-  const viewBox = `0 0 ${viewBoxWidth} ${viewBoxHeight}`;
   const exportWidth = baseExportWidth + pixelPadding * 2;
   const exportHeight = baseExportHeight + pixelPadding * 2;
 
-  svg.setAttribute('viewBox', viewBox);
+  // Keep MathJax's viewport inside a padded canvas, just like PNG rendering.
+  // Its ink bounds omit intentional space (\hspace, \phantom, etc.). Using
+  // them as a new viewBox moves/resizes glyphs and can erase blank formulas.
+  const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  wrapper.setAttribute('viewBox', mjxSvg.getAttribute('viewBox'));
+  if (mjxSvg.hasAttribute('preserveAspectRatio')) {
+    wrapper.setAttribute('preserveAspectRatio', mjxSvg.getAttribute('preserveAspectRatio'));
+  }
+  wrapper.setAttribute('x', pixelPadding);
+  wrapper.setAttribute('y', pixelPadding);
+  wrapper.setAttribute('width', baseExportWidth);
+  wrapper.setAttribute('height', baseExportHeight);
+  while (svg.firstChild) {
+    wrapper.appendChild(svg.firstChild);
+  }
+  svg.appendChild(wrapper);
+
+  svg.setAttribute('viewBox', `0 0 ${exportWidth} ${exportHeight}`);
   svg.setAttribute('width', exportWidth);
   svg.setAttribute('height', exportHeight);
 
@@ -93,9 +92,10 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
     const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     bgRect.setAttribute('x', '0');
     bgRect.setAttribute('y', '0');
-    bgRect.setAttribute('width', viewBoxWidth.toString());
-    bgRect.setAttribute('height', viewBoxHeight.toString());
+    bgRect.setAttribute('width', exportWidth);
+    bgRect.setAttribute('height', exportHeight);
     bgRect.setAttribute('fill', bgColor);
+    bgRect.setAttribute('stroke', 'none');
     svg.insertBefore(bgRect, svg.firstChild);
   }
 
