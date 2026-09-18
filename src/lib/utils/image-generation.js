@@ -1,5 +1,11 @@
 const BASE_PADDING_EM = 16; // 1em in pixels
 
+function getCanvasContext(canvas) {
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Your browser could not create an image. Please try again.');
+  return context;
+}
+
 function exportRect(svg, previewElement, scale) {
   const rect = svg.getBoundingClientRect();
   const previewScale = parseFloat(getComputedStyle(previewElement).scale) || 1;
@@ -118,7 +124,7 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   canvas.width = outputWidth;
   canvas.height = outputHeight;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = getCanvasContext(canvas);
   if (backgroundColor) {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, outputWidth, outputHeight);
@@ -138,22 +144,19 @@ async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, 
   const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        ctx.drawImage(img, padding, padding, contentWidth, contentHeight);
-        resolve();
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    };
-    img.onerror = (e) => {
-      URL.revokeObjectURL(url);
-      reject(e);
-    };
-    img.src = url;
-  });
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Could not load the rendered equation image. Please try again.'));
+      image.src = url;
+    });
+    // Draw outside the load callback so exceptions reject this export rather
+    // than leaving its promise (and the Download/Copy button) pending forever.
+    ctx.drawImage(img, padding, padding, contentWidth, contentHeight);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 
   return canvas;
 }
@@ -171,7 +174,7 @@ function bakeSvgColors(svg, fgColor) {
 function normalizeColor(color) {
   if (!color) return null;
   if (color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return 'transparent';
-  const ctx = document.createElement('canvas').getContext('2d');
+  const ctx = getCanvasContext(document.createElement('canvas'));
   ctx.fillStyle = color;
   return ctx.fillStyle; // normalized css color string
 }
