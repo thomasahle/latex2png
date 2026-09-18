@@ -30,7 +30,7 @@ export default defineConfig({
       } : {}) },
       testIgnore: '**/mobile.spec.mjs',
     })),
-    { name: 'mobile-chrome', use: { ...devices['Pixel 7'], browserName: 'chromium' }, testMatch: ['**/mobile.spec.mjs', '**/controls.spec.mjs', '**/clipboard.spec.mjs'] },
-    { name: 'mobile-safari', use: { ...devices['iPhone 13'], browserName: 'webkit' }, testMatch: ['**/mobile.spec.mjs', '**/controls.spec.mjs', '**/clipboard.spec.mjs'] },
+    { name: 'mobile-chrome', use: { ...devices['Pixel 7'], browserName: 'chromium' }, testMatch: ['**/mobile.spec.mjs', '**/controls.spec.mjs', '**/clipboard.spec.mjs', '**/sharing.spec.mjs'] },
+    { name: 'mobile-safari', use: { ...devices['iPhone 13'], browserName: 'webkit' }, testMatch: ['**/mobile.spec.mjs', '**/controls.spec.mjs', '**/clipboard.spec.mjs', '**/sharing.spec.mjs'] },
   ],
 });

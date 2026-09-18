@@ -98,20 +98,30 @@ export async function shareLink(options = {}) {
 }
 
 export async function shareToTwitter() {
-  const shareUrl = await buildShareUrl({ compress: true, useHash: false });
-  const text = "Check out my LaTeX equation!";
-  const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
-
-  // Note: with "noopener" in the features string window.open() always returns
-  // null, so it cannot be used to detect a blocked popup. Open without it and
-  // sever the opener link ourselves instead (the window is still about:blank here).
-  const win = window.open(intent, "_blank", "width=550,height=420");
-  if (!win) {
-    toast.error("Popup blocked by the browser");
-    trackError(new Error('Twitter popup blocked'), { context: 'shareToTwitter' });
-  } else {
+  let win;
+  try {
+    // Open during the click: loading compression code may outlast user activation.
+    // Using the noopener feature would also return null for an allowed popup, so
+    // sever the opener immediately while the new window is still about:blank.
+    win = window.open("about:blank", "_blank", "width=550,height=420");
+    if (!win) {
+      toast.error("Popup blocked by the browser");
+      trackError(new Error('Twitter popup blocked'), { context: 'shareToTwitter' });
+      return;
+    }
     win.opener = null;
+    const shareUrl = await buildShareUrl({ compress: true, useHash: false });
+    // Closing the window while its link loads cancels sharing.
+    if (win.closed) return;
+    const text = "Check out my LaTeX equation!";
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+    win.location.replace(intent);
     trackEvent('share', { method: 'twitter' });
+  } catch (error) {
+    if (win?.closed) return;
+    win?.close();
+    toast.error("Failed to open Twitter sharing");
+    trackError(error, { context: 'shareToTwitter' });
   }
 }
 
