@@ -2,9 +2,9 @@
   import { onMount, onDestroy } from "svelte";
   import { EditorView, minimalSetup } from "codemirror";
   import { EditorState, Compartment } from "@codemirror/state";
-  import { placeholder, lineNumbers, highlightActiveLine } from "@codemirror/view";
+  import { placeholder, lineNumbers, highlightActiveLine, keymap } from "@codemirror/view";
   import { latex } from "codemirror-lang-latex";
-  import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
+  import { autocompletion, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
   import { bracketMatching } from "@codemirror/language";
   import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
   import { vim } from "@replit/codemirror-vim";
@@ -27,6 +27,10 @@
     const state = EditorState.create({
       doc: "",
       extensions: [
+        // Vim handles normal-mode keys before the insert-mode editing keymaps.
+        vimCompartment.of([]),
+        // Try paired deletion before minimalSetup's ordinary Backspace binding.
+        keymap.of(closeBracketsKeymap),
         minimalSetup,
         EditorView.contentAttributes.of({
           'aria-label': 'LaTeX equation',
@@ -39,7 +43,6 @@
         autocompletion({ override: [latexCompletions] }),
         lineNumberCompartment.of([]),
         themeCompartment.of([]),
-        vimCompartment.of([]),
         activeLineCompartment.of([]),
         placeholder(String.raw`e.g. \frac{1}{\sqrt{2\pi}} e^{-x^2/2}`),
         EditorView.lineWrapping,
