@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test, formula } from './fixtures.mjs';
+import { test, expect, formula } from './fixtures.mjs';
 import { chooseExportOption } from '../../scripts/export-controls.mjs';
 
 for (const invalid of [String.raw`\frac{1}{`, String.raw`\notACommand{x}`]) {
@@ -50,6 +50,83 @@ test("editor does not trap Tab", async ({ page, app }) => {
   await editor.focus();
   await page.keyboard.press('Tab');
   assert.notEqual(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'LaTeX equation');
+});
+
+test('keyboard navigation reaches ordinary symbols and fills their placeholders', async ({ page, app }) => {
+  await app.editor.fill('');
+  const trigger = page.getByRole('button', { name: 'Insert math symbol', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  const fraction = page.getByRole('menuitem', { name: 'Fraction', exact: true });
+  await expect(fraction).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('menuitem', { name: 'Derivative d/dx', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await expect(fraction).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(app.editor).toBeFocused();
+  await page.keyboard.type('1');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('2');
+  await expect(app.editor).toHaveText(String.raw`\frac{1}{2}`);
+  await app.ready();
+});
+
+test('symbol typeahead and keyboard submenus insert the selected command', async ({ page, app }) => {
+  const trigger = page.getByRole('button', { name: 'Insert math symbol', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('square');
+  await expect(page.getByRole('menuitem', { name: 'Square root', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(app.editor).toBeFocused();
+  await page.keyboard.type('2');
+  await expect(app.editor).toContainText(String.raw`\sqrt{2}`);
+
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('integral');
+  const integral = page.getByRole('menuitem', { name: 'Integral', exact: true });
+  await expect(integral).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  const submenu = page.getByRole('menu', { name: 'Integral variants', exact: true });
+  await expect(submenu.getByRole('menuitem', { name: 'Single integral ∫', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(submenu.getByRole('menuitem', { name: 'Double integral ∬', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.type('double');
+  await expect(submenu.getByRole('menuitem', { name: 'Double integral ∬', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(app.editor).toBeFocused();
+  await expect(app.editor).toContainText(String.raw`\iint`);
+});
+
+test('category shortcuts keep keyboard focus in the chosen symbols', async ({ page, app }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Insert math symbol', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('End');
+  await expect(page.getByRole('menuitem', { name: 'Shapes', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  const club = page.getByRole('menuitem', { name: 'Club suit ♣', exact: true });
+  await expect(club).toBeFocused();
+  expect(await club.evaluate(el => {
+    const r = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+  })).toBe(true);
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('menuitem', { name: 'Diamond suit ♢', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Insert math symbol', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  const fraction = page.getByRole('menuitem', { name: 'Fraction', exact: true });
+  await expect(fraction).toBeFocused();
+  // Let saved-scroll restoration finish; it used to move focus offscreen.
+  await page.waitForTimeout(250);
+  expect(await fraction.evaluate(el => {
+    const r = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+  })).toBe(true);
 });
 
 test("pending drag cannot use an obsolete image", async ({ page, app }) => {

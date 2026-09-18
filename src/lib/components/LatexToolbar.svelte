@@ -26,6 +26,7 @@
   let lastSubTriggerPointerType = $state(null);
   let isRestoringScroll = $state(false);
   let skipTriggerRefocus = false;
+  let symbolSearch = { menu: null, text: "", time: 0 };
   const toolbarLayerSelector = "[data-latex-toolbar-layer]";
 
   function addToRecent(command) {
@@ -39,10 +40,37 @@
 
   function markToolbarInteraction() {
     hasInteractedInsideToolbar = true;
+    isRestoringScroll = false;
+  }
+
+  function handleSymbolTypeahead(event) {
+    if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
+    if (event.key.length !== 1 || event.key === " ") {
+      symbolSearch.text = "";
+      return;
+    }
+
+    // Match accessible names: the visible content is SVG, and bits-ui 2.19
+    // doesn't use its textValue prop or reset typeahead when this menu closes.
+    const menu = event.currentTarget;
+    const now = performance.now();
+    const prefix = symbolSearch.menu === menu && now - symbolSearch.time < 1000 ? symbolSearch.text : "";
+    symbolSearch = { menu, text: prefix + event.key.toLowerCase(), time: now };
+    const query = /^(.)\1*$/u.test(symbolSearch.text) ? symbolSearch.text[0] : symbolSearch.text;
+    const items = [...menu.querySelectorAll('[role="menuitem"]')].filter(item =>
+      item.getAttribute('aria-disabled') !== 'true' && item.closest('[role="menu"]') === menu);
+    const current = items.indexOf(document.activeElement);
+    const start = Math.max(0, current + (query.length === 1 ? 1 : 0));
+    const ordered = [...items.slice(start), ...items.slice(0, start)];
+    const match = ordered.find(item => item.getAttribute('aria-label')?.toLowerCase().startsWith(query));
+    markToolbarInteraction();
+    event.preventDefault();
+    match?.focus();
   }
 
   function handleTriggerClick(event) {
     const isKeyboardActivation = event?.detail === 0;
+    if (isKeyboardActivation) savedTop = 0;
     if (menuOpen && hoverEnabled && openedViaHover && !isKeyboardActivation) {
       event.preventDefault();
       event.stopPropagation();
@@ -285,7 +313,7 @@
     };
 
     const tickFrame = () => {
-      if (!menuOpen || !scrollEl) {
+      if (!menuOpen || !scrollEl || !isRestoringScroll) {
         finish();
         return;
       }
@@ -302,6 +330,7 @@
 
   // Scroll to a specific section
   function scrollToSection(category) {
+    markToolbarInteraction();
     const ref = sectionRefs[category];
     if (ref && scrollEl) {
       const containerTop = scrollEl.getBoundingClientRect().top;
@@ -313,6 +342,7 @@
         scrollEl.scrollTop = targetTop;
       }
       activeSection = category;
+      ref.querySelector('[role="menuitem"]')?.focus({ preventScroll: true });
     }
   }
 
@@ -375,6 +405,10 @@
           onmouseleave={handleTriggerMouseLeave}
           onclickcapture={handleTriggerClick}
           onpointerdowncapture={handleTriggerPointerDown}
+          onkeydowncapture={(event) => {
+            // Keyboard opening focuses the first item, so it must be in view.
+            if (["Enter", " ", "ArrowDown"].includes(event.key)) savedTop = 0;
+          }}
         >
           <Button
             {...props}
@@ -395,7 +429,7 @@
       sideOffset={0}
       collisionPadding={8}
       bind:ref={contentEl}
-      class={`w-[min(420px,calc(100vw-1rem))] max-h-[min(460px,var(--bits-dropdown-menu-content-available-height))] flex flex-col overflow-hidden p-0 focus:outline-hidden relative transition-opacity duration-150 ${
+      class={`symbols-menu w-[min(420px,calc(100vw-1rem))] max-h-[min(460px,var(--bits-dropdown-menu-content-available-height))] flex flex-col overflow-hidden p-0 focus:outline-hidden relative transition-opacity duration-150 ${
         menuOpen ? "" : "hidden!"
       }`}
       aria-hidden={!menuOpen}
@@ -404,8 +438,10 @@
       data-latex-toolbar-layer
       preventScroll={false}
       onmouseleave={handleContentMouseLeave}
+      onkeydown={handleSymbolTypeahead}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
+        symbolSearch = { menu: null, text: "", time: 0 };
         skipTriggerRefocus = false;
         contentEl?.focus?.({ preventScroll: true });
         restoreScrollUntilSettled();
@@ -430,16 +466,15 @@
               class="grid gap-1 grid-cols-[repeat(auto-fill,minmax(2.25rem,1fr))] touch:grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))]"
             >
               {#each recentCommands as cmd}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                <DropdownMenu.Item
+                  class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-visible rounded-md cursor-pointer"
                   title={cmd.tooltip}
-                  onclick={() =>
+                  aria-label={cmd.tooltip}
+                  onSelect={() =>
                     insertLatex(cmd.latex, "Recent", cmd.label, cmd.tooltip)}
                 >
                   <MathSymbol latex={cmd.label} />
-                </Button>
+                </DropdownMenu.Item>
               {/each}
             </div>
           </div>
@@ -465,8 +500,9 @@
                     >
                       <DropdownMenu.SubTrigger
                         showIcon={false}
-                        class="relative h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent cursor-pointer"
+                        class="relative h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-visible rounded-md data-[state=open]:bg-accent cursor-pointer"
                         title={cmd.tooltip}
+                        aria-label={cmd.tooltip}
                       >
                         <span
                           aria-hidden="true"
@@ -480,22 +516,22 @@
                       </DropdownMenu.SubTrigger>
                     </div>
                     <DropdownMenu.SubContent
-                      class="min-w-0 max-h-(--bits-dropdown-menu-content-available-height) overflow-y-auto p-1"
+                      class="symbols-menu min-w-0 max-h-(--bits-dropdown-menu-content-available-height) overflow-y-auto p-1"
                       collisionPadding={8}
                       aria-label={`${cmd.tooltip} variants`}
                       data-latex-toolbar-layer
+                      onkeydown={handleSymbolTypeahead}
                       onCloseAutoFocus={(e) => {
                         e.preventDefault();
                       }}
                     >
                       <div class="flex flex-col gap-1">
                         {#each cmd.subcommands as subcmd}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            class="h-9 touch:h-11 w-full justify-start px-2 text-sm"
+                          <DropdownMenu.Item
+                            class="h-9 touch:h-11 w-full justify-start px-2 text-sm cursor-pointer"
                             title={subcmd.tooltip}
-                            onclick={() =>
+                            aria-label={subcmd.tooltip}
+                            onSelect={() =>
                               insertLatex(
                                 subcmd.latex,
                                 group.category,
@@ -504,19 +540,18 @@
                               )}
                           >
                             <MathSymbol latex={subcmd.label} />
-                          </Button>
+                          </DropdownMenu.Item>
                         {/each}
                       </div>
                     </DropdownMenu.SubContent>
                   </DropdownMenu.Sub>
                 {:else}
-                  <!-- Regular button for simple commands -->
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                  <!-- Simple commands participate in the menu's keyboard navigation. -->
+                  <DropdownMenu.Item
+                    class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-visible rounded-md cursor-pointer"
                     title={cmd.tooltip}
-                    onclick={() =>
+                    aria-label={cmd.tooltip}
+                    onSelect={() =>
                       insertLatex(
                         cmd.latex,
                         group.category,
@@ -525,7 +560,7 @@
                       )}
                   >
                     <MathSymbol latex={cmd.label} />
-                  </Button>
+                  </DropdownMenu.Item>
                 {/if}
               {/each}
             </div>
@@ -540,13 +575,12 @@
       >
         <div class="flex items-center gap-1.5 overflow-x-auto">
           {#each getNavSections() as section (section.key)}
-            <Button
-              variant="ghost"
-              size="sm"
-              class={`h-7 w-7 min-w-7 touch:size-11 touch:min-w-11 p-0 shrink-0 rounded-full text-xs ${
+            <DropdownMenu.Item
+              closeOnSelect={false}
+              class={`h-7 w-7 min-w-7 touch:size-11 touch:min-w-11 p-0 shrink-0 justify-center rounded-full text-xs cursor-pointer ${
                 activeSection === section.key ? "bg-accent" : ""
               }`}
-              onclick={() => scrollToSection(section.key)}
+              onSelect={() => scrollToSection(section.key)}
               title={section.title}
               aria-label={section.title}
               aria-current={activeSection === section.key ? 'true' : undefined}
@@ -556,7 +590,7 @@
               {:else}
                 <MathSymbol latex={section.icon} />
               {/if}
-            </Button>
+            </DropdownMenu.Item>
           {/each}
         </div>
       </div>
@@ -565,6 +599,7 @@
 </div>
 
 <style>
+  :global(.symbols-menu [role='menuitem']) { box-shadow: none; }
   /* bits-ui >= 2.15.8 copies the content's z-index onto its floating wrapper
      only when the content node mounts. With forceMount that happens while
      the menu is closed, so the wrapper never gets one and the preview pane's

@@ -85,7 +85,7 @@ test('symbols and submenus fit portrait and landscape, including the last catego
     await app.ready();
 
     await page.getByRole('button', { name: 'Insert math symbol', exact: true }).tap();
-    await page.getByRole('button', { name: 'Shapes', exact: true }).tap();
+    await page.getByRole('menuitem', { name: 'Shapes', exact: true }).tap();
     const last = page.getByRole('group', { name: 'Shapes', exact: true }).getByTitle('Diagonal dots ⋱', { exact: true });
     await last.scrollIntoViewIfNeeded();
     await expect.poll(() => last.evaluate(el => {

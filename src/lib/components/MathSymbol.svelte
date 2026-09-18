@@ -18,9 +18,10 @@
   :global(a:has(.math-symbol)) {
     overflow: visible;
   }
-  /* Don't let parent icon rules resize MathJax's SVGs */
+  /* Keep parent icon rules from resizing or muting active math glyphs. */
   .math-symbol :global(svg) {
     width: auto !important;
     height: auto !important;
+    color: inherit !important;
   }
 </style>
