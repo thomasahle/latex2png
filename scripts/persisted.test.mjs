@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { get } from 'svelte/store';
+import lzString from 'lz-string';
 import { persisted, readStoredValue } from '../src/lib/stores/persisted.js';
 import { createContentStore } from '../src/lib/stores/content.js';
 import { createHistoryStore } from '../src/lib/stores/history.js';
@@ -119,6 +120,64 @@ test('shared URL wins over saved content, including an explicitly empty equation
   store.destroy();
 });
 
+test('real compressed links round-trip Unicode, plus signs, and intentional empty content', async () => {
+  const equations = ['', 'x^2', String.raw`\frac{1+2}{3} + \text{café, 雪 & 100\%}`, 'a &= b \\\\\n c &= d', 'a'.repeat(5000)];
+  // Keep a known existing link as well as generated examples.
+  const examples = [['B4PQTEA', 'x^2'], ...equations.map(latex => [lzString.compressToEncodedURIComponent(latex), latex])];
+  let withPlus;
+  for (let n = 0; n < 1000 && !withPlus; n++) {
+    const latex = `x_{${n}}`;
+    const encoded = lzString.compressToEncodedURIComponent(latex);
+    if (encoded.includes('+')) withPlus = [encoded, latex];
+  }
+  assert.ok(withPlus, 'exercise a literal plus parsed as a space');
+  examples.push(withPlus);
+  for (const [encoded, latex] of examples) {
+    const f = fixture({ latexContent: 'saved' });
+    const store = createContentStore(f);
+    try {
+      assert.equal(await store.initialize(new URL(`https://example.test/?z=${encoded}&v=1`)), 'loaded');
+      assert.equal(get(store), latex);
+      store.flush();
+      assert.equal(f.data.get('latexContent'), latex);
+    } finally { store.destroy(); }
+  }
+});
+
+test('malformed compressed links cannot replace or clear the saved draft', async () => {
+  const valid = lzString.compressToEncodedURIComponent(String.raw`\frac{x+1}{2}`);
+  for (const value of ['', 'abc', '123', 'null', '?', 'garbage', valid.slice(0, -2), valid + 'extra']) {
+    const f = fixture({ latexContent: 'saved' });
+    const store = createContentStore(f);
+    try {
+      assert.equal(await store.initialize(new URL(`https://example.test/?z=${encodeURIComponent(value)}&v=1`)), 'invalid', value);
+      assert.equal(get(store), 'saved', value);
+      f.events.dispatchEvent(new Event('pagehide'));
+      assert.equal(f.data.get('latexContent'), 'saved', value);
+    } finally { store.destroy(); }
+  }
+});
+
+test('equation query parameters take precedence while unrelated queries permit fragment links', async () => {
+  const encoded = lzString.compressToEncodedURIComponent('compressed');
+  const examples = [
+    ['?utm_source=example#latex=x%2By', 'x+y', 'loaded'],
+    [`?utm_source=example#z=${encoded}&v=1`, 'compressed', 'loaded'],
+    [`?latex=query#z=${encoded}`, 'query', 'loaded'],
+    ['?latex=#latex=fragment', '', 'loaded'],
+    [`?z=${encoded}#latex=fragment`, 'compressed', 'loaded'],
+    ['?z=abc#latex=fragment', 'saved', 'invalid'],
+    ['?utm_source=example#editor', 'saved', 'none'],
+  ];
+  for (const [suffix, value, status] of examples) {
+    const store = createContentStore(fixture({ latexContent: 'saved' }));
+    try {
+      assert.equal(await store.initialize(new URL(`https://example.test/${suffix}`)), status);
+      assert.equal(get(store), value);
+    } finally { store.destroy(); }
+  }
+});
+
 test('delayed decompression never overwrites a newer edit; invalid links retain saved content', async () => {
   const store = createContentStore(fixture({ latexContent: 'saved' }));
   await store.initialize(new URL('https://example.test/?z=bad'), async () => null);
@@ -129,7 +188,9 @@ test('delayed decompression never overwrites a newer edit; invalid links retain 
   const initializing = store.initialize(new URL('https://example.test/?z=slow'), () => new Promise(resolve => { finish = resolve; }));
   store.update(() => 'newer edit');
   finish('stale link');
-  await initializing;
+  assert.equal(await initializing, 'superseded');
+  assert.equal(get(store), 'newer edit');
+  assert.equal(await store.initialize(new URL('https://example.test/?z=offline'), async () => { throw Error('Network unavailable'); }), 'invalid');
   assert.equal(get(store), 'newer edit');
   store.destroy();
 });

@@ -4,6 +4,7 @@ import { mount } from 'svelte'
 import App from './App.svelte'
 import { latexContent } from './lib/stores/content.js'
 import { trackError } from './lib/utils/analytics.js'
+import { toast } from './lib/components/ui/sonner'
 
 window.addEventListener('error', (event) => {
   trackError(event.error || new Error(event.message), {
@@ -21,8 +22,10 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // Resolve shared links before the editor mounts, so startup never races typing.
-const app = latexContent.initialize(window.location).then(() => mount(App, {
-  target: document.getElementById('app'),
-}))
+const app = latexContent.initialize(window.location).then(status => {
+  const app = mount(App, { target: document.getElementById('app') })
+  if (status === 'invalid') toast.error('Could not load the equation from this link.')
+  return app
+})
 
 export default app
