@@ -1,12 +1,22 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.js";
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
+	import { createMenuTypeahead } from "./typeahead.js";
+
+	const uid = $props.id();
+	const typeahead = createMenuTypeahead();
 
 	let {
+		id = uid,
 		ref = $bindable(null),
 		sideOffset = 4,
 		portalProps,
 		class: className,
+		children,
+		child: customChild,
+		onkeydown,
+		onkeydowncapture,
+		onOpenAutoFocus,
 		...restProps
 	}: DropdownMenuPrimitive.ContentProps & {
 		portalProps?: DropdownMenuPrimitive.PortalProps;
@@ -15,6 +25,7 @@
 
 <DropdownMenuPrimitive.Portal {...portalProps}>
 	<DropdownMenuPrimitive.Content
+		{id}
 		bind:ref
 		data-slot="dropdown-menu-content"
 		{sideOffset}
@@ -24,5 +35,29 @@
 			className
 		)}
 		{...restProps}
-	/>
+		onkeydowncapture={(event) => {
+			onkeydowncapture?.(event);
+			typeahead.onkeydowncapture(event);
+		}}
+		onkeydown={(event) => {
+			onkeydown?.(event);
+			typeahead.onkeydown(event);
+		}}
+		onOpenAutoFocus={(event) => {
+			typeahead.reset();
+			onOpenAutoFocus?.(event);
+		}}
+	>
+		{#snippet child({ props, wrapperProps, ...snippetProps })}
+			<!-- bits-ui 2.19 drops the content ID in its floating layer. Restore
+			     it here so aria-controls refers to the actual menu element. -->
+			{#if customChild}
+				{@render customChild({ props: { ...props, id }, wrapperProps, ...snippetProps })}
+			{:else}
+				<div {...wrapperProps}>
+					<div {...props} {id}>{@render children?.()}</div>
+				</div>
+			{/if}
+		{/snippet}
+	</DropdownMenuPrimitive.Content>
 </DropdownMenuPrimitive.Portal>

@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
 	import { cn } from "$lib/utils.js";
+	import { createMenuTypeahead } from "./typeahead.js";
+
+	const typeahead = createMenuTypeahead();
 
 	let {
 		ref = $bindable(null),
 		class: className,
+		onkeydown,
+		onkeydowncapture,
+		onOpenAutoFocus,
 		...restProps
 	}: DropdownMenuPrimitive.SubContentProps = $props();
 </script>
@@ -18,4 +24,16 @@
 		className
 	)}
 	{...restProps}
+	onkeydowncapture={(event) => {
+		onkeydowncapture?.(event);
+		typeahead.onkeydowncapture(event);
+	}}
+	onkeydown={(event) => {
+		onkeydown?.(event);
+		typeahead.onkeydown(event);
+	}}
+	onOpenAutoFocus={(event) => {
+		typeahead.reset();
+		onOpenAutoFocus?.(event);
+	}}
 />

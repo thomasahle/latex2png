@@ -87,7 +87,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content bind:ref={menuElement} class="history-dropdown-content w-80 max-w-[calc(100vw-1rem)] max-h-[min(400px,var(--bits-dropdown-menu-content-available-height))] overflow-y-auto">
+  <DropdownMenu.Content aria-label="History" bind:ref={menuElement} class="history-dropdown-content w-80 max-w-[calc(100vw-1rem)] max-h-[min(400px,var(--bits-dropdown-menu-content-available-height))] overflow-y-auto">
     <div class="px-2 py-1.5 text-xs font-semibold">History</div>
     {#if $history.length === 0}
       <div class="px-3 py-6 text-center text-muted-foreground text-sm">

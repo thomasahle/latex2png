@@ -52,7 +52,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content>
+  <DropdownMenu.Content aria-label="Settings">
     <DropdownMenu.Item
       onSelect={toggleTheme}
       class="cursor-pointer flex items-center justify-between"

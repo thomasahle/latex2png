@@ -26,7 +26,6 @@
   let lastSubTriggerPointerType = $state(null);
   let isRestoringScroll = $state(false);
   let skipTriggerRefocus = false;
-  let symbolSearch = { menu: null, text: "", time: 0 };
   const toolbarLayerSelector = "[data-latex-toolbar-layer]";
 
   function addToRecent(command) {
@@ -41,31 +40,6 @@
   function markToolbarInteraction() {
     hasInteractedInsideToolbar = true;
     isRestoringScroll = false;
-  }
-
-  function handleSymbolTypeahead(event) {
-    if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing) return;
-    if (event.key.length !== 1 || event.key === " ") {
-      symbolSearch.text = "";
-      return;
-    }
-
-    // Match accessible names: the visible content is SVG, and bits-ui 2.19
-    // doesn't use its textValue prop or reset typeahead when this menu closes.
-    const menu = event.currentTarget;
-    const now = performance.now();
-    const prefix = symbolSearch.menu === menu && now - symbolSearch.time < 1000 ? symbolSearch.text : "";
-    symbolSearch = { menu, text: prefix + event.key.toLowerCase(), time: now };
-    const query = /^(.)\1*$/u.test(symbolSearch.text) ? symbolSearch.text[0] : symbolSearch.text;
-    const items = [...menu.querySelectorAll('[role="menuitem"]')].filter(item =>
-      item.getAttribute('aria-disabled') !== 'true' && item.closest('[role="menu"]') === menu);
-    const current = items.indexOf(document.activeElement);
-    const start = Math.max(0, current + (query.length === 1 ? 1 : 0));
-    const ordered = [...items.slice(start), ...items.slice(0, start)];
-    const match = ordered.find(item => item.getAttribute('aria-label')?.toLowerCase().startsWith(query));
-    markToolbarInteraction();
-    event.preventDefault();
-    match?.focus();
   }
 
   function handleTriggerClick(event) {
@@ -438,10 +412,9 @@
       data-latex-toolbar-layer
       preventScroll={false}
       onmouseleave={handleContentMouseLeave}
-      onkeydown={handleSymbolTypeahead}
+      onkeydown={markToolbarInteraction}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
-        symbolSearch = { menu: null, text: "", time: 0 };
         skipTriggerRefocus = false;
         contentEl?.focus?.({ preventScroll: true });
         restoreScrollUntilSettled();
@@ -520,7 +493,7 @@
                       collisionPadding={8}
                       aria-label={`${cmd.tooltip} variants`}
                       data-latex-toolbar-layer
-                      onkeydown={handleSymbolTypeahead}
+                      onkeydown={markToolbarInteraction}
                       onCloseAutoFocus={(e) => {
                         e.preventDefault();
                       }}

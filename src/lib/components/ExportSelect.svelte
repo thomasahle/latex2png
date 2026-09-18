@@ -31,7 +31,7 @@
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content align="start" sideOffset={6} class="min-w-40 rounded-lg p-1.5 shadow-lg">
+  <DropdownMenu.Content aria-label={label} align="start" sideOffset={6} class="min-w-40 rounded-lg p-1.5 shadow-lg">
     <Tooltip.Provider delayDuration={300}>
       <DropdownMenu.RadioGroup {value} onValueChange={onchange} aria-label={label}>
         {#each options as option}

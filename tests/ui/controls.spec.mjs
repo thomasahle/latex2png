@@ -1,4 +1,80 @@
 import { test, expect } from './fixtures.mjs';
+import { chooseExportOption } from '../../scripts/export-controls.mjs';
+
+test('dropdown triggers reference their open menus, including symbol submenus', async ({ page, app }) => {
+  const ids = new Set();
+  for (const label of ['Settings', 'Export format', 'Export background', 'History', 'Insert math symbol']) {
+    const trigger = page.getByRole('button', { name: label, exact: true });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.locator('[role="menu"][data-state="open"]');
+    await expect(menu).toBeVisible();
+    const id = await trigger.getAttribute('aria-controls');
+    expect(id).toBeTruthy();
+    expect(ids.has(id)).toBe(false);
+    ids.add(id);
+    await expect(menu).toHaveAttribute('id', id);
+    await expect(menu).toHaveAccessibleName(label === 'Insert math symbol' ? 'Math symbols' : label);
+    expect(await page.evaluate(id => document.querySelectorAll(`[id="${id}"]`).length, id)).toBe(1);
+    if (label === 'Insert math symbol') {
+      await page.keyboard.type('integral');
+      const integral = page.getByRole('menuitem', { name: 'Integral', exact: true });
+      await expect(integral).toBeFocused();
+      await page.keyboard.press('ArrowRight');
+      const submenu = page.getByRole('menu', { name: 'Integral variants', exact: true });
+      await expect(submenu).toHaveAttribute('id', await integral.getAttribute('aria-controls'));
+      await page.keyboard.press('ArrowLeft');
+      await expect(integral).toBeFocused();
+      await page.keyboard.type('fraction');
+      await expect(page.getByRole('menuitem', { name: 'Fraction', exact: true })).toBeFocused();
+    }
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+  }
+});
+
+test('format typeahead resets on reopening and repeated letters cycle through matches', async ({ page, app }) => {
+  const trigger = page.getByRole('button', { name: 'Export format', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await page.keyboard.type('j');
+  await expect(page.getByRole('menuitemradio', { name: 'JPEG', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(trigger).toHaveAttribute('aria-description', 'JPEG');
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await page.keyboard.type('s');
+  await expect(page.getByRole('menuitemradio', { name: 'SVG', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(trigger).toHaveAttribute('aria-description', 'SVG');
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await page.keyboard.type('p');
+  await expect(page.getByRole('menuitemradio', { name: 'PDF', exact: true })).toBeFocused();
+  await page.keyboard.type('p');
+  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toHaveAttribute('aria-description', 'SVG');
+});
+
+test('background typeahead skips disabled transparency for JPEG', async ({ page, app }) => {
+  await chooseExportOption(page, 'Export format', 'JPEG');
+  const trigger = page.getByRole('button', { name: 'Export background', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('menuitemradio', { name: 'Transparent', exact: true })).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByRole('menuitemradio', { name: 'Solid', exact: true })).toBeFocused();
+  await page.keyboard.type('t');
+  await expect(page.getByRole('menuitemradio', { name: 'Solid', exact: true })).toBeFocused();
+  await page.keyboard.press('Home');
+  await page.keyboard.type('custom');
+  await expect(page.getByRole('menuitemradio', { name: 'Custom', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+});
 
 test('Copy confirms success in place, resets, and never confirms a download fallback', async ({ page, app }) => {
   const copy = page.getByRole('button', { name: 'Copy image', exact: true });
