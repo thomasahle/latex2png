@@ -1,8 +1,8 @@
 <script>
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import { history } from "../stores/history.js";
+  import { history, historyEntryKey } from "../stores/history.js";
   import { latexContent } from "../stores/content.js";
   import { trackEvent } from "../utils/analytics.js";
   import { renderLatexToSvg } from "../services/mathjax-service.js";
@@ -11,6 +11,7 @@
 
   let menuOpen = $state(false);
   let renderedPreviews = $state({});
+  const pendingPreviews = new Set();
   let menuElement = $state(null);
 
   function loadEquation(latex) {
@@ -18,8 +19,8 @@
     trackEvent("history_load", { length: latex.length });
   }
 
-  async function removeEntry(index) {
-    history.remove(index);
+  async function removeEntry(entry, index) {
+    history.remove(entry);
     trackEvent("history_remove");
     await tick();
     const buttons = menuElement?.querySelectorAll('[data-history-remove]');
@@ -52,29 +53,33 @@
   }
 
   // Render history previews when menu opens
-  async function renderHistoryPreviews() {
-    const entries = $history;
+  async function renderHistoryPreviews(entries) {
     for (const entry of entries) {
-      if (renderedPreviews[entry.timestamp]) continue;
+      if (!menuOpen) break;
+      const key = historyEntryKey(entry);
+      if (renderedPreviews[key] || pendingPreviews.has(key)) continue;
+      pendingPreviews.add(key);
       try {
         const latex = prepareLatex(entry.latex);
         const svg = await renderLatexToSvg(latex, false, { key: null }); // inline math
-        renderedPreviews[entry.timestamp] = svg;
-        renderedPreviews = { ...renderedPreviews }; // trigger reactivity
+        renderedPreviews[key] = svg;
       } catch (err) {
         console.error("Failed to render history preview:", err);
-        renderedPreviews[entry.timestamp] = `<span class="text-red-500 text-xs">Error</span>`;
-        renderedPreviews = { ...renderedPreviews };
+        renderedPreviews[key] = `<span class="text-red-500 text-xs">Error</span>`;
+      } finally {
+        pendingPreviews.delete(key);
       }
     }
   }
 
-  // Track and render when menu opens
+  // Updating a preview must not restart this loop and duplicate pending work.
   $effect(() => {
-    if (menuOpen && typeof window !== "undefined") {
-      trackEvent("history_open", { count: $history.length });
-      renderHistoryPreviews();
-    }
+    const entries = $history;
+    if (menuOpen) untrack(() => renderHistoryPreviews(entries));
+  });
+
+  $effect(() => {
+    if (menuOpen) untrack(() => trackEvent("history_open", { count: $history.length }));
   });
 </script>
 
@@ -94,7 +99,8 @@
         No history yet
       </div>
     {:else}
-      {#each $history as entry, index (entry.timestamp)}
+      {#each $history as entry, index (historyEntryKey(entry))}
+        {@const key = historyEntryKey(entry)}
         <div class="history-entry group flex items-center gap-1">
           <DropdownMenu.Item
             onSelect={() => loadEquation(entry.latex)}
@@ -103,8 +109,8 @@
           >
             <div class="flex-1 min-w-0 overflow-hidden">
               <div class="history-preview overflow-x-auto overflow-y-hidden">
-                {#if renderedPreviews[entry.timestamp]}
-                  {@html renderedPreviews[entry.timestamp]}
+                {#if renderedPreviews[key]}
+                  {@html renderedPreviews[key]}
                 {:else}
                   <span class="text-muted-foreground text-xs">Loading...</span>
                 {/if}
@@ -115,7 +121,7 @@
             </div>
           </DropdownMenu.Item>
           <DropdownMenu.Item
-            onSelect={() => removeEntry(index)}
+            onSelect={() => removeEntry(entry, index)}
             closeOnSelect={false}
             data-history-remove
             class="history-remove opacity-0 group-hover:opacity-100 data-highlighted:opacity-100 size-8 justify-center p-0 rounded-full text-muted-foreground transition-opacity shrink-0 cursor-pointer"

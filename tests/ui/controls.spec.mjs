@@ -162,3 +162,94 @@ test('removing the last history entry keeps the empty menu usable', async ({ pag
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'History', exact: true })).toBeFocused();
 });
+
+test('history merges exports across tabs and updates an open menu without replacing either draft', async ({ page, app, context }) => {
+  const other = await context.newPage();
+  try {
+    await other.route('https://**/*', route => route.abort());
+    await other.goto(new URL('?latex=y%5E3', page.url()).href);
+    await other.locator('#math-preview svg').waitFor();
+    await page.bringToFront();
+    await app.setEquation('x^2');
+    await expect(app.editor).toHaveText('x^2');
+    let downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download PNG', exact: true }).click();
+    expect(await (await downloading).failure()).toBeNull();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(page.getByRole('menuitem', { name: 'Load equation: x^2', exact: true })).toBeVisible();
+
+    await other.bringToFront();
+    downloading = other.waitForEvent('download');
+    await other.getByRole('button', { name: 'Download PNG', exact: true }).click();
+    expect(await (await downloading).failure()).toBeNull();
+    await expect(page.getByRole('menuitem', { name: /^Load equation:/ })).toHaveCount(2);
+    await expect(page.getByRole('menuitem', { name: 'Load equation: y^3', exact: true })).toBeVisible();
+    await expect(app.editor).toHaveText('x^2');
+    await expect(other.getByRole('textbox', { name: 'LaTeX equation' })).toHaveText('y^3');
+
+    await other.getByRole('button', { name: 'History', exact: true }).click();
+    const firstTabEntry = other.getByRole('menuitem', { name: 'Load equation: x^2', exact: true }).locator('..');
+    await firstTabEntry.getByRole('menuitem', { name: 'Remove from history', exact: true }).click();
+    await expect(page.getByRole('menuitem', { name: /^Load equation:/ })).toHaveCount(1);
+    await expect(page.getByRole('menuitem', { name: 'Load equation: y^3', exact: true })).toBeVisible();
+    await page.bringToFront();
+    await page.reload();
+    await app.ready();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(page.getByRole('menuitem', { name: /^Load equation:/ })).toHaveCount(1);
+    await expect(page.getByRole('menuitem', { name: 'Load equation: y^3', exact: true })).toBeVisible();
+  } finally { await other.close(); }
+});
+
+test('history entries saved in the same millisecond remain distinct', async ({ page, app }) => {
+  await page.evaluate(() => localStorage.setItem('equationHistory', JSON.stringify([
+    { latex: 'x^2', timestamp: 1234567890 },
+    { latex: 'y^3', timestamp: 1234567890 },
+  ])));
+  await page.reload();
+  await app.ready();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(page.getByRole('menuitem', { name: /^Load equation:/ })).toHaveCount(2);
+  const x = page.getByRole('menuitem', { name: 'Load equation: x^2', exact: true });
+  const y = page.getByRole('menuitem', { name: 'Load equation: y^3', exact: true });
+  await expect(x.locator('.history-preview svg')).toBeVisible();
+  await expect(y.locator('.history-preview svg')).toBeVisible();
+  await x.locator('..').getByRole('menuitem', { name: 'Remove from history', exact: true }).click();
+  await expect(x).toHaveCount(0);
+  await y.click();
+  await expect(app.editor).toHaveText('y^3');
+});
+
+test('history renders each preview once across rapid menu reopenings', async ({ page, app }) => {
+  const equations = Array.from({ length: 5 }, (_, i) => `x^{${i + 2}}`);
+  await page.evaluate(equations => localStorage.setItem('equationHistory', JSON.stringify(
+    equations.map((latex, i) => ({ latex, timestamp: Date.now() - i })),
+  )), equations);
+  await page.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    window.historyRenderRequests = [];
+    window.Worker = class extends NativeWorker {
+      postMessage(message, ...options) {
+        if (message.type === 'render' && !message.display) window.historyRenderRequests.push(message.latex);
+        return super.postMessage(message, ...options);
+      }
+    };
+  });
+  await page.reload();
+  await app.ready();
+  const trigger = page.getByRole('button', { name: 'History', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.evaluate(() => window.historyRenderRequests.length)).toBeGreaterThan(0);
+  // Reopen while the fixture's slow worker still has a preview in flight.
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.history-preview svg')).toHaveCount(equations.length);
+  expect((await page.evaluate(() => window.historyRenderRequests)).sort()).toEqual(equations.sort());
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.history-preview svg')).toHaveCount(equations.length);
+  expect(await page.evaluate(() => window.historyRenderRequests.length)).toBe(equations.length);
+});

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { get } from 'svelte/store';
 import { persisted, readStoredValue } from '../src/lib/stores/persisted.js';
 import { createContentStore } from '../src/lib/stores/content.js';
+import { createHistoryStore } from '../src/lib/stores/history.js';
 import { exportFormats, effectiveBackground, resolveExportBackground } from '../src/lib/utils/export-formats.js';
 
 function fixture(initial = {}) {
@@ -39,6 +40,63 @@ test('pagehide and backgrounding flush the most recent debounced edit', () => {
   store.set('destroyed');
   store.destroy();
   assert.equal(f.data.get('test'), '"destroyed"');
+});
+
+test('shared history merges saves before storage events arrive and removes the intended entry', () => {
+  const f = fixture();
+  const first = createHistoryStore(f);
+  const second = createHistoryStore(f);
+  try {
+    first.add('x^2');
+    const entryToRemove = get(first)[0];
+    second.add('y^2');
+    assert.deepEqual(get(second).map(entry => entry.latex), ['y^2', 'x^2']);
+    first.remove(entryToRemove);
+    assert.deepEqual(get(first).map(entry => entry.latex), ['y^2']);
+    f.events.dispatchEvent(Object.assign(new Event('storage'), { key: 'equationHistory', storageArea: f.storage }));
+    assert.deepEqual(get(second).map(entry => entry.latex), ['y^2']);
+    f.data.delete('equationHistory');
+    f.events.dispatchEvent(Object.assign(new Event('storage'), { key: null, storageArea: f.storage }));
+    assert.deepEqual(get(first), []);
+    assert.deepEqual(get(second), []);
+  } finally {
+    first.destroy();
+    second.destroy();
+  }
+});
+
+test('failed writes keep new history in memory until storage is available again', () => {
+  const f = fixture({ equationHistory: JSON.stringify([{ latex: 'saved', timestamp: 1 }]) });
+  const write = f.storage.setItem;
+  f.storage.setItem = () => { throw Error('full'); };
+  const store = createHistoryStore(f);
+  try {
+    store.add('first');
+    store.add('second');
+    f.events.dispatchEvent(Object.assign(new Event('storage'), { key: 'equationHistory', storageArea: f.storage }));
+    assert.deepEqual(get(store).map(entry => entry.latex), ['second', 'first', 'saved']);
+    f.storage.setItem = write;
+    store.add('third');
+    assert.deepEqual(JSON.parse(f.data.get('equationHistory')).map(entry => entry.latex), ['third', 'second', 'first', 'saved']);
+  } finally { store.destroy(); }
+});
+
+test('cross-tab synchronization is opt-in, ignores other storage areas, and cleans up', () => {
+  const f = fixture({ shared: '1', local: '2' });
+  const shared = persisted('shared', 0, { ...f, syncTabs: true });
+  const local = persisted('local', 0, f);
+  f.data.set('shared', '3');
+  f.data.set('local', '4');
+  f.events.dispatchEvent(Object.assign(new Event('storage'), { key: null, storageArea: {} }));
+  assert.equal(get(shared), 1);
+  f.events.dispatchEvent(Object.assign(new Event('storage'), { key: null, storageArea: f.storage }));
+  assert.equal(get(shared), 3);
+  assert.equal(get(local), 2);
+  shared.destroy();
+  local.destroy();
+  f.data.set('shared', '5');
+  f.events.dispatchEvent(Object.assign(new Event('storage'), { key: 'shared', storageArea: f.storage }));
+  assert.equal(get(shared), 3);
 });
 
 test('content loads immediately and saves edits made during startup', async () => {
