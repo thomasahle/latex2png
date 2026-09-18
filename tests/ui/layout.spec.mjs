@@ -49,12 +49,12 @@ for (const width of [320, 390, 480, 640, 768, 1280]) {
       assert.ok(bounds.pageWidth <= bounds.viewportWidth + 1, 'wide equations scroll inside the preview');
       const controlsFit = await page.locator('#preview-actions').evaluate(bar => {
         const bounds = bar.getBoundingClientRect();
-        return [...bar.querySelectorAll('select, button')].every(control => {
-          const box = control.getBoundingClientRect();
-          return box.left >= bounds.left + 9 && box.right <= bounds.right - 9;
-        });
+        const controls = [...bar.querySelectorAll('button')].map(control => control.getBoundingClientRect());
+        return controls.every(box => box.left >= bounds.left + 9 && box.right <= bounds.right - 9)
+          && (innerWidth >= 640 || controls.every(box =>
+            Math.abs(box.top - controls[0].top) < 1 && box.width >= 44 && box.height >= 44));
       });
-      assert.ok(controlsFit, `export controls retain padding at ${width}px`);
+      assert.ok(controlsFit, `export controls fit in one mobile row with padding and 44px touch targets at ${width}px`);
       if (width <= 390 && scale === '5') assert.ok(bounds.canScroll, 'oversized equation remains scrollable');
     }
   });

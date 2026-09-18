@@ -10,6 +10,37 @@ async function chooseByTouch(page, label, option) {
   await expect(menu).toBeHidden();
 }
 
+test('compact export bar stays on one row and its controls work by touch', async ({ page, app }) => {
+  for (const width of [320, 390, 568]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const background of ['Transparent', 'Solid', 'Custom']) {
+      await chooseByTouch(page, 'Export background', background);
+      if (background === 'Custom') await page.getByLabel('Custom background color', { exact: true }).fill('#2060c0');
+      await expect(page.getByRole('button', { name: 'Export background', exact: true })).toHaveAttribute('aria-description', background);
+      const boxes = await page.locator('#preview-actions button').evaluateAll(buttons => buttons.map(button => {
+        const box = button.getBoundingClientRect();
+        return { top: box.top, left: box.left, right: box.right, width: box.width, height: box.height };
+      }));
+      expect(boxes).toHaveLength(4);
+      for (const box of boxes) {
+        expect(Math.abs(box.top - boxes[0].top)).toBeLessThan(1);
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        expect(box.left).toBeGreaterThanOrEqual(10);
+        expect(box.right).toBeLessThanOrEqual(width - 10);
+      }
+    }
+  }
+  await page.getByRole('button', { name: 'Copy image', exact: true }).tap();
+  await page.waitForFunction(() => window.copiedItems.length === 1);
+  const copied = await page.evaluate(async () => {
+    const blob = await window.copiedItems[0].getType('image/png');
+    return { type: blob.type, size: blob.size };
+  });
+  expect(copied.type).toBe('image/png');
+  expect(copied.size).toBeGreaterThan(100);
+});
+
 for (const format of ['PNG', 'JPEG', 'SVG', 'PDF']) {
   test(`touch menus export ${format} with custom background`, async ({ page, app }) => {
     await app.setEquation(formula);
