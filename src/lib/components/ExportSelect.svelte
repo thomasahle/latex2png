@@ -10,7 +10,7 @@
 </script>
 
 {#snippet choice(option)}
-  <DropdownMenu.RadioItem value={option.value} disabled={option.disabled} aria-description={option.disabled ? option.title : undefined} onSelect={() => onselect(option.value)} class="min-h-10 rounded-md pr-3 data-disabled:pointer-events-auto">
+  <DropdownMenu.RadioItem value={option.value} disabled={option.disabled} aria-description={option.disabled ? option.title : undefined} onSelect={() => onselect(option.value)} class="min-h-10 touch:min-h-11 rounded-md pr-3 data-disabled:pointer-events-auto">
     {option.label}
     {#if option.color}<span class="ml-auto size-3.5 rounded-full border border-foreground/20" style:background={option.color} aria-hidden="true"></span>{/if}
   </DropdownMenu.RadioItem>

@@ -63,6 +63,9 @@
             padding: "10px 48px 10px 10px",
             minHeight: "100%",
           },
+          "@media (max-width: 639px), (pointer: coarse)": {
+            ".cm-content": { paddingRight: "60px" },
+          },
         }),
       ],
     });

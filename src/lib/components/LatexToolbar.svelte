@@ -17,6 +17,7 @@
   let triggerRegionEl = $state(null);
   let savedTop = $state(0);
   let contentEl = $state(null);
+  let scrollEl = $state(null);
   let recentCommands = $state(readStoredValue('latexRecentCommands', [], {
     validate: value => Array.isArray(value) && value.every(command => typeof command?.latex === 'string'),
   }));
@@ -176,7 +177,7 @@
 
   // Track interactions, scroll state, and handle scroll restoration from a single effect
   $effect(() => {
-    const el = contentEl;
+    const el = scrollEl;
     if (!el) return;
 
     const handlePointerDown = () => markToolbarInteraction();
@@ -198,7 +199,7 @@
     let cancelled = false;
     if (menuOpen) {
       tick().then(() => {
-        if (cancelled || !menuOpen || contentEl !== el) return;
+        if (cancelled || !menuOpen || scrollEl !== el) return;
         restoreScrollUntilSettled();
         updateActiveSection();
       });
@@ -238,8 +239,8 @@
 
   // Update active section based on scroll position
   function updateActiveSection() {
-    if (!contentEl) return;
-    const containerTop = contentEl.getBoundingClientRect().top;
+    if (!scrollEl) return;
+    const containerTop = scrollEl.getBoundingClientRect().top;
     let closestSection = null;
     let closestDistance = Infinity;
 
@@ -273,7 +274,7 @@
 
   // Restore scroll and keep asserting until settled
   function restoreScrollUntilSettled() {
-    if (!contentEl) return;
+    if (!scrollEl) return;
     isRestoringScroll = true;
     let frames = 0;
 
@@ -284,11 +285,11 @@
     };
 
     const tickFrame = () => {
-      if (!menuOpen || !contentEl) {
+      if (!menuOpen || !scrollEl) {
         finish();
         return;
       }
-      contentEl.scrollTop = savedTop;
+      scrollEl.scrollTop = savedTop;
       if (++frames < 8) {
         requestAnimationFrame(tickFrame); // ~8 frames ≈ 130ms @60Hz
       } else {
@@ -302,14 +303,14 @@
   // Scroll to a specific section
   function scrollToSection(category) {
     const ref = sectionRefs[category];
-    if (ref && contentEl) {
-      const containerTop = contentEl.getBoundingClientRect().top;
+    if (ref && scrollEl) {
+      const containerTop = scrollEl.getBoundingClientRect().top;
       const elementTop = ref.getBoundingClientRect().top;
-      const targetTop = contentEl.scrollTop + (elementTop - containerTop) - 8; // 8px padding
-      if (typeof contentEl.scrollTo === "function") {
-        contentEl.scrollTo({ top: targetTop, behavior: "smooth" });
+      const targetTop = scrollEl.scrollTop + (elementTop - containerTop) - 8; // 8px padding
+      if (typeof scrollEl.scrollTo === "function") {
+        scrollEl.scrollTo({ top: targetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       } else {
-        contentEl.scrollTop = targetTop;
+        scrollEl.scrollTop = targetTop;
       }
       activeSection = category;
     }
@@ -392,11 +393,13 @@
     <DropdownMenu.Content
       forceMount
       sideOffset={0}
+      collisionPadding={8}
       bind:ref={contentEl}
-      class={`w-[min(420px,calc(100vw-1rem))] max-h-[460px] overflow-y-auto p-3 pb-6 focus:outline-hidden relative transition-opacity duration-150 ${
+      class={`w-[min(420px,calc(100vw-1rem))] max-h-[min(460px,var(--bits-dropdown-menu-content-available-height))] flex flex-col overflow-hidden p-0 focus:outline-hidden relative transition-opacity duration-150 ${
         menuOpen ? "" : "hidden!"
       }`}
       aria-hidden={!menuOpen}
+      aria-label="Math symbols"
       inert={!menuOpen}
       data-latex-toolbar-layer
       preventScroll={false}
@@ -419,129 +422,134 @@
       }}
       onInteractOutside={handleInteractOutside}
     >
-      {#if recentCommands.length > 0}
-        <div class="mb-3" bind:this={sectionRefs["Recent"]}>
-          <div class="text-xs font-semibold text-foreground mb-2">Recent</div>
-          <div
-            class="grid gap-1"
-            style="grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));"
-          >
-            {#each recentCommands as cmd}
-              <Button
-                variant="ghost"
-                size="sm"
-                class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
-                title={cmd.tooltip}
-                onclick={() =>
-                  insertLatex(cmd.latex, "Recent", cmd.label, cmd.tooltip)}
-              >
-                <MathSymbol latex={cmd.label} />
-              </Button>
-            {/each}
-          </div>
-        </div>
-      {/if}
-      {#each toolbarCommands as group}
-        <div class="mb-3" bind:this={sectionRefs[group.category]}>
-          <div class="text-xs font-semibold text-foreground mb-2">
-            {group.category}
-          </div>
-          <div
-            class="grid gap-1"
-            style="grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));"
-          >
-            {#each group.commands as cmd, cmdIdx}
-              {#if cmd.subcommands}
-                <!-- Nested dropdown for commands with subcommands -->
-                <DropdownMenu.Sub>
-                  <div
-                    class="contents"
-                    onpointerdowncapture={(event) =>
-                      handleSubTriggerPointerDown(event)}
-                    onclickcapture={(event) =>
-                      handleSubTriggerClick(event, cmd, group.category)}
-                  >
-                    <DropdownMenu.SubTrigger
-                      showIcon={false}
-                      class="relative h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent cursor-pointer"
-                      title={cmd.tooltip}
-                    >
-                      <span
-                        aria-hidden="true"
-                        class="absolute top-0.5 right-0.5 text-[11px] leading-5 font-semibold text-muted-foreground/60 pointer-events-none"
-                      >
-                        ^
-                      </span>
-                      <span class="relative z-10 flex items-center justify-center">
-                        <MathSymbol latex={cmd.label} />
-                      </span>
-                    </DropdownMenu.SubTrigger>
-                  </div>
-                  <DropdownMenu.SubContent
-                    class="min-w-0 p-1"
-                    data-latex-toolbar-layer
-                    onCloseAutoFocus={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    <div class="flex flex-col gap-1">
-                      {#each cmd.subcommands as subcmd}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          class="h-9 w-full justify-start px-2 text-sm"
-                          title={subcmd.tooltip}
-                          onclick={() =>
-                            insertLatex(
-                              subcmd.latex,
-                              group.category,
-                              subcmd.label,
-                              subcmd.tooltip,
-                            )}
-                        >
-                          <MathSymbol latex={subcmd.label} />
-                        </Button>
-                      {/each}
-                    </div>
-                  </DropdownMenu.SubContent>
-                </DropdownMenu.Sub>
-              {:else}
-                <!-- Regular button for simple commands -->
+      <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto p-3">
+        {#if recentCommands.length > 0}
+          <div class="mb-3" role="group" aria-label="Recent" bind:this={sectionRefs["Recent"]}>
+            <div class="text-xs font-semibold text-foreground mb-2">Recent</div>
+            <div
+              class="grid gap-1 grid-cols-[repeat(auto-fill,minmax(2.25rem,1fr))] touch:grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))]"
+            >
+              {#each recentCommands as cmd}
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="h-9 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                  class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
                   title={cmd.tooltip}
                   onclick={() =>
-                    insertLatex(
-                      cmd.latex,
-                      group.category,
-                      cmd.label,
-                      cmd.tooltip,
-                    )}
+                    insertLatex(cmd.latex, "Recent", cmd.label, cmd.tooltip)}
                 >
                   <MathSymbol latex={cmd.label} />
                 </Button>
-              {/if}
-            {/each}
+              {/each}
+            </div>
           </div>
-        </div>
-      {/each}
+        {/if}
+        {#each toolbarCommands as group}
+          <div class="mb-3" role="group" aria-label={group.category} bind:this={sectionRefs[group.category]}>
+            <div class="text-xs font-semibold text-foreground mb-2">
+              {group.category}
+            </div>
+            <div
+              class="grid gap-1 grid-cols-[repeat(auto-fill,minmax(2.25rem,1fr))] touch:grid-cols-[repeat(auto-fill,minmax(2.75rem,1fr))]"
+            >
+              {#each group.commands as cmd, cmdIdx}
+                {#if cmd.subcommands}
+                  <!-- Nested dropdown for commands with subcommands -->
+                  <DropdownMenu.Sub>
+                    <div
+                      class="contents"
+                      onpointerdowncapture={(event) =>
+                        handleSubTriggerPointerDown(event)}
+                      onclickcapture={(event) =>
+                        handleSubTriggerClick(event, cmd, group.category)}
+                    >
+                      <DropdownMenu.SubTrigger
+                        showIcon={false}
+                        class="relative h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md data-[state=open]:bg-accent cursor-pointer"
+                        title={cmd.tooltip}
+                      >
+                        <span
+                          aria-hidden="true"
+                          class="absolute top-0.5 right-0.5 text-[11px] leading-5 font-semibold text-muted-foreground/60 pointer-events-none"
+                        >
+                          ^
+                        </span>
+                        <span class="relative z-10 flex items-center justify-center">
+                          <MathSymbol latex={cmd.label} />
+                        </span>
+                      </DropdownMenu.SubTrigger>
+                    </div>
+                    <DropdownMenu.SubContent
+                      class="min-w-0 max-h-(--bits-dropdown-menu-content-available-height) overflow-y-auto p-1"
+                      collisionPadding={8}
+                      aria-label={`${cmd.tooltip} variants`}
+                      data-latex-toolbar-layer
+                      onCloseAutoFocus={(e) => {
+                        e.preventDefault();
+                      }}
+                    >
+                      <div class="flex flex-col gap-1">
+                        {#each cmd.subcommands as subcmd}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            class="h-9 touch:h-11 w-full justify-start px-2 text-sm"
+                            title={subcmd.tooltip}
+                            onclick={() =>
+                              insertLatex(
+                                subcmd.latex,
+                                group.category,
+                                subcmd.label,
+                                subcmd.tooltip,
+                              )}
+                          >
+                            <MathSymbol latex={subcmd.label} />
+                          </Button>
+                        {/each}
+                      </div>
+                    </DropdownMenu.SubContent>
+                  </DropdownMenu.Sub>
+                {:else}
+                  <!-- Regular button for simple commands -->
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-9 touch:h-11 aspect-square p-0 text-sm justify-center overflow-hidden rounded-md"
+                    title={cmd.tooltip}
+                    onclick={() =>
+                      insertLatex(
+                        cmd.latex,
+                        group.category,
+                        cmd.label,
+                        cmd.tooltip,
+                      )}
+                  >
+                    <MathSymbol latex={cmd.label} />
+                  </Button>
+                {/if}
+              {/each}
+            </div>
+          </div>
+        {/each}
 
-      <!-- Section Navigation Buttons -->
+      </div>
+
+      <!-- Keep category navigation outside the scroll area so it cannot cover symbols. -->
       <div
-        class="fixed bottom-0 left-0 w-full bg-background/95 backdrop-blur-xs border-t border-border py-1 px-3 z-10"
+        class="shrink-0 w-full bg-background/95 backdrop-blur-xs border-t border-border py-1 px-3"
       >
         <div class="flex items-center gap-1.5 overflow-x-auto">
           {#each getNavSections() as section (section.key)}
             <Button
               variant="ghost"
               size="sm"
-              class={`h-7 w-7 min-w-7 p-0 shrink-0 rounded-full text-xs ${
+              class={`h-7 w-7 min-w-7 touch:size-11 touch:min-w-11 p-0 shrink-0 rounded-full text-xs ${
                 activeSection === section.key ? "bg-accent" : ""
               }`}
               onclick={() => scrollToSection(section.key)}
               title={section.title}
+              aria-label={section.title}
+              aria-current={activeSection === section.key ? 'true' : undefined}
             >
               {#if section.type === "emoji"}
                 <span class="text-sm">{section.icon}</span>

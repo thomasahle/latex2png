@@ -59,14 +59,71 @@ for (const format of ['PNG', 'JPEG', 'SVG', 'PDF']) {
   });
 }
 
-test('symbols insert by touch and the menu stays inside the phone viewport', async ({ page, app }) => {
-  await page.getByRole('button', { name: 'Insert math symbol', exact: true }).tap();
-  const bounds = await page.locator('[role="menu"][data-state="open"]').boundingBox();
-  expect(bounds.x).toBeGreaterThanOrEqual(0);
-  expect(bounds.x + bounds.width).toBeLessThanOrEqual(page.viewportSize().width);
-  await page.getByTitle('Square root', { exact: true }).tap();
-  await expect(app.editor).toContainText('\\sqrt');
-  await app.ready();
+test('symbols and submenus fit portrait and landscape, including the last category', async ({ page, app }) => {
+  for (const viewport of [{ width: 320, height: 568 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(viewport);
+    await page.getByRole('button', { name: 'Insert math symbol', exact: true }).tap();
+    const menu = page.getByRole('menu', { name: 'Math symbols', exact: true });
+    await menu.evaluate(el => Promise.allSettled(el.getAnimations({ subtree: true }).map(animation => animation.finished)));
+    const bounds = await menu.boundingBox();
+    expect(bounds.x).toBeGreaterThanOrEqual(7);
+    expect(bounds.y).toBeGreaterThanOrEqual(7);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width - 7);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height - 7);
+    await page.getByTitle('Integral', { exact: true }).tap();
+    const submenu = page.getByRole('menu', { name: 'Integral variants', exact: true });
+    const integral = submenu.getByTitle('Double integral ∬', { exact: true });
+    await expect(integral).toBeVisible();
+    await submenu.evaluate(el => Promise.allSettled(el.getAnimations({ subtree: true }).map(animation => animation.finished)));
+    const submenuBox = await submenu.boundingBox();
+    expect(submenuBox.y).toBeGreaterThanOrEqual(7);
+    expect(submenuBox.y + submenuBox.height).toBeLessThanOrEqual(viewport.height - 7);
+    const integralBox = await integral.boundingBox();
+    expect(integralBox.height).toBeCloseTo(44, 0);
+    await integral.tap();
+    await expect(app.editor).toContainText('\\iint');
+    await app.ready();
+
+    await page.getByRole('button', { name: 'Insert math symbol', exact: true }).tap();
+    await page.getByRole('button', { name: 'Shapes', exact: true }).tap();
+    const last = page.getByRole('group', { name: 'Shapes', exact: true }).getByTitle('Diagonal dots ⋱', { exact: true });
+    await last.scrollIntoViewIfNeeded();
+    await expect.poll(() => last.evaluate(el => {
+      const box = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+    })).toBe(true);
+    await last.tap();
+    await expect(app.editor).toContainText('\\ddots');
+    await app.ready();
+  }
+});
+
+test('compact controls have full touch targets while the header stays small', async ({ page, app }) => {
+  for (const viewport of [{ width: 320, height: 568 }, { width: 844, height: 390 }]) {
+    await page.setViewportSize(viewport);
+    const boxes = await page.locator('nav button, nav a, button[aria-label="Insert math symbol"], #preview-toolbar input').evaluateAll(els =>
+      els.map(el => el.getBoundingClientRect().toJSON()));
+    for (const box of boxes) {
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(viewport.width);
+    }
+    expect((await page.locator('nav').boundingBox()).height).toBe(57);
+    const slider = page.getByRole('slider', { name: 'Zoom level' });
+    await slider.fill('1');
+    await slider.tap({ position: { x: 60, y: 3 } });
+    expect(Number(await slider.inputValue())).toBeGreaterThan(2);
+    await slider.tap({ position: { x: 15, y: 40 } });
+    expect(Number(await slider.inputValue())).toBeLessThan(2);
+    await expect(slider).toHaveAttribute('aria-valuetext', /times$/);
+    await page.getByRole('button', { name: 'Settings', exact: true }).tap();
+    await page.getByRole('menu').evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished)));
+    for (const item of await page.getByRole('menuitem').all()) {
+      expect((await item.boundingBox()).height).toBeCloseTo(44, 0);
+    }
+    await page.keyboard.press('Escape');
+  }
 });
 
 test('mobile stays fullscreen with no exit control in portrait and landscape', async ({ page, app }) => {

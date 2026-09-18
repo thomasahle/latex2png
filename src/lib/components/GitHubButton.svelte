@@ -28,7 +28,8 @@
   href="https://github.com/thomasahle/latex2png"
   target="_blank"
   rel="noopener noreferrer"
-  class="gap-2 text-xs"
+  class="gap-2 text-xs touch:h-11"
+  aria-label={`GitHub repository, ${stars} stars`}
   onclick={handleClick}
 >
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

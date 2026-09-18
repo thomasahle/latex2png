@@ -3,6 +3,9 @@
 @plugin 'tailwindcss-animate';
 
 @custom-variant dark (&:is([data-theme="dark"] *));
+@custom-variant touch {
+  @media (max-width: 639px), (pointer: coarse) { @slot; }
+}
 
 @utility floating-surface {
   background-color: hsl(var(--floating-control) / 0.5);

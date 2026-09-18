@@ -18,7 +18,7 @@
   }
 </script>
 
-<div class="floating-surface flex h-8 items-center gap-2 px-2.5 rounded-md font-sans">
+<div class="floating-surface flex h-8 touch:h-11 items-center gap-2 px-2.5 rounded-md font-sans">
   <span class="text-xs tabular-nums min-w-[2.5em] text-center">{$zoom.toFixed(1)}x</span>
   <input
     type="range"
@@ -28,6 +28,19 @@
     value={$zoom}
     oninput={handleZoomChange}
     aria-label="Zoom level"
-    class="w-20 h-[5px] rounded-full appearance-none bg-border outline-hidden focus-visible:ring-[3px] focus-visible:ring-ring/50 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[15px] [&::-webkit-slider-thumb]:h-[15px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-[15px] [&::-moz-range-thumb]:h-[15px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-none"
+    aria-valuetext={`${$zoom.toFixed(1)} times`}
+    class="zoom-slider w-20 h-8 touch:h-11 rounded-full appearance-none bg-transparent outline-hidden focus-visible:ring-[3px] focus-visible:ring-ring/50 cursor-pointer"
   />
 </div>
+
+<style>
+  /* The input provides a generous hit area; the native track stays thin. */
+  .zoom-slider::-webkit-slider-runnable-track { height: 5px; border-radius: 999px; background: hsl(var(--border)); }
+  .zoom-slider::-moz-range-track { height: 5px; border-radius: 999px; background: hsl(var(--border)); }
+  .zoom-slider::-webkit-slider-thumb { appearance: none; width: 15px; height: 15px; margin-top: -5px; border-radius: 50%; background: hsl(var(--primary)); }
+  .zoom-slider::-moz-range-thumb { width: 15px; height: 15px; border: none; border-radius: 50%; background: hsl(var(--primary)); }
+  @media (max-width: 639px), (pointer: coarse) {
+    .zoom-slider::-webkit-slider-thumb { width: 20px; height: 20px; margin-top: -7.5px; }
+    .zoom-slider::-moz-range-thumb { width: 20px; height: 20px; }
+  }
+</style>
