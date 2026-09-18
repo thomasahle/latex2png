@@ -3,6 +3,8 @@
   import { readStoredValue, writeStoredValue } from '../stores/persisted.js';
   import { layout } from "../stores/layout.js";
   import { fullscreen } from "../stores/fullscreen.js";
+  import { exportSettings } from "../stores/exportSettings.js";
+  import { resolveCustomForeground } from "../utils/export-formats.js";
   import LatexEditor from "./LatexEditor.svelte";
   import LatexToolbar from "./LatexToolbar.svelte";
   import MathPreview from "./MathPreview.svelte";
@@ -15,6 +17,7 @@
   import { previewState } from "../services/preview-service.js";
 
   let { editorInstance = $bindable(null) } = $props();
+  let previewForeground = $derived(resolveCustomForeground($exportSettings));
 
   const defaultHeight = 500;
   const minHeight = 360;
@@ -142,7 +145,11 @@
     />
 
     <Resizable.Pane defaultSize={50} minSize={30} id="preview-pane">
-      <section class="relative h-full min-h-0 flex flex-col bg-card text-center">
+      <section
+        class="relative h-full min-h-0 flex flex-col bg-card text-center"
+        style:color={previewForeground}
+        style:--floating-control={previewForeground ? (previewForeground === '#000000' ? '0 0% 88%' : '0 0% 38%') : undefined}
+      >
         <div id="preview-toolbar" class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-2.5 pointer-events-none">
           <div class="flex items-center gap-0.5 pointer-events-auto">
             <div class="hidden sm:block"><LayoutToggle /></div>

@@ -1,6 +1,57 @@
 import { test, expect } from './fixtures.mjs';
 import { chooseExportOption } from '../../scripts/export-controls.mjs';
 
+for (const [theme, background, ink] of [['light', '#000000', '255'], ['dark', '#ffffff', '0']]) {
+  test(`custom backgrounds keep formulas, controls, and exported ink legible in ${theme} mode`, async ({ page, app }, testInfo) => {
+    await page.evaluate(theme => localStorage.setItem('theme', theme), theme);
+    await page.reload();
+    await app.setEquation(String.raw`x+{\color{red}y}`);
+    await page.getByRole('slider', { name: 'Zoom level' }).fill('3');
+    await chooseExportOption(page, 'Export background', 'Custom');
+    await page.getByLabel('Custom background color', { exact: true }).fill(background);
+    await page.keyboard.press('Escape');
+    const color = `rgb(${ink}, ${ink}, ${ink})`;
+    await expect(page.locator('#math-preview')).toHaveCSS('color', color);
+    await expect(page.locator('#preview-toolbar')).toHaveCSS('color', color);
+    await expect(page.locator('#preview-toolbar .floating-surface').last()).toHaveCSS('color', color);
+    await page.screenshot({ path: testInfo.outputPath('custom-background.png') });
+
+    const png = await app.save('PNG');
+    const jpeg = await app.save('JPEG');
+    for (const [format, bytes] of [['png', png], ['jpeg', jpeg]]) {
+      const inkPixels = await page.evaluate(async ({ bytes, format, ink }) => {
+        const image = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: `image/${format}` }));
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width; canvas.height = image.height;
+        const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0); image.close();
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let count = 0;
+        for (let i = 0; i < pixels.length; i += 4) {
+          if ([0, 1, 2].every(channel => Math.abs(pixels[i + channel] - Number(ink)) < 10)) count++;
+        }
+        return count;
+      }, { bytes: [...bytes], format, ink });
+      expect(inkPixels, `${format} contains contrasting formula pixels`).toBeGreaterThan(40);
+    }
+    const svg = (await app.save('SVG')).toString();
+    expect(svg).toContain(`color="${ink === '0' ? '#000000' : '#ffffff'}"`);
+    expect(svg).toContain('fill="red"');
+    await page.getByRole('button', { name: 'Copy image', exact: true }).click();
+    await page.waitForFunction(() => window.copiedItems.length);
+    const copied = await page.evaluate(async () => [...new Uint8Array(await (await window.copiedItems[0].getType('image/png')).arrayBuffer())]);
+    expect(Buffer.from(copied)).toEqual(png);
+    await page.waitForFunction(() => document.querySelector('#formula-drag-image')?.complete);
+    const dragged = await page.locator('#formula-drag-image').evaluate(async el => [...new Uint8Array(await (await fetch(el.src)).arrayBuffer())]);
+    expect(Buffer.from(dragged)).toEqual(png);
+
+    // Returning to a theme background restores its normal ink and controls.
+    await chooseExportOption(page, 'Export background', 'Solid');
+    const normalColor = theme === 'light' ? 'rgb(10, 10, 10)' : 'rgb(238, 238, 238)';
+    await expect(page.locator('#math-preview')).toHaveCSS('color', normalColor);
+    await expect(page.locator('#preview-toolbar')).toHaveCSS('color', normalColor);
+  });
+}
+
 test('dropdown triggers reference their open menus, including symbol submenus', async ({ page, app }) => {
   const ids = new Set();
   for (const label of ['Settings', 'Export format', 'Export background', 'History', 'Insert math symbol']) {

@@ -12,10 +12,11 @@ function exportRect(svg, previewElement, scale) {
  * @param {HTMLElement} previewElement - The preview element to capture
  * @param {number} zoomScale - Output scale, independent of preview zoom (e.g., 1.0, 1.5, 2.0)
  * @param {string|null} backgroundColor - Background color for the image (null for transparent)
+ * @param {string} [foregroundColor] - Captured default ink color (otherwise use the preview)
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
-export async function generateImage(previewElement, zoomScale, backgroundColor = null) {
-  const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor);
+export async function generateImage(previewElement, zoomScale, backgroundColor = null, foregroundColor) {
+  const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor, foregroundColor);
 
   const mjxSvg = previewElement.querySelector('mjx-container svg');
   if (!mjxSvg) {
@@ -25,15 +26,9 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
   return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, zoomScale);
 }
 
-export function resolveThemeColors(previewElement, backgroundOverride) {
+export function resolveThemeColors(previewElement, backgroundOverride, foregroundOverride) {
   const previewStyle = window.getComputedStyle(previewElement);
-  const rootStyle = window.getComputedStyle(document.body);
-  const getVarColor = (name) => {
-    const v = rootStyle.getPropertyValue(`--${name}`)?.trim();
-    return v ? normalizeColor(`hsl(${v})`) : null;
-  };
-
-  const fgColor = getVarColor('foreground') || normalizeColor(previewStyle.color) || '#000';
+  const fgColor = normalizeColor(foregroundOverride ?? previewStyle.color) || '#000';
 
   if (backgroundOverride !== null && backgroundOverride !== undefined) {
     const normBg = normalizeColor(backgroundOverride);
@@ -53,13 +48,13 @@ export function resolveThemeColors(previewElement, backgroundOverride) {
 /**
  * Generate a theme-aware SVG string from the MathJax output, honoring zoom scale.
  */
-export function generateSvg(previewElement, zoomScale = 1, backgroundColor = null) {
+export function generateSvg(previewElement, zoomScale = 1, backgroundColor = null, foregroundColor) {
   const mjxSvg = previewElement.querySelector('mjx-container svg');
   if (!mjxSvg) {
     throw new Error('No SVG found to export');
   }
 
-  const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor);
+  const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor, foregroundColor);
 
   const bbox = mjxSvg.getBBox();
   const svg = mjxSvg.cloneNode(true);

@@ -1,6 +1,28 @@
 import assert from 'node:assert/strict';
-import { test, formula, pdfContent } from './fixtures.mjs';
+import { test, expect, formula, pdfContent } from './fixtures.mjs';
 import { chooseExportOption } from '../../scripts/export-controls.mjs';
+
+test('pending export keeps foreground and background from the same selection', async ({ page, app }) => {
+  await chooseExportOption(page, 'Export background', 'Custom');
+  const colorInput = page.getByLabel('Custom background color', { exact: true });
+  await colorInput.fill('#ffffff');
+  await chooseExportOption(page, 'Export format', 'SVG');
+  await app.editor.fill(String.raw`\frac{987654321}{2}`);
+  await expect(app.preview).toHaveAttribute('aria-busy', 'true');
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download SVG', exact: true }).click();
+  await expect(app.preview).toHaveAttribute('aria-busy', 'true');
+  await colorInput.fill('#000000');
+  const chunks = [];
+  for await (const chunk of await (await downloaded).createReadStream()) chunks.push(chunk);
+  const exported = Buffer.concat(chunks).toString();
+  assert.match(exported, /<rect[^>]+fill="#ffffff"/, 'export keeps the original white background');
+  assert.match(exported, /<svg[^>]+color="#000000"/, 'export keeps the matching black ink');
+  await expect(page.locator('#math-preview')).toHaveCSS('color', 'rgb(255, 255, 255)');
+  const next = (await app.save('SVG')).toString();
+  assert.match(next, /<rect[^>]+fill="#000000"/);
+  assert.match(next, /<svg[^>]+color="#ffffff"/);
+});
 
 for (const format of ['PNG', 'JPEG', 'SVG', 'PDF']) {
   test(`pending ${format} export uses the latest equation`, async ({ page, app }) => {

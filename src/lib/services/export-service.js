@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { exportSettings } from '../stores/exportSettings.js';
 import { zoom } from '../stores/zoom.js';
-import { exportFormats, resolveExportBackground } from '../utils/export-formats.js';
+import { exportFormats, resolveExportBackground, resolveCustomForeground } from '../utils/export-formats.js';
 import { generateImage, generateSvg } from '../utils/image-generation.js';
 import { ensureCurrentPreview } from './preview-service.js';
 
@@ -9,10 +9,14 @@ import { ensureCurrentPreview } from './preview-service.js';
 // Copy and drag produce PNGs, while honoring the background shown for the
 // currently selected format. Explicit downloads use that format's capabilities.
 export function captureExportOptions(format = get(exportSettings).format) {
-  const color = getComputedStyle(document.body).getPropertyValue('--background').trim();
+  const settings = get(exportSettings);
+  const style = getComputedStyle(document.body);
+  const color = style.getPropertyValue('--background').trim();
+  const foreground = style.getPropertyValue('--foreground').trim();
   return {
     scale: get(zoom),
-    background: resolveExportBackground(get(exportSettings), format, color ? `hsl(${color})` : '#ffffff'),
+    background: resolveExportBackground(settings, format, color ? `hsl(${color})` : '#ffffff'),
+    foreground: resolveCustomForeground(settings) ?? (foreground ? `hsl(${foreground})` : style.color),
   };
 }
 
@@ -27,11 +31,11 @@ export async function renderExport({ format = 'PNG', options = captureExportOpti
   const { mimeType, extension } = exportFormats[format];
   let blob, width, height;
   if (format === 'PNG' || format === 'JPEG') {
-    const canvas = await generateImage(element, options.scale, options.background);
+    const canvas = await generateImage(element, options.scale, options.background, options.foreground);
     ({ width, height } = canvas);
     blob = await canvasToBlob(canvas, mimeType);
   } else {
-    const svg = generateSvg(element, options.scale, options.background);
+    const svg = generateSvg(element, options.scale, options.background, options.foreground);
     ({ width, height } = svg);
     if (format === 'SVG') {
       blob = new Blob([svg.svgString], { type: mimeType });
