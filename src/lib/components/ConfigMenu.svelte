@@ -5,7 +5,7 @@
   import { vimMode } from "../stores/vimMode.js";
   import { wrapContent } from "../stores/wrapContent.js";
   import { trackEvent } from "../utils/analytics.js";
-  import { fullscreen } from "../stores/fullscreen.js";
+  import { fullscreen, fullscreenRequired } from "../stores/fullscreen.js";
   import SettingsIcon from "@lucide/svelte/icons/settings";
   import SunIcon from "@lucide/svelte/icons/sun";
   import MoonIcon from "@lucide/svelte/icons/moon";
@@ -85,14 +85,16 @@
       </span>
     </DropdownMenu.Item>
 
-    <DropdownMenu.Item
-      onSelect={toggleFullscreen}
-      class="cursor-pointer flex items-center justify-between"
-    >
-      <span class="flex items-center gap-2">
-        {#if $fullscreen}<Minimize2Icon />{:else}<Maximize2Icon />{/if}
-        {$fullscreen ? "Exit" : "Enter"} Fullscreen
-      </span>
-    </DropdownMenu.Item>
+    {#if !$fullscreenRequired}
+      <DropdownMenu.Item
+        onSelect={toggleFullscreen}
+        class="cursor-pointer flex items-center justify-between"
+      >
+        <span class="flex items-center gap-2">
+          {#if $fullscreen}<Minimize2Icon />{:else}<Maximize2Icon />{/if}
+          {$fullscreen ? "Exit" : "Enter"} Fullscreen
+        </span>
+      </DropdownMenu.Item>
+    {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

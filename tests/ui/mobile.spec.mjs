@@ -69,7 +69,7 @@ test('symbols insert by touch and the menu stays inside the phone viewport', asy
   await app.ready();
 });
 
-test('touch zoom and fullscreen work in portrait and landscape', async ({ page, app }) => {
+test('mobile stays fullscreen with no exit control in portrait and landscape', async ({ page, app }) => {
   await app.setEquation(formula);
   await expect(page.getByRole('button', { name: 'Toggle layout orientation' })).toBeHidden();
   const slider = page.getByRole('slider', { name: 'Zoom level' });
@@ -77,16 +77,25 @@ test('touch zoom and fullscreen work in portrait and landscape', async ({ page, 
   expect(Number(await slider.inputValue())).toBeGreaterThan(1.5);
   await slider.fill('5');
   await expect(app.preview).toHaveAttribute('aria-busy', 'false');
-  await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).tap();
   const portrait = page.viewportSize();
-  for (const size of [portrait, { width: portrait.height, height: portrait.width }]) {
+  for (const size of [portrait, { width: portrait.height, height: portrait.width }, portrait]) {
     await page.setViewportSize(size);
-    await expect(page.getByRole('button', { name: 'Exit fullscreen', exact: true })).toBeVisible();
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^(Enter|Exit) fullscreen$/ })).toHaveCount(0);
+    await expect(page.getByRole('separator', { name: 'Resize workspace height' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Settings', exact: true }).tap();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: /fullscreen/i })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menu')).toBeHidden();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
     const layout = await page.evaluate(() => {
       const preview = document.querySelector('#preview-scroll');
+      const actions = document.querySelector('#preview-actions').getBoundingClientRect();
       const controls = [...document.querySelectorAll('#preview-toolbar button, #preview-toolbar input')];
       return { width: document.documentElement.scrollWidth, viewport: innerWidth,
-        previewHeight: preview.clientHeight,
+        previewHeight: preview.clientHeight, actionsBottom: actions.bottom, viewportHeight: innerHeight,
         controlsOnTop: controls.every(control => {
           const r = control.getBoundingClientRect();
           return !r.width || control.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
@@ -95,49 +104,50 @@ test('touch zoom and fullscreen work in portrait and landscape', async ({ page, 
     expect(layout.width).toBeLessThanOrEqual(layout.viewport + 1);
     expect(layout.previewHeight).toBeGreaterThan(40);
     expect(layout.controlsOnTop).toBe(true);
+    expect(Math.abs(layout.actionsBottom - layout.viewportHeight)).toBeLessThan(1);
   }
-  await page.getByRole('button', { name: 'Exit fullscreen', exact: true }).tap();
-  await expect(page.getByRole('separator', { name: 'Resize workspace height' })).toBeVisible();
+  // A previous visit's desktop preference must not allow mobile to exit fullscreen.
+  for (const preference of [false, true]) {
+    await page.evaluate(value => localStorage.setItem('fullscreen', JSON.stringify(value)), preference);
+    await page.reload();
+    await app.ready();
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('fullscreen'))).toBe(String(preference));
+  }
 });
 
-test('both resizers accept touch focus and preserve pointer changes on reload', async ({ page, app }) => {
-  const values = [];
-  for (const name of ['Resize editor and preview', 'Resize workspace height']) {
-    const handle = page.getByRole('separator', { name, exact: true });
-    await handle.tap();
-    await expect(handle).toHaveCSS('touch-action', 'none');
-    await expect(handle).toHaveCSS('outline-style', 'none');
-    const before = Number(await handle.getAttribute('aria-valuenow'));
-    const bounds = await handle.boundingBox();
-    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2 + 20, { steps: 4 });
-    await page.mouse.up();
-    const after = Number(await handle.getAttribute('aria-valuenow'));
-    expect(after).toBeGreaterThan(before);
-    values.push({ name, value: String(after) });
-  }
+test('the mobile pane resizer accepts touch focus and preserves changes on reload', async ({ page, app }) => {
+  const handle = page.getByRole('separator', { name: 'Resize editor and preview', exact: true });
+  await handle.tap();
+  await expect(handle).toHaveCSS('touch-action', 'none');
+  await expect(handle).toHaveCSS('outline-style', 'none');
+  const before = Number(await handle.getAttribute('aria-valuenow'));
+  const bounds = await handle.boundingBox();
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2 + 20, { steps: 4 });
+  await page.mouse.up();
+  const after = Number(await handle.getAttribute('aria-valuenow'));
+  expect(after).toBeGreaterThan(before);
   await page.reload();
   await app.ready();
-  for (const { name, value } of values) {
-    await expect(page.getByRole('separator', { name, exact: true })).toHaveAttribute('aria-valuenow', value);
-  }
+  await expect(handle).toHaveAttribute('aria-valuenow', String(after));
 });
 
-test('Android native touch gestures resize both handles', async ({ page, context, browserName, app }) => {
+test('Android native touch gestures resize the editor and preview', async ({ page, context, browserName, app }) => {
   test.skip(browserName !== 'chromium', 'Native swipe injection uses the Chromium DevTools protocol.');
   const touch = await context.newCDPSession(page);
-  for (const name of ['Resize editor and preview', 'Resize workspace height']) {
-    const handle = page.getByRole('separator', { name, exact: true });
-    await handle.scrollIntoViewIfNeeded();
-    const bounds = await handle.boundingBox();
-    const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
-    const before = Number(await handle.getAttribute('aria-valuenow'));
-    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
-    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y + 20 }] });
-    await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
-  }
+  const handle = page.getByRole('separator', { name: 'Resize editor and preview', exact: true });
+  await handle.scrollIntoViewIfNeeded();
+  const bounds = await handle.boundingBox();
+  const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  const before = Number(await handle.getAttribute('aria-valuenow'));
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y + 20 }] });
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
   await touch.detach();
 });
 

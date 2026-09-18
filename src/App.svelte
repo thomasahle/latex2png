@@ -7,7 +7,7 @@
   import { latexContent } from "./lib/stores/content.js";
   import { latexExamples } from "./lib/utils/examples.js";
   import { layout } from "./lib/stores/layout.js";
-  import { fullscreen } from "./lib/stores/fullscreen.js";
+  import { fullscreen, fullscreenRequired } from "./lib/stores/fullscreen.js";
   import { trackEvent } from "./lib/utils/analytics.js";
   import { vimMode } from './lib/stores/vimMode.js';
 
@@ -40,7 +40,7 @@
   }
 
   function handleEscape(event) {
-    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || !$fullscreen) return;
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || !$fullscreen || $fullscreenRequired) return;
     // Let menus and Vim consume Escape before leaving the workspace.
     if (document.querySelector('[role="menu"][data-state="open"], [role="dialog"][data-state="open"]')) return;
     if ($vimMode && event.target.closest?.('.cm-editor')) return;

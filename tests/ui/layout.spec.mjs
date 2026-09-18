@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test, formula } from './fixtures.mjs';
+import { test, expect, formula } from './fixtures.mjs';
 
 for (const width of [320, 390, 480, 640, 768, 1280]) {
   test(`preview layout at ${width}px supports 1–5x zoom`, async ({ page, app }) => {
@@ -67,6 +67,32 @@ test("side by side fullscreen keeps preview usable", async ({ page, app }) => {
   assert.equal(await page.getByRole('separator', { name: 'Resize editor and preview' }).getAttribute('aria-orientation'), 'vertical');
   const previewBox = await preview.boundingBox();
   assert.ok(previewBox.height > 100, 'side by side fullscreen preview remains usable');
+});
+
+test('mobile fullscreen preserves the desktop preference and workspace height', async ({ page, app }) => {
+  const workspace = page.locator('#equation-workspace');
+  const heightHandle = page.getByRole('separator', { name: 'Resize workspace height', exact: true });
+  await heightHandle.press('Shift+ArrowDown');
+  const height = (await workspace.boundingBox()).height;
+  for (const preferred of [false, true]) {
+    if (preferred) await page.getByRole('button', { name: 'Enter fullscreen', exact: true }).click();
+    const saved = await page.evaluate(() => localStorage.getItem('fullscreen'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^(Enter|Exit) fullscreen$/ })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    await page.reload();
+    await app.ready();
+    await expect(page.locator('.fullscreen-app')).toBeVisible();
+    assert.equal(await page.evaluate(() => localStorage.getItem('fullscreen')), saved);
+    await page.setViewportSize({ width: 1280, height: 844 });
+    await expect(page.getByRole('button', { name: preferred ? 'Exit fullscreen' : 'Enter fullscreen', exact: true })).toBeVisible();
+    if (!preferred) {
+      await expect(heightHandle).toBeVisible();
+      assert.equal((await workspace.boundingBox()).height, height);
+    }
+  }
 });
 
 test("pane sizes persist separately without remounting editor or changing exports", async ({ page, app }) => {

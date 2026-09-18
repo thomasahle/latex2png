@@ -1,16 +1,34 @@
-import { get } from 'svelte/store';
+import { derived, get, readable } from 'svelte/store';
 import { persisted } from './persisted.js';
 
-const store = persisted('fullscreen', false, { validate: value => typeof value === 'boolean' });
+const preference = persisted('fullscreen', false, { validate: value => typeof value === 'boolean' });
+
+// Keep phones fullscreen after rotation too, without forcing short desktop windows.
+export const fullscreenRequired = readable(false, set => {
+  const query = globalThis.window?.matchMedia('(max-width: 639px), (pointer: coarse) and (max-height: 639px)');
+  if (!query) return;
+  const update = () => set(query.matches);
+  update();
+  query.addEventListener('change', update);
+  return () => query.removeEventListener('change', update);
+});
+
 let previousScroll = 0;
-function set(value) {
-  if (typeof value !== 'boolean') return;
+let wasFullscreen = false;
+const effective = derived([preference, fullscreenRequired], ([preferred, required]) => {
+  const enabled = preferred || required;
   // Capture before Svelte reduces the page height and clamps scrollY.
-  if (value && !get(store)) previousScroll = window.scrollY;
-  store.set(value);
+  if (enabled && !wasFullscreen) previousScroll = globalThis.window?.scrollY ?? 0;
+  wasFullscreen = enabled;
+  return enabled;
+});
+
+function set(value) {
+  if (typeof value !== 'boolean' || get(fullscreenRequired)) return;
+  preference.set(value);
 }
 export const fullscreen = {
-  subscribe: store.subscribe, set,
-  toggle: () => set(!get(store)),
+  subscribe: effective.subscribe, set,
+  toggle: () => set(!get(effective)),
   getPreviousScroll: () => previousScroll,
 };
