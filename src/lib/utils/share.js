@@ -59,6 +59,26 @@ function renderShareImage() {
   return renderExport({ format: 'PNG', options: captureExportOptions() });
 }
 
+function canWriteClipboardItems() {
+  return IS_SECURE && navigator.clipboard?.write && typeof window.ClipboardItem === 'function';
+}
+
+async function writeClipboardItem(type, content) {
+  // Start the clipboard request during the click, before rendering can outlast
+  // user activation. ClipboardItem accepts data that is still being generated.
+  // https://webkit.org/blog/10855/async-clipboard-api/
+  const data = Promise.resolve(content);
+  // A denied write or unsupported constructor may never consume this promise.
+  data.catch(() => {});
+  try {
+    await navigator.clipboard.write([new window.ClipboardItem({ [type]: data })]);
+  } catch (error) {
+    // Preserve a rendering error rather than reporting it as a permission error.
+    await data;
+    throw error;
+  }
+}
+
 // ---------- public API ----------
 export async function shareLink(options = {}) {
   try {
@@ -97,22 +117,23 @@ export async function shareToTwitter() {
 
 export async function copyImage({ notifySuccess = true } = {}) {
   try {
-    const image = await renderShareImage();
-    const { blob } = image;
+    const image = renderShareImage();
 
-    if (IS_SECURE && navigator.clipboard?.write && "ClipboardItem" in window) {
+    if (canWriteClipboardItems()) {
       try {
-        await navigator.clipboard.write([new window.ClipboardItem({ [blob.type]: blob })]);
+        await writeClipboardItem('image/png', image.then(({ blob }) => blob));
         if (notifySuccess) toast.success("Image copied to clipboard!");
         trackEvent('share', { method: 'copy_image' });
         return true;
       } catch (e) {
+        // Rendering failures are handled below; only a valid image can fall back.
+        await image;
         console.error("Clipboard write failed, falling back to download:", e);
         trackError(e, { context: 'copyImage_clipboard', fallback: 'download' });
       }
     }
 
-    downloadExport(image);
+    downloadExport(await image);
     toast.info("Clipboard not supported; downloaded the image instead.");
     trackEvent('share', { method: 'copy_image_fallback' });
   } catch (error) {
@@ -125,12 +146,17 @@ export async function copyImage({ notifySuccess = true } = {}) {
 
 export async function copyMathML() {
   try {
-    const { mathml } = await ensureCurrentPreview();
+    const preview = ensureCurrentPreview();
 
-    if (IS_SECURE && navigator.clipboard?.writeText) {
+    if (canWriteClipboardItems()) {
+      await writeClipboardItem('text/plain', preview.then(({ mathml }) => new Blob([mathml], { type: 'text/plain' })));
+      toast.success("MathML copied to clipboard!");
+    } else if (IS_SECURE && navigator.clipboard?.writeText) {
+      const { mathml } = await preview;
       await navigator.clipboard.writeText(mathml);
       toast.success("MathML copied to clipboard!");
     } else {
+      const { mathml } = await preview;
       await fallbackCopyText(mathml);
       toast.success("MathML copied!");
     }

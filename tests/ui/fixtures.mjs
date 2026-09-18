@@ -17,7 +17,7 @@ export const test = base.extend({
       window.Worker = class extends NativeWorker {
         set onmessage(handler) {
           super.onmessage = event => {
-            if (event.data.id) setTimeout(() => handler(event), 400);
+            if (event.data.id) setTimeout(() => handler(event), window.workerResponseDelay ?? 400);
             else handler(event);
           };
         }
@@ -25,7 +25,16 @@ export const test = base.extend({
       window.copiedItems = [];
       window.sharedFiles = [];
       Object.defineProperty(navigator, 'clipboard', { value: {
-        write: async items => { window.copiedItems = items; },
+        write: async items => {
+          // Like the browser, finish a write only once promised data is ready.
+          for (const item of items) {
+            for (const type of item.types) {
+              const blob = await item.getType(type);
+              if (type === 'text/plain') window.copiedText = await blob.text();
+            }
+          }
+          window.copiedItems = items;
+        },
         writeText: async text => { window.copiedText = text; },
       } });
       Object.defineProperty(navigator, 'canShare', { value: () => true });
