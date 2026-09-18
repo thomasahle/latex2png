@@ -129,7 +129,7 @@ for (const [theme, background, ink] of [['light', '#000000', '255'], ['dark', '#
 
 test('dropdown triggers reference their open menus, including symbol submenus', async ({ page, app }) => {
   const ids = new Set();
-  for (const label of ['Settings', 'Export format', 'Export background', 'History', 'Insert math symbol']) {
+  for (const label of ['Settings', 'Export format', 'Export background', 'History', 'Share', 'Insert math symbol']) {
     const trigger = page.getByRole('button', { name: label, exact: true });
     await trigger.focus();
     await page.keyboard.press('Enter');

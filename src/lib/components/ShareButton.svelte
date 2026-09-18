@@ -34,7 +34,7 @@
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content>
+  <DropdownMenu.Content aria-label="Share">
     {#each items as item (item.label)}
       <DropdownMenu.Item
         onSelect={item.action}

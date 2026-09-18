@@ -14,15 +14,30 @@ function getLatexCode() {
 
 async function fallbackCopyText(text) {
   // only used when async clipboard isn't available
-  const input = document.createElement("input");
+  const previousFocus = document.activeElement;
+  const selection = document.getSelection();
+  const ranges = selection ? Array.from({ length: selection.rangeCount }, (_, i) => selection.getRangeAt(i).cloneRange()) : [];
+  const input = document.createElement("textarea");
   input.value = text;
   input.setAttribute("readonly", "");
-  input.style.position = "fixed";
-  input.style.opacity = "0";
+  input.tabIndex = -1;
+  input.style.cssText = "position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none";
   document.body.appendChild(input);
-  input.select();
-  document.execCommand("copy"); // deprecated but works as a last resort
-  input.remove();
+  try {
+    input.focus({ preventScroll: true });
+    input.select();
+    // execCommand can fail without throwing. Never report success in that case.
+    if (!document.execCommand("copy")) throw new Error("The browser blocked clipboard access.");
+  } finally {
+    input.remove();
+    if (selection && ranges.length) {
+      selection.removeAllRanges();
+      for (const range of ranges) {
+        if (range.startContainer.isConnected && range.endContainer.isConnected) selection.addRange(range);
+      }
+    }
+    if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+  }
 }
 
 async function buildShareUrl({ compress = false, useHash = false } = {}) {
@@ -46,8 +61,8 @@ function renderShareImage() {
 
 // ---------- public API ----------
 export async function shareLink(options = {}) {
-  const url = await buildShareUrl(options);
   try {
+    const url = await buildShareUrl(options);
     if (IS_SECURE && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard!");
