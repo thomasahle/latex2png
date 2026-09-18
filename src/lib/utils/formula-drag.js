@@ -51,16 +51,16 @@ export function createFormulaDrag({ getState, onUrl }) {
       dragPngUrl = URL.createObjectURL(dragPngFile);
       onUrl(dragPngUrl);
       return dragPngUrl;
-    })();
-    dragPngGenerationPromise = promise;
-    try {
-      return await promise;
-    } catch (error) {
+    })().catch(error => {
       trackError(error, { context: 'drag_preview' });
       return null;
-    } finally {
+    }).finally(() => {
       if (dragPngGenerationPromise === promise) dragPngGenerationPromise = null;
-    }
+    });
+    // Every caller must share the handled promise, including pointer events
+    // arriving while background preparation is already running.
+    dragPngGenerationPromise = promise;
+    return promise;
   }
 
   function escapeAttr(text) {
