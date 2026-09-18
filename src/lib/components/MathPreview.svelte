@@ -19,6 +19,7 @@
   let dragImageElement = $state(null);
   let accessibleMath = $state("");
   let renderer;
+  const contextMenuId = $props.id();
   let contextMenuOpen = $state(false);
   let contextMenuPosition = $state({ x: 0, y: 0 });
   let dragPngUrl = $state(null);
@@ -58,11 +59,38 @@
   let currentLatex = "";
   let currentWrap = true;
 
-  function handleContextMenu(event) {
-    event.preventDefault();
-    contextMenuPosition = { x: event.clientX, y: event.clientY };
+  function openContextMenu(x, y) {
+    contextMenuPosition = { x, y };
     contextMenuOpen = true;
     trackEvent("context_menu", { location: "math_preview" });
+  }
+
+  function handleContextMenu(event) {
+    event.preventDefault();
+    openContextMenu(event.clientX, event.clientY);
+  }
+
+  function handlePreviewKeydown(event) {
+    if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+    const preview = event.currentTarget;
+    const step = { ArrowLeft: [-40, 0], ArrowRight: [40, 0], ArrowUp: [0, -40], ArrowDown: [0, 40] }[event.key];
+    if (step && !event.shiftKey) {
+      const canPan = step[0] ? preview.scrollWidth > preview.clientWidth : preview.scrollHeight > preview.clientHeight;
+      if (canPan) {
+        // WebKit can drop native arrow scrolling when switching axes after
+        // a menu closes. Keep panning local to this focusable scroll region.
+        event.preventDefault();
+        preview.scrollBy({ left: step[0], top: step[1], behavior: 'instant' });
+      }
+      return;
+    }
+    if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) return;
+    event.preventDefault();
+    // Keyboard context-menu events differ between browsers. Anchor to the
+    // visible preview instead of relying on their missing or zero coordinates.
+    const rect = preview.getBoundingClientRect();
+    openContextMenu((Math.max(0, rect.left) + Math.min(innerWidth, rect.right)) / 2,
+      (Math.max(0, rect.top) + Math.min(innerHeight, rect.bottom)) / 2);
   }
 
   // Actions may reject (e.g. nothing to export); surface that as a toast
@@ -134,18 +162,21 @@
   });
 </script>
 
-<!-- The scroll region is focusable so keyboard users can pan large equations. -->
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- The scroll region supports keyboard panning and context-menu shortcuts. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
   id="preview-scroll"
   class="flex-1 min-h-0 overflow-auto p-4"
   role="region"
   aria-label="Equation preview"
   aria-busy={$previewState.status === 'pending'}
+  aria-controls={contextMenuOpen ? contextMenuId : undefined}
+  aria-keyshortcuts="Shift+F10"
   tabindex="0"
   style:background-color={$exportSettings.background === 'custom' ? $exportSettings.customColor : undefined}
   style="display: flex; align-items: safe center; justify-content: safe center;"
   oncontextmenu={handleContextMenu}
+  onkeydown={handlePreviewKeydown}
 >
   {#if accessibleMath}
     <div class="sr-only">{@html accessibleMath}</div>
@@ -192,7 +223,7 @@
 <DropdownMenu.Root bind:open={contextMenuOpen}>
   <DropdownMenu.Trigger tabindex={-1} aria-hidden="true" class="fixed opacity-0 pointer-events-none w-0 h-0" style={`left: ${contextMenuPosition.x}px; top: ${contextMenuPosition.y}px;`}>
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content>
+  <DropdownMenu.Content id={contextMenuId} aria-label="Equation actions" collisionPadding={8}>
     {#each saveMenuItems as item, i (item.label || `separator-${i}`)}
       {#if item.separator}
         <DropdownMenu.Separator />

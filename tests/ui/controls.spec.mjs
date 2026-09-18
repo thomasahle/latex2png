@@ -1,6 +1,81 @@
 import { test, expect } from './fixtures.mjs';
 import { chooseExportOption } from '../../scripts/export-controls.mjs';
 
+test('preview context menu supports keyboard access and returns focus after copying', async ({ page, app }) => {
+  await app.setEquation(String.raw`\frac{123}{456}`);
+  const menu = page.getByRole('menu', { name: 'Equation actions', exact: true });
+  for (const key of ['Shift+F10', 'ContextMenu']) {
+    await app.preview.focus();
+    await page.keyboard.press(key);
+    await expect(menu).toBeVisible();
+    await expect(menu).toHaveAttribute('id', await app.preview.getAttribute('aria-controls'));
+    await expect(page.getByRole('menuitem', { name: 'Save PNG', exact: true })).toBeFocused();
+    await page.keyboard.type('copy');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(page.getByRole('menuitem', { name: 'Copy MathML', exact: true })).toBeFocused();
+    if (key === 'Shift+F10') await page.keyboard.press('Escape');
+    else {
+      await page.keyboard.press('Enter');
+      await expect.poll(() => page.evaluate(() => window.copiedText)).toContain('<mfrac');
+    }
+    await expect(menu).toBeHidden();
+    await expect(app.preview).toBeFocused();
+    await expect(app.preview).not.toHaveAttribute('aria-controls');
+  }
+  await app.preview.press('F10');
+  await expect(menu).toBeHidden();
+});
+
+test('preview context menu stays reachable at narrow and short viewport edges', async ({ page, app }, testInfo) => {
+  for (const viewport of [page.viewportSize(), { width: 320, height: 568 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(viewport);
+    const bounds = await app.preview.boundingBox();
+    await app.preview.click({ button: 'right', position: { x: bounds.width - 8, y: bounds.height / 2 } });
+    const menu = page.getByRole('menu', { name: 'Equation actions', exact: true });
+    await expect(menu).toBeVisible();
+    await menu.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+    const box = await menu.boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    await page.keyboard.press('End');
+    const last = page.getByRole('menuitem', { name: 'Share Image', exact: true });
+    await expect(last).toBeFocused();
+    await expect(last).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath(`preview-menu-${viewport.width}x${viewport.height}.png`) });
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+  }
+});
+
+test('preview arrow keys scroll large formulas after closing its context menu', async ({ page, app }, testInfo) => {
+  const row = Array(12).fill('123456789').join('&');
+  await app.setEquation('\\begin{matrix}' + Array(12).fill(row).join('\\\\') + '\\end{matrix}');
+  await page.getByRole('slider', { name: 'Zoom level' }).fill('5');
+  await app.preview.focus();
+  await page.keyboard.press('Shift+F10');
+  const menu = page.getByRole('menu', { name: 'Equation actions', exact: true });
+  await expect(menu).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(app.preview).toBeFocused();
+  const scroll = () => app.preview.evaluate(el => ({ x: el.scrollLeft, y: el.scrollTop }));
+  const before = await scroll();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(async () => (await scroll()).x).toBeGreaterThan(before.x);
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(async () => (await scroll()).y).toBeGreaterThan(before.y);
+  const moved = await scroll();
+  await page.screenshot({ path: testInfo.outputPath('preview-panned.png') });
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(async () => (await scroll()).x).toBeLessThan(moved.x);
+  await page.keyboard.press('ArrowUp');
+  await expect.poll(async () => (await scroll()).y).toBeLessThan(moved.y);
+  await expect(app.preview).toBeFocused();
+});
+
 for (const [theme, background, ink] of [['light', '#000000', '255'], ['dark', '#ffffff', '0']]) {
   test(`custom backgrounds keep formulas, controls, and exported ink legible in ${theme} mode`, async ({ page, app }, testInfo) => {
     await page.evaluate(theme => localStorage.setItem('theme', theme), theme);
