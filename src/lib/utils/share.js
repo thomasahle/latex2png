@@ -80,7 +80,7 @@ export async function shareToTwitter() {
   }
 }
 
-export async function copyImage() {
+export async function copyImage({ notifySuccess = true } = {}) {
   try {
     const image = await renderShareImage();
     const { blob } = image;
@@ -88,9 +88,9 @@ export async function copyImage() {
     if (IS_SECURE && navigator.clipboard?.write && "ClipboardItem" in window) {
       try {
         await navigator.clipboard.write([new window.ClipboardItem({ [blob.type]: blob })]);
-        toast.success("Image copied to clipboard!");
+        if (notifySuccess) toast.success("Image copied to clipboard!");
         trackEvent('share', { method: 'copy_image' });
-        return;
+        return true;
       } catch (e) {
         console.error("Clipboard write failed, falling back to download:", e);
         trackError(e, { context: 'copyImage_clipboard', fallback: 'download' });
@@ -105,6 +105,7 @@ export async function copyImage() {
     toast.error(`Failed to copy image: ${error.message}`);
     trackError(error, { context: 'copyImage' });
   }
+  return false;
 }
 
 export async function copyMathML() {

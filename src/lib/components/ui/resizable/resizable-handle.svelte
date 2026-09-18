@@ -127,6 +127,15 @@
     outline: 2px solid hsl(var(--primary) / .4);
     outline-offset: 1px;
   }
+  @media (max-width: 639px), (pointer: coarse) {
+    /* Keep the 10px divider, with a 44px touch target above the adjacent panes.
+       Floating controls retain their higher stacking order. */
+    .resize-handle { z-index: 1; }
+    .resize-handle::after { inset: 50% 0 auto; height: 44px; transform: translateY(-50%); }
+    .resize-handle[data-orientation='vertical']::after {
+      inset: 0 auto 0 50%; width: 44px; height: auto; transform: translateX(-50%);
+    }
+  }
   @media (forced-colors: active) {
     .grip { background: ButtonText; }
     .resize-handle:focus-visible:not([data-pointer-focus]) .grip { outline-color: Highlight; }

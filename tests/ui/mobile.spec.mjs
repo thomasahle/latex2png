@@ -136,13 +136,43 @@ test('the mobile pane resizer accepts touch focus and preserves changes on reloa
   await expect(handle).toHaveAttribute('aria-valuenow', String(after));
 });
 
+test('thin dividers can be grabbed throughout their enlarged touch area', async ({ page, app }) => {
+  const handle = page.getByRole('separator', { name: 'Resize editor and preview', exact: true });
+  for (const vertical of [false, true]) {
+    if (vertical) {
+      await page.setViewportSize({ width: 844, height: 390 });
+      await page.getByRole('button', { name: 'Toggle layout orientation' }).tap();
+    }
+    for (const offset of [-16, 25]) {
+      const bounds = await handle.boundingBox();
+      expect(vertical ? bounds.width : bounds.height).toBe(10);
+      const point = vertical
+        ? { x: bounds.x + offset, y: bounds.y + bounds.height / 2 }
+        : { x: bounds.x + bounds.width / 2, y: bounds.y + offset };
+      expect(await handle.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), point)).toBe(true);
+      const before = Number(await handle.getAttribute('aria-valuenow'));
+      await page.mouse.move(point.x, point.y);
+      await page.mouse.down();
+      await page.mouse.move(point.x + (vertical ? 20 : 0), point.y + (vertical ? 0 : 20), { steps: 4 });
+      await page.mouse.up();
+      expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
+      await handle.press('Enter');
+    }
+    // Enlarged targets must not cover the nearby floating controls.
+    expect(await page.locator('#preview-toolbar button, #preview-toolbar input').evaluateAll(controls => controls.every(el => {
+      const box = el.getBoundingClientRect();
+      return !box.width || el.contains(document.elementFromPoint(box.left + 1, box.top + box.height / 2));
+    }))).toBe(true);
+  }
+});
+
 test('Android native touch gestures resize the editor and preview', async ({ page, context, browserName, app }) => {
   test.skip(browserName !== 'chromium', 'Native swipe injection uses the Chromium DevTools protocol.');
   const touch = await context.newCDPSession(page);
   const handle = page.getByRole('separator', { name: 'Resize editor and preview', exact: true });
   await handle.scrollIntoViewIfNeeded();
   const bounds = await handle.boundingBox();
-  const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  const point = { x: bounds.x + bounds.width / 2, y: bounds.y - 12 };
   const before = Number(await handle.getAttribute('aria-valuenow'));
   await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
   await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y + 20 }] });

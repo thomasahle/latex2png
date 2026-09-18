@@ -1,4 +1,5 @@
 <script>
+  import { tick } from 'svelte';
   import { Button } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { history } from "../stores/history.js";
@@ -10,21 +11,20 @@
 
   let menuOpen = $state(false);
   let renderedPreviews = $state({});
+  let menuElement = $state(null);
 
   function loadEquation(latex) {
     latexContent.set(latex);
     trackEvent("history_load", { length: latex.length });
   }
 
-  function removeEntry(index, event) {
-    event.stopPropagation();
+  async function removeEntry(index) {
     history.remove(index);
     trackEvent("history_remove");
-  }
-
-  function clearHistory() {
-    history.clear();
-    trackEvent("history_clear");
+    await tick();
+    const buttons = menuElement?.querySelectorAll('[data-history-remove]');
+    // Keep keyboard focus in the open menu after its focused item disappears.
+    (buttons?.[Math.min(index, buttons.length - 1)] ?? menuElement)?.focus({ preventScroll: true });
   }
 
   function formatTime(timestamp) {
@@ -87,7 +87,7 @@
     {/snippet}
   </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content class="history-dropdown-content w-80 max-h-[400px] overflow-y-auto">
+  <DropdownMenu.Content bind:ref={menuElement} class="history-dropdown-content w-80 max-w-[calc(100vw-1rem)] max-h-[min(400px,var(--bits-dropdown-menu-content-available-height))] overflow-y-auto">
     <div class="px-2 py-1.5 text-xs font-semibold">History</div>
     {#if $history.length === 0}
       <div class="px-3 py-6 text-center text-muted-foreground text-sm">
@@ -95,36 +95,46 @@
       </div>
     {:else}
       {#each $history as entry, index (entry.timestamp)}
-        <DropdownMenu.Item
-          onSelect={() => loadEquation(entry.latex)}
-          class="cursor-pointer flex items-start justify-between gap-2 group py-2"
-        >
-          <div class="flex-1 min-w-0 overflow-hidden">
-            <div class="history-preview overflow-x-auto overflow-y-hidden">
-              {#if renderedPreviews[entry.timestamp]}
-                {@html renderedPreviews[entry.timestamp]}
-              {:else}
-                <span class="text-muted-foreground text-xs">Loading...</span>
-              {/if}
-            </div>
-            <div class="text-xs text-muted-foreground">
-              {formatTime(entry.timestamp)}
-            </div>
-          </div>
-          <button
-            onclick={(e) => removeEntry(index, e)}
-            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-opacity shrink-0"
-            aria-label="Remove from history"
+        <div class="history-entry group flex items-center gap-1">
+          <DropdownMenu.Item
+            onSelect={() => loadEquation(entry.latex)}
+            aria-label={`Load equation: ${entry.latex}`}
+            class="cursor-pointer flex-1 min-w-0 min-h-11 py-2"
           >
-            <XIcon size={14} />
-          </button>
-        </DropdownMenu.Item>
+            <div class="flex-1 min-w-0 overflow-hidden">
+              <div class="history-preview overflow-x-auto overflow-y-hidden">
+                {#if renderedPreviews[entry.timestamp]}
+                  {@html renderedPreviews[entry.timestamp]}
+                {:else}
+                  <span class="text-muted-foreground text-xs">Loading...</span>
+                {/if}
+              </div>
+              <div class="text-xs text-muted-foreground">
+                {formatTime(entry.timestamp)}
+              </div>
+            </div>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={() => removeEntry(index)}
+            closeOnSelect={false}
+            data-history-remove
+            class="history-remove opacity-0 group-hover:opacity-100 data-highlighted:opacity-100 size-8 justify-center p-0 rounded-full text-muted-foreground transition-opacity shrink-0 cursor-pointer"
+            aria-label="Remove from history"
+            title="Remove from history"
+          >
+            <XIcon class="size-4" />
+          </DropdownMenu.Item>
+        </div>
       {/each}
     {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>
 
 <style>
+  .history-entry :global([role='menuitem']) { box-shadow: none; }
+  @media (max-width: 639px), (pointer: coarse) {
+    .history-entry :global(.history-remove) { opacity: 1; width: 44px; height: 44px; }
+  }
   .history-preview {
     font-size: 1.1rem;
     color: var(--foreground);

@@ -1,4 +1,5 @@
 <script>
+  import { onDestroy } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import ExportSelect from './ExportSelect.svelte';
   import { toast } from '$lib/components/ui/sonner';
@@ -7,11 +8,14 @@
   import { exportFormats as formats, effectiveBackground } from '../utils/export-formats.js';
   import { copyImage } from '../utils/share.js';
   import CopyIcon from '@lucide/svelte/icons/copy';
+  import CheckIcon from '@lucide/svelte/icons/check';
   import DownloadIcon from '@lucide/svelte/icons/download';
   import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 
   let saving = $state(false);
   let copying = $state(false);
+  let copied = $state(false);
+  let copyTimeout;
   let colorInput;
   const opaque = $derived(!formats[$exportSettings.format].transparent);
   const background = $derived(effectiveBackground($exportSettings));
@@ -43,9 +47,16 @@
 
   async function copy() {
     if (copying) return;
+    clearTimeout(copyTimeout);
+    copied = false;
     copying = true;
-    try { await copyImage(); } finally { copying = false; }
+    try {
+      copied = await copyImage({ notifySuccess: false });
+      if (copied) copyTimeout = setTimeout(() => { copied = false; }, 2000);
+    } finally { copying = false; }
   }
+
+  onDestroy(() => clearTimeout(copyTimeout));
 </script>
 
 <div id="preview-actions" class="export-bar border-t border-border bg-card font-sans">
@@ -57,15 +68,16 @@
     <input bind:this={colorInput} class="color-input" type="color" aria-label="Custom background color" tabindex="-1" value={$exportSettings.customColor} oninput={chooseColor} />
   </div>
   <div class="export-buttons">
-    <Button variant="ghost" class="max-sm:size-11 max-sm:gap-0 max-sm:has-[>svg]:px-0 max-sm:bg-secondary" onclick={copy} disabled={copying} aria-label="Copy image" title="Copy image as PNG">
-      {#if copying}<LoaderCircleIcon class="size-4 max-sm:size-5 animate-spin" />{:else}<CopyIcon class="size-4 max-sm:size-5" />{/if}
-      <span class="max-sm:sr-only">Copy</span>
+    <Button variant="ghost" class="sm:min-w-26 max-sm:size-11 max-sm:gap-0 max-sm:has-[>svg]:px-0 max-sm:bg-secondary" onclick={copy} disabled={copying} aria-label="Copy image" title={copied ? 'Copied!' : 'Copy image as PNG'}>
+      {#if copying}<LoaderCircleIcon class="size-4 max-sm:size-5 animate-spin" />{:else if copied}<CheckIcon class="size-4 max-sm:size-5" />{:else}<CopyIcon class="size-4 max-sm:size-5" />{/if}
+      <span class="max-sm:sr-only">{copied ? 'Copied' : 'Copy'}</span>
     </Button>
     <Button class="max-sm:size-11 max-sm:gap-0 max-sm:has-[>svg]:px-0" onclick={download} disabled={saving} aria-label={`Download ${$exportSettings.format}`} title={`Download ${$exportSettings.format}`}>
       {#if saving}<LoaderCircleIcon class="size-4 max-sm:size-5 animate-spin" />{:else}<DownloadIcon class="size-4 max-sm:size-5" />{/if}
       <span class="max-sm:sr-only">Download</span>
     </Button>
   </div>
+  <span class="sr-only" role="status">{copied ? 'Image copied to clipboard' : ''}</span>
 </div>
 
 <style>
