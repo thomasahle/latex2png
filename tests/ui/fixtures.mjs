@@ -52,7 +52,13 @@ export const test = base.extend({
       // Select through the editor's keyboard handler before inserting text.
       // Address the editor for every key: an open menu can take focus back
       // between keystrokes, and page.keyboard sends to whatever is focused.
-      await editor.press('ControlOrMeta+a');
+      // CodeMirror binds select-all to the modifier of the *emulated* platform
+      // (Meta on macOS and iOS, Control elsewhere) while Playwright's
+      // ControlOrMeta follows the host OS, so an iPhone project on a Linux
+      // runner would get the wrong key. Send both; the first is harmless
+      // (Control+A on a Mac-style keymap only moves to the line start).
+      await editor.press('Control+a');
+      await editor.press('Meta+a');
       if (latex) {
         await editor.focus();
         await page.keyboard.insertText(latex);

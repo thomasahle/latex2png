@@ -15,6 +15,9 @@ test('Backspace removes empty bracket pairs together and undo restores the pair'
     await expect(app.editor).toHaveText('x');
   }
 
+  // Redo leaves the cursor at the document start on Linux browsers; continue
+  // typing after the x explicitly.
+  await app.editor.press('End');
   await app.editor.pressSequentially('({');
   await expect(app.editor).toHaveText('x({})');
   await app.editor.press('Backspace');
