@@ -82,10 +82,21 @@
       gtag('js', new Date());
       // Report the page without its query string: share links carry the
       // user's LaTeX in ?latex=/?z=, and gtag would otherwise attach the
-      // full URL (page_location) to every event.
-      gtag('config', 'G-40XB6Q54CE', {
-        page_location: location.origin + location.pathname
-      });
+      // full URL (page_location) to every event. Only ?ref= is read, for
+      // the ref_tag dimension. full_referrer / referrer_host / landing_page /
+      // ref_tag are event-scoped custom dimensions shared with thomasahle.com.
+      var ref = document.referrer || '';
+      var refHost = '';
+      if (ref) { try { refHost = new URL(ref).hostname || ref; } catch (e) { refHost = ref; } }
+      var gaParams = {
+        page_location: location.origin + location.pathname,
+        full_referrer: ref || '(direct)',
+        referrer_host: refHost || '(direct)',
+        landing_page: location.pathname
+      };
+      var refTag = new URLSearchParams(location.search).get('ref');
+      if (refTag) { gaParams.ref_tag = refTag; }
+      gtag('config', 'G-40XB6Q54CE', gaParams);
       var gtagScript = document.createElement('script');
       gtagScript.async = true;
       gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-40XB6Q54CE';
