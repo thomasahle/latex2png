@@ -161,23 +161,30 @@ test('dropdown triggers reference their open menus, including symbol submenus', 
 
 test('format typeahead resets on reopening and repeated letters cycle through matches', async ({ page, app }) => {
   const trigger = page.getByRole('button', { name: 'Export format', exact: true });
+  const png = page.getByRole('menuitemradio', { name: 'PNG', exact: true });
+  async function openWithKeyboard() {
+    await page.keyboard.press('Enter');
+    await expect(png).toBeFocused();
+    // bits-ui focuses the first item again a tick after the content gains
+    // focus. On a slow runner that lands after the next keystroke and takes
+    // focus back from the typeahead match, so let the open settle first.
+    await page.waitForTimeout(250);
+    await expect(png).toBeFocused();
+  }
   await trigger.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await openWithKeyboard();
   await page.keyboard.type('j');
   await expect(page.getByRole('menuitemradio', { name: 'JPEG', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(trigger).toHaveAttribute('aria-description', 'JPEG');
   await expect(trigger).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await openWithKeyboard();
   await page.keyboard.type('s');
   await expect(page.getByRole('menuitemradio', { name: 'SVG', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(trigger).toHaveAttribute('aria-description', 'SVG');
   await expect(trigger).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('menuitemradio', { name: 'PNG', exact: true })).toBeFocused();
+  await openWithKeyboard();
   await page.keyboard.type('p');
   await expect(page.getByRole('menuitemradio', { name: 'PDF', exact: true })).toBeFocused();
   await page.keyboard.type('p');
