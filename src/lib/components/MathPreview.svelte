@@ -162,6 +162,12 @@
   });
 </script>
 
+<!-- Cancel blob reads as soon as navigation starts (beforeunload): WebKit tears
+     down the old page's blob loads before pagehide and logs each cancelled
+     read as an error. pagehide also covers bfcache entry; pageshow restores
+     the drag assets after a cached visit. -->
+<svelte:window onbeforeunload={() => { drag.suspend(); }} onpagehide={() => drag.suspend()} onpageshow={() => drag.resume()} />
+
 <!-- The scroll region supports keyboard panning and context-menu shortcuts. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div

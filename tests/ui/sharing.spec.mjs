@@ -58,7 +58,7 @@ for (const menu of ['header', 'preview']) {
     expect(popup.url()).toBe('about:blank');
     expect(await popup.evaluate(() => window.opener)).toBeNull();
     expect(await page.evaluate(() => window.shareEvents)).toEqual([]);
-    await app.editor.fill('y^3');
+    await app.enterEquation('y^3');
     await compression.finish();
     await expect(popup.getByText('Sharing destination')).toBeVisible();
     const shared = new URL(intent.searchParams.get('url'));

@@ -7,7 +7,7 @@ test('pending export keeps foreground and background from the same selection', a
   const colorInput = page.getByLabel('Custom background color', { exact: true });
   await colorInput.fill('#ffffff');
   await chooseExportOption(page, 'Export format', 'SVG');
-  await app.editor.fill(String.raw`\frac{987654321}{2}`);
+  await app.enterEquation(String.raw`\frac{987654321}{2}`);
   await expect(app.preview).toHaveAttribute('aria-busy', 'true');
   const downloaded = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download SVG', exact: true }).click();
@@ -48,7 +48,7 @@ for (const action of ['Copy Image', 'Share Image', 'Copy MathML']) {
     await setEquation('x');
     await openSaveMenu();
     const latex = String.raw`\frac{987654321}{2}`;
-    await editor.fill(latex);
+    await app.enterEquation(latex);
     await page.getByRole('menuitem', { name: action, exact: true }).click();
     if (action === 'Copy MathML') {
       await page.waitForFunction(() => window.copiedText?.includes('987654321'));

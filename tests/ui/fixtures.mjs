@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test as base } from 'playwright/test';
+import { test as base, expect } from 'playwright/test';
 import { chooseExportOption } from '../../scripts/export-controls.mjs';
 
 export { expect } from 'playwright/test';
@@ -46,8 +46,24 @@ export const test = base.extend({
       await page.waitForFunction(() => document.querySelector('#preview-scroll')?.getAttribute('aria-busy') === 'false');
       await page.locator('#math-preview mjx-container > svg').waitFor();
     }
+    async function enterEquation(latex) {
+      // CodeMirror's Android EditContext tracks its own selection. Playwright's
+      // fill() changes the DOM selection only, which can leave the old text.
+      // Select through the editor's keyboard handler before inserting text.
+      // Address the editor for every key: an open menu can take focus back
+      // between keystrokes, and page.keyboard sends to whatever is focused.
+      await editor.press('ControlOrMeta+a');
+      if (latex) {
+        await editor.focus();
+        await page.keyboard.insertText(latex);
+      } else {
+        await editor.press('Backspace');
+      }
+      if (latex) await expect(editor).toHaveText(latex, { useInnerText: true });
+      else await expect(editor.locator('.cm-placeholder')).toBeVisible();
+    }
     async function setEquation(latex) {
-      await editor.fill(latex);
+      await enterEquation(latex);
       await ready();
     }
     async function openSaveMenu() {
@@ -56,7 +72,7 @@ export const test = base.extend({
     async function save(format, newLatex) {
       await chooseExportOption(page, 'Export format', format);
       if (newLatex !== undefined) {
-        await editor.fill(newLatex);
+        await enterEquation(newLatex);
         assert.equal(await preview.getAttribute('aria-busy'), 'true', 'exercise a pending render');
       }
       const downloaded = page.waitForEvent('download');
@@ -69,7 +85,7 @@ export const test = base.extend({
 
     await page.goto(`${baseUrl}?latex=x`);
     await ready();
-    await use({ editor, preview, ready, setEquation, openSaveMenu, save });
+    await use({ editor, preview, ready, enterEquation, setEquation, openSaveMenu, save });
     assert.deepEqual(pageErrors, [], 'no uncaught errors');
   },
 });

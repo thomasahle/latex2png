@@ -239,7 +239,7 @@ test('Android native touch gestures resize the editor and preview', async ({ pag
 });
 
 test('an immediate page departure saves the mobile edit and zoom', async ({ page, app }) => {
-  await app.editor.fill('x^3');
+  await app.enterEquation('x^3');
   await page.getByRole('slider', { name: 'Zoom level' }).fill('2.7');
   await page.goto('about:blank');
   await page.goto(baseUrl);

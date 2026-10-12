@@ -5,7 +5,7 @@ import { chooseExportOption } from '../../scripts/export-controls.mjs';
 for (const invalid of [String.raw`\frac{1}{`, String.raw`\notACommand{x}`]) {
   test(`invalid input ${invalid} blocks export and recovers`, async ({ page, app }) => {
     const { editor, preview, setEquation } = app;
-    await editor.fill(invalid);
+    await app.enterEquation(invalid);
     await page.locator('[data-mathjax-error]').waitFor();
     assert.equal(await editor.getAttribute('aria-invalid'), 'true');
     assert.equal(await editor.getAttribute('aria-describedby'), 'latex-feedback');
@@ -29,7 +29,7 @@ test("accessible MathML and empty input", async ({ page, app }) => {
   await setEquation(String.raw`a &= b \\ c &= d`);
   assert.equal(await page.locator('#preview-scroll math mtable').count(), 1, 'accessible math includes automatic alignment');
   assert.equal(await page.locator('#math-preview').getAttribute('aria-hidden'), 'true');
-  await editor.fill('');
+  await app.enterEquation('');
   await page.getByRole('button', { name: 'Download PNG', exact: true }).click();
   await page.getByText(/Enter a LaTeX equation before exporting/).waitFor();
 });
@@ -53,7 +53,7 @@ test("editor does not trap Tab", async ({ page, app }) => {
 });
 
 test('keyboard navigation reaches ordinary symbols and fills their placeholders', async ({ page, app }) => {
-  await app.editor.fill('');
+  await app.enterEquation('');
   const trigger = page.getByRole('button', { name: 'Insert math symbol', exact: true });
   await trigger.focus();
   await page.keyboard.press('Enter');
@@ -133,7 +133,7 @@ test("pending drag cannot use an obsolete image", async ({ page, app }) => {
   const { editor, preview, ready, setEquation } = app;
   // A drag cannot wait asynchronously: cancel it until a current image exists.
   await setEquation('x');
-  await editor.fill(String.raw`\frac{24680}{3}`);
+  await app.enterEquation(String.raw`\frac{24680}{3}`);
   assert.equal(await page.evaluate(() => document.querySelector('#math-preview').dispatchEvent(
     new DragEvent('dragstart', { cancelable: true, dataTransfer: new DataTransfer() }),
   )), false, 'pending renders cannot drag an old image');

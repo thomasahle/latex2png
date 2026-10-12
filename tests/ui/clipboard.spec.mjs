@@ -16,7 +16,7 @@ for (const action of ['Copy image', 'Copy MathML']) {
       };
     });
     if (action === 'Copy MathML') await app.openSaveMenu();
-    await app.editor.fill(String.raw`\frac{987654321}{2}`);
+    await app.enterEquation(String.raw`\frac{987654321}{2}`);
     const copy = page.getByRole('button', { name: 'Copy image', exact: true });
     const trigger = action === 'Copy image' ? copy : page.getByRole('menuitem', { name: action, exact: true });
     await trigger.click();
@@ -60,10 +60,14 @@ for (const action of ['Copy image', 'Copy MathML']) {
           : window.NativeClipboardItem;
       }, failure);
       for (const latex of [String.raw`\frac{`, '']) {
+        // Type before opening the menu: while it is open its focus trap can
+        // reclaim focus between keystrokes, so select-all hits the document.
+        await app.enterEquation(latex);
         if (action === 'Copy MathML') await app.openSaveMenu();
-        await app.editor.fill(latex);
         await (action === 'Copy image' ? copy : page.getByRole('menuitem', { name: action, exact: true })).click();
-        const error = page.locator('[data-sonner-toast][data-type="error"]').last();
+        const error = page.locator('[data-sonner-toast][data-type="error"]').filter({
+          hasText: latex ? 'Missing close brace' : 'Enter a LaTeX equation before exporting.',
+        }).first();
         await expect(error).toContainText(`Failed to copy ${action === 'Copy image' ? 'image' : 'MathML'}:`);
         if (!latex) await expect(error).toContainText('Enter a LaTeX equation before exporting.');
         await expect(page.locator('[data-sonner-toast][data-type="success"]')).toHaveCount(0);
@@ -86,7 +90,7 @@ for (const unavailable of ['ClipboardItem', 'write']) {
       else navigator.clipboard.write = undefined;
     }, unavailable);
     await app.openSaveMenu();
-    await app.editor.fill(String.raw`\frac{123456789}{2}`);
+    await app.enterEquation(String.raw`\frac{123456789}{2}`);
     await page.getByRole('menuitem', { name: 'Copy MathML', exact: true }).click();
     await expect(page.getByText('MathML copied to clipboard!', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => window.copiedText)).toMatch(/<mfrac[\s\S]*123456789/);
@@ -155,7 +159,7 @@ test('text copy fallback preserves the complete text and preview focus after a p
   expect(new URL(link.text).searchParams.get('latex')).toBe('y');
 
   await app.openSaveMenu();
-  await app.editor.fill(latex);
+  await app.enterEquation(latex);
   await expect(app.preview).toHaveAttribute('aria-busy', 'true');
   await page.getByRole('menuitem', { name: 'Copy MathML', exact: true }).click();
   await expect(page.getByText('MathML copied!', { exact: true })).toBeVisible();

@@ -2,7 +2,7 @@ import { test, expect } from './fixtures.mjs';
 
 test('Backspace removes empty bracket pairs together and undo restores the pair', async ({ page, app }, testInfo) => {
   for (const [opening, closing] of [['{', '}'], ['(', ')'], ['[', ']']]) {
-    await app.editor.fill('x');
+    await app.enterEquation('x');
     await app.editor.pressSequentially(opening);
     await expect(app.editor).toHaveText(`x${opening}${closing}`);
     // Pause beyond CodeMirror's typing group so undo targets this deletion.
@@ -23,7 +23,7 @@ test('Backspace removes empty bracket pairs together and undo restores the pair'
   await expect(app.editor).toHaveText('x');
   await app.ready();
 
-  await app.editor.fill('');
+  await app.enterEquation('');
   await app.editor.pressSequentially('{');
   await app.editor.press('Backspace');
   await expect(app.editor.locator('.cm-placeholder')).toBeVisible();
@@ -34,11 +34,11 @@ test('Backspace removes empty bracket pairs together and undo restores the pair'
 });
 
 test('paired deletion preserves ordinary Backspace, selections, and closing-bracket overtyping', async ({ page, app }) => {
-  await app.editor.fill('x+y');
+  await app.enterEquation('x+y');
   await app.editor.press('Backspace');
   await expect(app.editor).toHaveText('x+');
 
-  await app.editor.fill('x{abc}');
+  await app.enterEquation('x{abc}');
   await app.editor.press('ArrowLeft');
   for (let i = 0; i < 3; i++) await app.editor.press('Shift+ArrowLeft');
   await app.editor.press('Backspace');
@@ -46,12 +46,12 @@ test('paired deletion preserves ordinary Backspace, selections, and closing-brac
   await app.editor.press('Backspace');
   await expect(app.editor).toHaveText('x');
 
-  await app.editor.fill('x(]');
+  await app.enterEquation('x(]');
   await app.editor.press('ArrowLeft');
   await app.editor.press('Backspace');
   await expect(app.editor).toHaveText('x]');
 
-  await app.editor.fill('x');
+  await app.enterEquation('x');
   await app.editor.pressSequentially('{}');
   await expect(app.editor).toHaveText('x{}');
   // The closing key moved past the auto-inserted brace; delete only that brace.
@@ -63,7 +63,7 @@ test('paired deletion preserves ordinary Backspace, selections, and closing-brac
 });
 
 test('autocomplete still fills fraction fields and allows editing inside braces', async ({ page, app }) => {
-  await app.editor.fill('');
+  await app.enterEquation('');
   await app.editor.pressSequentially(String.raw`\fra`);
   await expect(page.getByRole('option', { name: /^\\frac/ })).toBeVisible();
   // Completion ignores keys for its first 75 ms to avoid accidental acceptance.
@@ -109,7 +109,7 @@ test('Vim normal mode keeps navigation keys while insert mode supports paired de
 
   await settings.click();
   await page.getByRole('menuitem', { name: 'Disable Vim Mode', exact: true }).click();
-  await app.editor.fill('x');
+  await app.enterEquation('x');
   await app.editor.pressSequentially('{');
   await app.editor.press('Backspace');
   await app.editor.pressSequentially('y');

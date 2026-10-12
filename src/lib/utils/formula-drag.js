@@ -6,11 +6,13 @@ import { trackEvent, trackError } from './analytics.js';
 export function createFormulaDrag({ getState, onUrl }) {
   let dragVersion = 0;
   let disposed = false;
+  let suspended = false;
   let dragPngUrl = null;
   let dragPngFile = null;
   let pngDataUrl = null;
   let dragDownloadDataUrl = null;
   let dragPngGenerationPromise = null;
+  let pendingReader = null;
   let prepareTimer;
   const dragFileName = 'latex-equation.png';
 
@@ -18,6 +20,8 @@ export function createFormulaDrag({ getState, onUrl }) {
     dragVersion++;
     clearTimeout(prepareTimer);
     dragPngGenerationPromise = null;
+    pendingReader?.abort();
+    pendingReader = null;
     if (dragPngUrl) {
       URL.revokeObjectURL(dragPngUrl);
       dragPngUrl = null;
@@ -30,7 +34,7 @@ export function createFormulaDrag({ getState, onUrl }) {
 
   async function ensureDragPng() {
     const { previewElement, currentLatex, ready } = getState();
-    if (disposed || !ready || !currentLatex.trim()) return null;
+    if (disposed || suspended || !ready || !currentLatex.trim()) return null;
     if (!previewElement?.querySelector('mjx-container svg')) return null;
     if (pngDataUrl) return dragPngUrl;
     if (dragPngGenerationPromise) return dragPngGenerationPromise;
@@ -38,13 +42,31 @@ export function createFormulaDrag({ getState, onUrl }) {
     const promise = (async () => {
       const { blob } = await renderExport({ format: 'PNG', options: captureExportOptions(), preview: { element: previewElement, latex: currentLatex } });
       if (!blob || version !== dragVersion || disposed) return null;
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-      });
+      const reader = new FileReader();
+      pendingReader = reader;
+      let outcome;
+      try {
+        // Settle by resolving only. WebKit rejects a read started while the
+        // page is unloading ("Cannot load blob: ... due to access control
+        // checks"), and a rejection created at that moment is reported as an
+        // uncaught error because its handlers never get to run.
+        outcome = await new Promise(resolve => {
+          reader.onload = () => resolve({ dataUrl: reader.result });
+          reader.onerror = () => resolve({ error: reader.error ?? new Error('The equation image could not be read.') });
+          reader.onabort = () => resolve({});
+          try {
+            reader.readAsDataURL(blob);
+          } catch (error) {
+            resolve({ error });
+          }
+        });
+      } finally {
+        if (pendingReader === reader) pendingReader = null;
+      }
       if (version !== dragVersion || disposed) return null;
+      if (outcome.error) throw outcome.error;
+      const { dataUrl } = outcome;
+      if (dataUrl == null) return null;
       dragPngFile = new File([blob], dragFileName, { type: "image/png" });
       pngDataUrl = dataUrl;
       dragDownloadDataUrl = dataUrl.replace("image/png", "application/octet-stream");
@@ -143,6 +165,15 @@ export function createFormulaDrag({ getState, onUrl }) {
     },
     start: handleDragStart,
     end: handleDragEnd,
+    suspend() {
+      suspended = true;
+      invalidateDragPng();
+    },
+    resume() {
+      if (!suspended) return;
+      suspended = false;
+      return ensureDragPng();
+    },
     dispose() {
       disposed = true;
       handleDragEnd();
