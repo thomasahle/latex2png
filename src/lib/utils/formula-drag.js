@@ -13,6 +13,7 @@ export function createFormulaDrag({ getState, onUrl }) {
   let dragDownloadDataUrl = null;
   let dragPngGenerationPromise = null;
   let pendingReader = null;
+  let dragGhost = null;
   let prepareTimer;
   const dragFileName = 'latex-equation.png';
 
@@ -114,13 +115,23 @@ export function createFormulaDrag({ getState, onUrl }) {
     previewElement.style.backgroundColor = captureExportOptions().background || "transparent";
     if (dragImageElement) dragImageElement.style.cursor = "grabbing";
 
-    // The formula has its own stacking context so the snapshot cannot include
-    // the panel behind it. Keep its CSS size and zoom; exports include padding
-    // and Retina pixels that must not enlarge the cursor preview.
+    // The preview is zoomed with a CSS transform, and browsers snapshot a drag
+    // image at the element's layout size, so the cursor preview would shrink
+    // to the unzoomed formula. Hand over a ghost laid out at the rendered size
+    // instead: a clone of the SVG, sized in pixels, placed under the formula
+    // so it is in the document (and on screen, which WebKit needs) but hidden
+    // behind the real one. Exports are not used here because their padding and
+    // Retina pixels must not enlarge the cursor preview.
     const rect = previewElement.getBoundingClientRect();
     const relativeX = event.clientX - rect.left;
     const relativeY = event.clientY - rect.top;
-    dt.setDragImage(previewElement, relativeX, relativeY);
+    const ghost = createDragGhost(previewElement, rect);
+    dt.setDragImage(ghost ?? previewElement, relativeX, relativeY);
+    if (ghost) {
+      dragGhost = ghost;
+      // The browser has captured the image by the time the event's task ends.
+      setTimeout(removeDragGhost, 0);
+    }
 
     const downloadSource = dragDownloadDataUrl || pngDataUrl;
     const downloadPayload = `application/octet-stream:${dragFileName}:${downloadSource}`;
@@ -147,7 +158,34 @@ export function createFormulaDrag({ getState, onUrl }) {
     // unhandled preserves the browser's native return animation for invalid drops.
   }
 
+  function createDragGhost(previewElement, rect) {
+    const svg = previewElement.querySelector("mjx-container svg");
+    const parent = previewElement.parentElement;
+    if (!svg || !parent || !(rect.width > 0) || !(rect.height > 0)) return null;
+    const svgRect = svg.getBoundingClientRect();
+    const ghost = previewElement.ownerDocument.createElement("div");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.style.cssText = `position:absolute;left:0;top:0;width:${rect.width}px;height:${rect.height}px;` +
+      "overflow:hidden;pointer-events:none;z-index:-1;isolation:isolate;";
+    ghost.style.color = getComputedStyle(previewElement).color;
+    ghost.style.backgroundColor = previewElement.style.backgroundColor;
+    const clone = svg.cloneNode(true);
+    clone.removeAttribute("width");
+    clone.removeAttribute("height");
+    clone.style.cssText = `position:absolute;left:${svgRect.left - rect.left}px;top:${svgRect.top - rect.top}px;` +
+      `width:${svgRect.width}px;height:${svgRect.height}px;`;
+    ghost.appendChild(clone);
+    parent.appendChild(ghost);
+    return ghost;
+  }
+
+  function removeDragGhost() {
+    dragGhost?.remove();
+    dragGhost = null;
+  }
+
   function handleDragEnd() {
+    removeDragGhost();
     const { previewElement, dragImageElement } = getState();
     if (previewElement) {
       previewElement.style.cursor = "";

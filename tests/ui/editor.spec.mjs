@@ -222,6 +222,11 @@ for (const background of ['Transparent', 'Solid', 'Custom']) {
       data.setDragImage = (image, x, y) => {
         const bounds = image.getBoundingClientRect();
         ghost = { width: bounds.width, height: bounds.height, x, y,
+          // The preview is zoomed with a CSS transform, which drag image
+          // snapshots ignore: the image handed over must be laid out at the
+          // displayed size, not merely render at it.
+          layoutWidth: image.offsetWidth, layoutHeight: image.offsetHeight,
+          transform: getComputedStyle(image).scale,
           background: getComputedStyle(image).backgroundColor,
           isolation: getComputedStyle(image).isolation };
       };
@@ -234,6 +239,9 @@ for (const background of ['Transparent', 'Solid', 'Custom']) {
     });
     assert.equal(result.ghost.width, result.displayed.width);
     assert.equal(result.ghost.height, result.displayed.height);
+    assert.ok(Math.abs(result.ghost.layoutWidth - result.displayed.width) <= 1, 'laid out at the zoomed width');
+    assert.ok(Math.abs(result.ghost.layoutHeight - result.displayed.height) <= 1, 'laid out at the zoomed height');
+    assert.equal(result.ghost.transform, 'none');
     // DragEvent coordinates round to CSS pixels in some browsers.
     assert.ok(Math.abs(result.ghost.x - 20) <= 1);
     assert.ok(Math.abs(result.ghost.y - 10) <= 1);
