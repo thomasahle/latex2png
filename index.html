@@ -79,6 +79,9 @@
     if (location.hostname === 'thomasahle.com') {
       window.dataLayer = window.dataLayer || [];
       window.gtag = function () { dataLayer.push(arguments); };
+      // No cookie banner on this site: deny all storage up front, so GA4 sets no
+      // cookies and sends cookieless pings (a per-page-load client id).
+      gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
       gtag('js', new Date());
       // Report the page without its query string: share links carry the
       // user's LaTeX in ?latex=/?z=, and gtag would otherwise attach the
