@@ -6,11 +6,17 @@ function getCanvasContext(canvas) {
   return context;
 }
 
-function exportRect(svg, previewElement, scale) {
+function exportGeometry(svg, previewElement, scale, tightCrop) {
+  // Keep MathJax's viewport, including space reserved by \hspace and \phantom.
+  // Cropping only removes the app's outer padding.
   const rect = svg.getBoundingClientRect();
   const previewScale = parseFloat(getComputedStyle(previewElement).scale) || 1;
   const ratio = scale / previewScale;
-  return { width: rect.width * ratio, height: rect.height * ratio };
+  return {
+    width: rect.width * ratio,
+    height: rect.height * ratio,
+    padding: tightCrop ? 0 : BASE_PADDING_EM * scale,
+  };
 }
 
 /**
@@ -19,9 +25,10 @@ function exportRect(svg, previewElement, scale) {
  * @param {number} zoomScale - Output scale, independent of preview zoom (e.g., 1.0, 1.5, 2.0)
  * @param {string|null} backgroundColor - Background color for the image (null for transparent)
  * @param {string} [foregroundColor] - Captured default ink color (otherwise use the preview)
+ * @param {boolean} [tightCrop] - Remove the outer export padding
  * @returns {Promise<HTMLCanvasElement>} A canvas containing the rendered image
  */
-export async function generateImage(previewElement, zoomScale, backgroundColor = null, foregroundColor) {
+export async function generateImage(previewElement, zoomScale = 1, backgroundColor = null, foregroundColor, tightCrop = false) {
   const { fgColor, bgColor } = resolveThemeColors(previewElement, backgroundColor, foregroundColor);
 
   const mjxSvg = previewElement.querySelector('mjx-container svg');
@@ -29,7 +36,8 @@ export async function generateImage(previewElement, zoomScale, backgroundColor =
     throw new Error('No SVG found in preview element');
   }
 
-  return await renderMathjaxSvgToCanvas(mjxSvg, previewElement, bgColor, fgColor, zoomScale);
+  const geometry = exportGeometry(mjxSvg, previewElement, zoomScale, tightCrop);
+  return await renderMathjaxSvgToCanvas(mjxSvg, geometry, bgColor, fgColor);
 }
 
 export function resolveThemeColors(previewElement, backgroundOverride, foregroundOverride) {
@@ -54,7 +62,7 @@ export function resolveThemeColors(previewElement, backgroundOverride, foregroun
 /**
  * Generate a theme-aware SVG string from the MathJax output, honoring zoom scale.
  */
-export function generateSvg(previewElement, zoomScale = 1, backgroundColor = null, foregroundColor) {
+export function generateSvg(previewElement, zoomScale = 1, backgroundColor = null, foregroundColor, tightCrop = false) {
   const mjxSvg = previewElement.querySelector('mjx-container svg');
   if (!mjxSvg) {
     throw new Error('No SVG found to export');
@@ -65,17 +73,13 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
   const svg = mjxSvg.cloneNode(true);
   bakeSvgColors(svg, fgColor);
 
-  const rect = exportRect(mjxSvg, previewElement, zoomScale);
-  const baseExportWidth = Math.max(1, rect.width);
-  const baseExportHeight = Math.max(1, rect.height);
-
-  const pixelPadding = BASE_PADDING_EM * zoomScale;
+  const geometry = exportGeometry(mjxSvg, previewElement, zoomScale, tightCrop);
+  const baseExportWidth = Math.max(1, geometry.width);
+  const baseExportHeight = Math.max(1, geometry.height);
+  const pixelPadding = geometry.padding;
   const exportWidth = baseExportWidth + pixelPadding * 2;
   const exportHeight = baseExportHeight + pixelPadding * 2;
 
-  // Keep MathJax's viewport inside a padded canvas, just like PNG rendering.
-  // Its ink bounds omit intentional space (\hspace, \phantom, etc.). Using
-  // them as a new viewBox moves/resizes glyphs and can erase blank formulas.
   const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   wrapper.setAttribute('viewBox', mjxSvg.getAttribute('viewBox'));
   if (mjxSvg.hasAttribute('preserveAspectRatio')) {
@@ -109,14 +113,13 @@ export function generateSvg(previewElement, zoomScale = 1, backgroundColor = nul
   return { svgString, width: exportWidth, height: exportHeight, backgroundColor: bgColor };
 }
 
-async function renderMathjaxSvgToCanvas(svgEl, previewElement, backgroundColor, fgColor, zoomScale = 1) {
-  const rect = exportRect(svgEl, previewElement, zoomScale);
+async function renderMathjaxSvgToCanvas(svgEl, geometry, backgroundColor, fgColor) {
   const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
-  const padding = Math.round(BASE_PADDING_EM * zoomScale * dpr);
+  const padding = Math.round(geometry.padding * dpr);
 
   // Apply the requested scale independently of the current pane dimensions.
-  const contentWidth = Math.max(1, Math.round(rect.width * dpr));
-  const contentHeight = Math.max(1, Math.round(rect.height * dpr));
+  const contentWidth = Math.max(1, Math.round(geometry.width * dpr));
+  const contentHeight = Math.max(1, Math.round(geometry.height * dpr));
   const outputWidth = contentWidth + padding * 2;
   const outputHeight = contentHeight + padding * 2;
 
