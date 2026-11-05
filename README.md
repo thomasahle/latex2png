@@ -4,6 +4,8 @@
 
 A fast, modern web app to convert LaTeX math equations to PNG, JPEG, SVG, and PDF images. **[Try it live →](https://thomasahle.com/latex2png)**
 
+Enable **Settings → Tight crop for exports** to remove the outer padding from downloads and PNGs you copy, share, or drag. The crop keeps intentional LaTeX spacing.
+
 ## Development
 
 ```bash

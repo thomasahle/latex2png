@@ -4,6 +4,7 @@
   import { theme } from "../stores/theme.js";
   import { vimMode } from "../stores/vimMode.js";
   import { wrapContent } from "../stores/wrapContent.js";
+  import { exportSettings } from "../stores/exportSettings.js";
   import { trackEvent } from "../utils/analytics.js";
   import { fullscreen, fullscreenRequired } from "../stores/fullscreen.js";
   import SettingsIcon from "@lucide/svelte/icons/settings";
@@ -84,6 +85,14 @@
         Auto {"\\begin{aligned}"}
       </span>
     </DropdownMenu.Item>
+
+    <DropdownMenu.CheckboxItem
+      checked={$exportSettings.tightCrop}
+      onCheckedChange={tightCrop => exportSettings.update(settings => ({ ...settings, tightCrop }))}
+      class="cursor-pointer"
+    >
+      Tight crop for exports
+    </DropdownMenu.CheckboxItem>
 
     {#if !$fullscreenRequired}
       <DropdownMenu.Item

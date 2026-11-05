@@ -17,6 +17,7 @@ export function captureExportOptions(format = get(exportSettings).format) {
     scale: get(zoom),
     background: resolveExportBackground(settings, format, color ? `hsl(${color})` : '#ffffff'),
     foreground: resolveCustomForeground(settings) ?? (foreground ? `hsl(${foreground})` : style.color),
+    tightCrop: settings.tightCrop,
   };
 }
 
@@ -29,13 +30,14 @@ function canvasToBlob(canvas, mimeType) {
 export async function renderExport({ format = 'PNG', options = captureExportOptions(format), preview } = {}) {
   const { element, latex } = preview ?? await ensureCurrentPreview();
   const { mimeType, extension } = exportFormats[format];
+  const { scale, background, foreground, tightCrop } = options;
   let blob, width, height;
   if (format === 'PNG' || format === 'JPEG') {
-    const canvas = await generateImage(element, options.scale, options.background, options.foreground);
+    const canvas = await generateImage(element, scale, background, foreground, tightCrop);
     ({ width, height } = canvas);
     blob = await canvasToBlob(canvas, mimeType);
   } else {
-    const svg = generateSvg(element, options.scale, options.background, options.foreground);
+    const svg = generateSvg(element, scale, background, foreground, tightCrop);
     ({ width, height } = svg);
     if (format === 'SVG') {
       blob = new Blob([svg.svgString], { type: mimeType });

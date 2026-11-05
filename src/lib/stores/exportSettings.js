@@ -7,6 +7,7 @@ function normalize(value) {
     format: exportFormats.includes(value?.format) ? value.format : 'PNG',
     background: ['solid', 'custom'].includes(value?.background) ? value.background : 'transparent',
     customColor: /^#[\da-f]{6}$/i.test(value?.customColor) ? value.customColor : '#808080',
+    tightCrop: value?.tightCrop === true,
   };
 }
 const store = persisted('exportSettings', normalize(), { parse: raw => normalize(JSON.parse(raw)) });

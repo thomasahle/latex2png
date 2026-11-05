@@ -45,7 +45,9 @@ async function inspectImages(page, png, svg) {
         }
         // Stay one pixel inside the border: SVG dimensions can be fractional,
         // so rasterizing to whole pixels may antialias the outermost edge.
-        const corners = [[1, 1], [canvas.width - 2, 1], [1, canvas.height - 2], [canvas.width - 2, canvas.height - 2]];
+        const [leftInset, rightInset] = canvas.width > 2 ? [1, canvas.width - 2] : [0, canvas.width - 1];
+        const [topInset, bottomInset] = canvas.height > 2 ? [1, canvas.height - 2] : [0, canvas.height - 1];
+        const corners = [[leftInset, topInset], [rightInset, topInset], [leftInset, bottomInset], [rightInset, bottomInset]];
         results.push({ width: canvas.width, height: canvas.height,
           ink: right < 0 ? null : { left, right, top, bottom },
           corners: corners.map(([x, y]) => [...ctx.getImageData(x, y, 1, 1).data]),
@@ -55,6 +57,105 @@ async function inspectImages(page, png, svg) {
     return results;
   }, { png: [...png], svg: [...svg] });
 }
+
+async function openCropSetting(page, checked) {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const item = page.getByRole('menuitemcheckbox', { name: 'Tight crop for exports', exact: true });
+  await expect(item).toHaveAttribute('aria-checked', String(checked));
+  return item;
+}
+
+async function jpegSize(page, bytes) {
+  return page.evaluate(async bytes => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${bytes}`;
+    await image.decode();
+    return [image.naturalWidth, image.naturalHeight];
+  }, bytes.toString('base64'));
+}
+
+function pdfSize(bytes) {
+  const [, width, height] = bytes.toString('latin1').match(/\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/);
+  // jsPDF's default conversion from its px unit to PDF points.
+  return [Number(width) * 72 / 96, Number(height) * 72 / 96];
+}
+
+test('tight crop is opt-in and removes the same border from every export format', async ({ page, app }, testInfo) => {
+  const latex = String.raw`\hspace{4em}x\phantom{MMMM}\vphantom{\dfrac{1}{\frac{a}{b}}}`;
+  await loadEquation(page, app, latex);
+  await page.getByRole('slider', { name: 'Zoom level' }).fill('1.5');
+
+  const setting = await openCropSetting(page, false);
+  await page.keyboard.press('Escape');
+  await setting.waitFor({ state: 'detached' });
+  const paddedPng = await app.save('PNG');
+  const paddedJpeg = await app.save('JPEG');
+  const paddedSvg = await app.save('SVG');
+  const paddedPdf = await app.save('PDF');
+
+  await (await openCropSetting(page, false)).click();
+  await setting.waitFor({ state: 'detached' });
+  await loadEquation(page, app, latex);
+  await openCropSetting(page, true);
+  await page.screenshot({ path: testInfo.outputPath('tight-crop-setting.png'), animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  await setting.waitFor({ state: 'detached' });
+  const tightPng = await app.save('PNG');
+  const tightJpeg = await app.save('JPEG');
+  const tightSvg = await app.save('SVG');
+  const tightPdf = await app.save('PDF');
+
+  const padded = await inspectImages(page, paddedPng, paddedSvg);
+  const tight = await inspectImages(page, tightPng, tightSvg);
+  const removedPadding = 16 * 1.5;
+  for (const [i, image] of tight.entries()) {
+    expect(padded[i].width - image.width).toBe(2 * removedPadding);
+    expect(padded[i].height - image.height).toBe(2 * removedPadding);
+    expect(image.ink.left).toBeGreaterThan(removedPadding);
+    expect(image.width - image.ink.right).toBeGreaterThan(removedPadding);
+    expect(image.height - (image.ink.bottom - image.ink.top + 1)).toBeGreaterThan(removedPadding);
+    for (const edge of ['left', 'right', 'top', 'bottom']) {
+      expect(padded[i].ink[edge] - image.ink[edge]).toBe(removedPadding);
+    }
+  }
+  const dpr = await page.evaluate(() => Math.max(1, Math.ceil(devicePixelRatio)));
+  expect(await jpegSize(page, tightJpeg)).toEqual([tightPng.readUInt32BE(16), tightPng.readUInt32BE(20)]);
+  expect(await jpegSize(page, paddedJpeg)).toEqual([
+    tightPng.readUInt32BE(16) + 2 * removedPadding * dpr,
+    tightPng.readUInt32BE(20) + 2 * removedPadding * dpr,
+  ]);
+  for (const [i, size] of pdfSize(tightPdf).entries()) {
+    expect(pdfSize(paddedPdf)[i] - size).toBeCloseTo(2 * removedPadding * 72 / 96);
+    expect(Math.round(size * 96 / 72)).toBe(i === 0 ? tight[1].width : tight[1].height);
+  }
+
+  await writeFile(testInfo.outputPath('padded.png'), paddedPng);
+  await writeFile(testInfo.outputPath('tight.png'), tightPng);
+  await page.getByRole('button', { name: 'Copy image', exact: true }).click();
+  await page.waitForFunction(() => window.copiedItems.length);
+  const copied = await page.evaluate(async () => [...new Uint8Array(await (await window.copiedItems[0].getType('image/png')).arrayBuffer())]);
+  expect(Buffer.from(copied)).toEqual(tightPng);
+
+  await (await openCropSetting(page, true)).click();
+  await setting.waitFor({ state: 'detached' });
+  expect(await app.save('PNG')).toEqual(paddedPng);
+});
+
+test('tight crop keeps blank LaTeX boxes exportable', async ({ page, app }) => {
+  await (await openCropSetting(page, false)).click();
+  for (const latex of [String.raw`\hspace{4em}`, String.raw`\vphantom{\frac{a}{b}}`]) {
+    await loadEquation(page, app, latex);
+    const png = await app.save('PNG');
+    const svg = await app.save('SVG');
+    const [raster, vector] = await inspectImages(page, png, svg);
+    for (const image of [raster, vector]) {
+      expect(image.ink).toBeNull();
+      expect(image.width).toBeGreaterThan(0);
+      expect(image.height).toBeGreaterThan(0);
+      expect(latex.includes('hspace') ? image.width : image.height).toBeGreaterThan(16);
+    }
+  }
+});
 
 test('SVG preserves intentional spacing, glyph size, and background across zoom levels', async ({ page, app }, testInfo) => {
   await chooseExportOption(page, 'Export background', 'Custom');
